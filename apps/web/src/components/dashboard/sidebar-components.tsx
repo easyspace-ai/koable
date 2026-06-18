@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   FolderIcon,
   ChevronDown,
@@ -127,6 +128,7 @@ export function FolderNode({
   onRename: (folder: Folder) => void;
   onDelete: (folder: Folder) => void;
 }) {
+  const t = useTranslations("dashboard");
   const [expanded, setExpanded] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const hasChildren = folder.children.length > 0;
@@ -199,11 +201,11 @@ export function FolderNode({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground text-xs" onClick={() => onRename(folder)}>
-                <Pencil className="mr-2 h-3 w-3" /> Rename
+                <Pencil className="mr-2 h-3 w-3" /> {t("common.rename")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-red-400 focus:bg-red-500/10 focus:text-red-400 text-xs" onClick={() => onDelete(folder)}>
-                <Trash2 className="mr-2 h-3 w-3" /> Delete
+                <Trash2 className="mr-2 h-3 w-3" /> {t("common.delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

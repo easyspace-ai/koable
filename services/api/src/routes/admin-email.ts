@@ -17,29 +17,14 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { ENCRYPTION_KEY } from "../lib/secrets.js";
-import { featureFlagQueries } from "@doable/db";
 import {
   getEmailQueueStats,
   reloadEmailProvider,
 } from "../lib/email/index.js";
 
-const featureFlags = featureFlagQueries(sql);
-
 export const adminEmailRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminEmailRoutes.use("*", authMiddleware);
-
-// ─── Platform admin guard ──────────────────────────────────
-adminEmailRoutes.use("*", async (c, next) => {
-  const userId = c.get("userId");
-  const isAdmin = await featureFlags.isPlatformAdmin(userId);
-  if (!isAdmin) {
-    return c.json({ error: "Platform admin access required" }, 403);
-  }
-  await next();
-});
 
 // ─── Types ─────────────────────────────────────────────────
 

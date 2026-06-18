@@ -4,6 +4,7 @@ import { sql } from "../../db/index.js";
 import { githubQueries } from "@doable/db/queries/github.js";
 import { type AuthEnv } from "../../middleware/auth.js";
 import { authMiddlewareWithRls as authMiddleware } from "../../middleware/rls.js";
+import { githubErrorResponse } from "./error-responses.js";
 
 const db = githubQueries(sql);
 
@@ -63,8 +64,7 @@ githubAccountRoutes.get("/github/status", async (c) => {
       });
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to get GitHub status", message }, 500);
+    return githubErrorResponse(c, "Failed to get GitHub status", err);
   }
 });
 
@@ -76,8 +76,7 @@ githubAccountRoutes.delete("/github/disconnect", async (c) => {
     await db.deleteUserToken(userId);
     return c.json({ data: { disconnected: true } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to disconnect GitHub", message }, 500);
+    return githubErrorResponse(c, "Failed to disconnect GitHub", err);
   }
 });
 
@@ -103,7 +102,6 @@ githubAccountRoutes.get("/github/repos", async (c) => {
     const repos = await githubClient.listRepos(token);
     return c.json({ data: repos });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to list repos", message }, 500);
+    return githubErrorResponse(c, "Failed to list repos", err);
   }
 });

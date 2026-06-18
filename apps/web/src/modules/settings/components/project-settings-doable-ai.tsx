@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   Brain,
@@ -57,6 +58,7 @@ interface Props {
 }
 
 export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
+  const t = useTranslations("settings");
   const [settings, setSettings] = useState<DoableAiSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -87,9 +89,9 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
         setPendingVisibility(data.thinkingVisibility ?? "auto");
         setPendingEnabled(data.enabled);
       })
-      .catch((err) => addToast("error", err instanceof Error ? err.message : "Failed to load AI settings"))
+      .catch((err) => addToast("error", err instanceof Error ? err.message : t("doableAi.errors.loadFailed")))
       .finally(() => setLoading(false));
-  }, [projectId, addToast]);
+  }, [projectId, addToast, t]);
 
   const refreshUsage = useCallback(() => {
     setUsageLoading(true);
@@ -124,14 +126,14 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
           chatModelOverride: pendingChatModel,
         }),
       });
-      addToast("success", "Doable AI settings saved.");
+      addToast("success", t("doableAi.toasts.saved"));
       refreshSettings();
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Save failed.");
+      addToast("error", err instanceof Error ? err.message : t("doableAi.errors.saveFailed"));
     } finally {
       setSaving(false);
     }
-  }, [projectId, pendingEnabled, pendingVisibility, pendingPrompt, pendingChatModel, addToast, refreshSettings]);
+  }, [projectId, pendingEnabled, pendingVisibility, pendingPrompt, pendingChatModel, addToast, refreshSettings, t]);
 
   const openEmbedModal = useCallback(async () => {
     setEmbedModalOpen(true);
@@ -147,7 +149,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
   const eraseEmbeddings = useCallback(async () => {
     if (embedConfirm !== "ERASE") {
-      addToast("error", 'Type "ERASE" exactly to confirm.');
+      addToast("error", t("doableAi.errors.eraseConfirm"));
       return;
     }
     setEmbedBusy(true);
@@ -171,16 +173,16 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
         });
       }
       const deleted = r.tables.reduce((acc, t) => acc + t.deleted, 0);
-      addToast("success", `Erased ${deleted} rows across ${r.tables.length} table(s). Mode: ${r.mode}.`);
+      addToast("success", t("doableAi.toasts.erased", { deleted, tables: r.tables.length, mode: r.mode }));
       setEmbedModalOpen(false);
       setEmbedConfirm("");
       refreshSettings();
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Erase failed.");
+      addToast("error", err instanceof Error ? err.message : t("doableAi.errors.eraseFailed"));
     } finally {
       setEmbedBusy(false);
     }
-  }, [projectId, embedConfirm, embedNewModel, addToast, refreshSettings, pendingVisibility, pendingPrompt, pendingChatModel, pendingEnabled]);
+  }, [projectId, embedConfirm, embedNewModel, addToast, refreshSettings, pendingVisibility, pendingPrompt, pendingChatModel, pendingEnabled, t]);
 
   if (loading || !settings) {
     return (
@@ -197,8 +199,8 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
     <div className="space-y-6" data-doable-ai-tab>
       {/* ── Master toggle ── */}
       <SectionCard
-        title="Doable AI for this project"
-        description="When disabled, /__doable/ai/* returns 503 AI_DISABLED_FOR_PROJECT. Useful for paused projects or quota lockouts."
+        title={t("doableAi.masterToggle.title")}
+        description={t("doableAi.masterToggle.description")}
       >
         <div className="flex items-center gap-3">
           <label className="inline-flex cursor-pointer items-center gap-2">
@@ -210,7 +212,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
               data-testid="ai-enabled-toggle"
             />
             <span className="text-sm font-medium">
-              {pendingEnabled ? "Enabled" : "Disabled"}
+              {pendingEnabled ? t("doableAi.masterToggle.enabled") : t("doableAi.masterToggle.disabled")}
             </span>
           </label>
         </div>
@@ -218,8 +220,8 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
       {/* ── Thinking visibility ── */}
       <SectionCard
-        title="Thinking content visibility"
-        description="How reasoning blocks (<think>, <reasoning>, <plan>…) are rendered in the generated chatbot UI."
+        title={t("doableAi.thinkingVisibility.title")}
+        description={t("doableAi.thinkingVisibility.description")}
       >
         <div className="grid gap-3 sm:grid-cols-3">
           {(["auto", "always-show", "hide"] as const).map((v) => (
@@ -242,14 +244,14 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
               />
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Brain className="h-4 w-4" />
-                {v === "auto" && "Auto (collapsed)"}
-                {v === "always-show" && "Always show"}
-                {v === "hide" && "Hide entirely"}
+                {v === "auto" && t("doableAi.thinkingVisibility.auto.label")}
+                {v === "always-show" && t("doableAi.thinkingVisibility.alwaysShow.label")}
+                {v === "hide" && t("doableAi.thinkingVisibility.hide.label")}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                {v === "auto" && "Render inside a 💭 Thinking disclosure, collapsed by default."}
-                {v === "always-show" && "Render reasoning inline above the answer."}
-                {v === "hide" && "Strip <think> blocks server-side. The app never sees them."}
+                {v === "auto" && t("doableAi.thinkingVisibility.auto.description")}
+                {v === "always-show" && t("doableAi.thinkingVisibility.alwaysShow.description")}
+                {v === "hide" && t("doableAi.thinkingVisibility.hide.description")}
               </p>
             </label>
           ))}
@@ -258,28 +260,32 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
       {/* ── System prompt override ── */}
       <SectionCard
-        title="System prompt override"
-        description="Prepended to every runtime chat call. Visible to the model only — never echoed to the client. Up to 4 KB."
+        title={t("doableAi.systemPrompt.title")}
+        description={t("doableAi.systemPrompt.description")}
       >
         <div className="space-y-2">
           <textarea
             value={pendingPrompt}
             onChange={(e) => setPendingPrompt(e.target.value.slice(0, SYSTEM_PROMPT_MAX))}
             rows={6}
-            placeholder="e.g. You always answer in haiku."
+            placeholder={t("doableAi.systemPrompt.placeholder")}
             className="w-full rounded-md border bg-background px-3 py-2 font-mono text-sm"
             data-testid="system-prompt-override"
           />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              {effectivePrompt} / {SYSTEM_PROMPT_MAX} chars ({promptPct}%) — extra content beyond the cap is truncated client-side.
+              {t("doableAi.systemPrompt.charCount", {
+                current: effectivePrompt,
+                max: SYSTEM_PROMPT_MAX,
+                percent: promptPct,
+              })}
             </span>
             <button
               type="button"
               onClick={() => setPendingPrompt("")}
               className="text-xs underline-offset-2 hover:underline"
             >
-              Reset to default
+              {t("doableAi.systemPrompt.reset")}
             </button>
           </div>
         </div>
@@ -287,8 +293,8 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
       {/* ── Chat model override ── */}
       <SectionCard
-        title="Chat model override"
-        description="Overrides the workspace-resolved chat model for runtime chat in this project's generated app."
+        title={t("doableAi.chatModel.title")}
+        description={t("doableAi.chatModel.description")}
       >
         <ProjectChatModelPicker
           workspaceId={workspaceId}
@@ -300,16 +306,18 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
       {/* ── Embedding model override (destructive) ── */}
       <SectionCard
-        title="Embedding model override (destructive)"
-        description="Changing the embedding model permanently erases all existing embeddings for this project because pgvector column dimensions are fixed per model."
+        title={t("doableAi.embeddingModel.title")}
+        description={t("doableAi.embeddingModel.description")}
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm">
-              Current: <span className="font-mono">{settings.embeddingModelOverride ?? settings.embeddingModel ?? "(workspace/platform default)"}</span>
+              {t("doableAi.embeddingModel.current", {
+                model: settings.embeddingModelOverride ?? settings.embeddingModel ?? t("doableAi.embeddingModel.currentDefault"),
+              })}
             </p>
             <p className="text-xs text-muted-foreground">
-              Click below to walk through the destructive confirmation.
+              {t("doableAi.embeddingModel.hint")}
             </p>
           </div>
           <button
@@ -319,15 +327,15 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
             data-testid="open-embed-modal"
           >
             <Trash2 className="h-4 w-4" />
-            Change embedding model…
+            {t("doableAi.embeddingModel.changeButton")}
           </button>
         </div>
       </SectionCard>
 
       {/* ── Token usage ── */}
       <SectionCard
-        title="Runtime token usage"
-        description="Aggregates of ai_usage_log rows for this project, grouped by mode."
+        title={t("doableAi.usage.title")}
+        description={t("doableAi.usage.description")}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex gap-1 rounded-lg border bg-muted/40 p-1">
@@ -340,7 +348,11 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
                 }`}
                 data-testid={`usage-period-${p}`}
               >
-                {p === "today" ? "Today" : p === "all" ? "All time" : p}
+                {p === "today"
+                  ? t("doableAi.usage.periods.today")
+                  : p === "all"
+                    ? t("doableAi.usage.periods.all")
+                    : t(`doableAi.usage.periods.${p}` as "7d" | "30d")}
               </button>
             ))}
           </div>
@@ -350,7 +362,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
               className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${usageLoading ? "animate-spin" : ""}`} />
-              Refresh
+              {t("doableAi.usage.refresh")}
             </button>
             <a
               href={`/api/projects/${projectId}/ai-usage.csv?period=${period}`}
@@ -358,7 +370,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
               data-testid="usage-csv-link"
             >
               <Download className="h-3.5 w-3.5" />
-              CSV
+              {t("doableAi.usage.csv")}
             </a>
           </div>
         </div>
@@ -367,18 +379,18 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
           <>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3" data-testid="usage-totals">
               <div className="rounded-lg border bg-muted/20 p-3">
-                <p className="text-xs text-muted-foreground">Total tokens</p>
+                <p className="text-xs text-muted-foreground">{t("doableAi.usage.totalTokens")}</p>
                 <p className="mt-1 text-2xl font-semibold">{usage.totals.tokens.toLocaleString()}</p>
               </div>
               <div className="rounded-lg border bg-muted/20 p-3">
-                <p className="text-xs text-muted-foreground">Requests</p>
+                <p className="text-xs text-muted-foreground">{t("doableAi.usage.requests")}</p>
                 <p className="mt-1 text-2xl font-semibold">{usage.totals.requests.toLocaleString()}</p>
               </div>
               <div className="rounded-lg border bg-muted/20 p-3">
-                <p className="text-xs text-muted-foreground">Estimated cost</p>
+                <p className="text-xs text-muted-foreground">{t("doableAi.usage.estimatedCost")}</p>
                 <p className="mt-1 text-2xl font-semibold">
                   {usage.totals.costUsd > 0 ? `$${usage.totals.costUsd.toFixed(4)}` : (
-                    <span className="text-sm font-normal text-muted-foreground">Pricing not configured</span>
+                    <span className="text-sm font-normal text-muted-foreground">{t("doableAi.usage.pricingNotConfigured")}</span>
                   )}
                 </p>
               </div>
@@ -388,16 +400,16 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-3 py-2 text-left">Mode</th>
-                    <th className="px-3 py-2 text-right">Prompt</th>
-                    <th className="px-3 py-2 text-right">Completion</th>
-                    <th className="px-3 py-2 text-right">Total</th>
-                    <th className="px-3 py-2 text-right">Requests</th>
+                    <th className="px-3 py-2 text-left">{t("doableAi.usage.table.mode")}</th>
+                    <th className="px-3 py-2 text-right">{t("doableAi.usage.table.prompt")}</th>
+                    <th className="px-3 py-2 text-right">{t("doableAi.usage.table.completion")}</th>
+                    <th className="px-3 py-2 text-right">{t("doableAi.usage.table.total")}</th>
+                    <th className="px-3 py-2 text-right">{t("doableAi.usage.table.requests")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(usage.byMode).length === 0 && (
-                    <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">No usage yet.</td></tr>
+                    <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">{t("doableAi.usage.noUsageYet")}</td></tr>
                   )}
                   {Object.entries(usage.byMode).map(([mode, row]) => (
                     <tr key={mode} className="border-t">
@@ -414,12 +426,12 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
 
             {usage.topModels.length > 0 && (
               <div className="mt-4">
-                <p className="mb-2 text-sm font-medium">Top models</p>
+                <p className="mb-2 text-sm font-medium">{t("doableAi.usage.topModels")}</p>
                 <ul className="space-y-1 text-sm">
                   {usage.topModels.map((m) => (
                     <li key={m.model} className="flex justify-between gap-2 text-muted-foreground">
                       <span className="font-mono truncate">{m.model}</span>
-                      <span>{m.requestCount} req · {m.totalTokens.toLocaleString()} tok</span>
+                      <span>{t("doableAi.usage.modelStats", { requests: m.requestCount, tokens: m.totalTokens.toLocaleString() })}</span>
                     </li>
                   ))}
                 </ul>
@@ -427,7 +439,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
             )}
           </>
         ) : (
-          <p className="text-sm text-muted-foreground">No usage data.</p>
+          <p className="text-sm text-muted-foreground">{t("doableAi.usage.noData")}</p>
         )}
       </SectionCard>
 
@@ -436,7 +448,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
         {dirty && (
           <p className="mr-auto text-xs text-amber-700 dark:text-amber-400">
             <AlertTriangle className="mr-1 inline h-3 w-3" />
-            Unsaved changes
+            {t("doableAi.saveBar.unsaved")}
           </p>
         )}
         <button
@@ -447,7 +459,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
           }}
           className="rounded-md border px-3 py-2 text-sm text-muted-foreground hover:bg-accent disabled:opacity-50"
         >
-          Discard
+          {t("doableAi.saveBar.discard")}
         </button>
         <button
           type="button"
@@ -457,7 +469,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
           data-testid="save-doable-ai"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Save
+          {t("doableAi.saveBar.save")}
         </button>
       </div>
 
@@ -466,45 +478,43 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" data-testid="embed-erase-modal">
           <div className="w-full max-w-lg rounded-xl border bg-background p-6 shadow-xl">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-red-600 dark:text-red-400">
-              <AlertTriangle className="h-5 w-5" /> Erase embeddings for this project?
+              <AlertTriangle className="h-5 w-5" /> {t("doableAi.eraseModal.title")}
             </h2>
             <p className="mt-3 text-sm text-muted-foreground">
-              Changing the embedding model will permanently <strong>DELETE</strong> all existing
-              embedding rows for this project (current model:{" "}
-              <span className="font-mono">
-                {settings.embeddingModelOverride ?? settings.embeddingModel ?? "(default)"}
-              </span>
-              , {embedStats?.totalRows.toLocaleString() ?? "?"} rows across{" "}
-              {embedStats?.tables.length ?? 0} table(s)).
+              {t("doableAi.eraseModal.description", {
+                model: settings.embeddingModelOverride ?? settings.embeddingModel ?? t("doableAi.embeddingModel.currentDefault"),
+                rows: embedStats?.totalRows.toLocaleString() ?? "?",
+                tables: embedStats?.tables.length ?? 0,
+              })}
             </p>
             {embedStats && embedStats.tables.length > 0 && (
               <ul className="mt-2 max-h-32 overflow-auto rounded border bg-muted/30 p-2 text-xs font-mono">
-                {embedStats.tables.map((t) => (
-                  <li key={t.table}>
-                    {t.table} — {t.rows.toLocaleString()} rows
+                {embedStats.tables.map((row) => (
+                  <li key={row.table}>
+                    {t("doableAi.eraseModal.tableRows", { table: row.table, rows: row.rows.toLocaleString() })}
                   </li>
                 ))}
               </ul>
             )}
             <div className="mt-4 space-y-2">
-              <label className="block text-sm font-medium">New embedding model</label>
+              <label className="block text-sm font-medium">{t("doableAi.eraseModal.newModelLabel")}</label>
               <input
                 type="text"
                 value={embedNewModel}
                 onChange={(e) => setEmbedNewModel(e.target.value)}
-                placeholder="e.g. text-embedding-3-small or gemini-embedding-001"
+                placeholder={t("doableAi.eraseModal.newModelPlaceholder")}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
                 data-testid="embed-new-model"
               />
               <label className="block text-sm font-medium">
-                Type <code className="font-mono">ERASE</code> to confirm
+                {t("doableAi.eraseModal.confirmLabel")}
               </label>
               <input
                 type="text"
                 value={embedConfirm}
                 onChange={(e) => setEmbedConfirm(e.target.value)}
                 className="w-full rounded-md border bg-background px-3 py-2 font-mono text-sm"
-                placeholder="ERASE"
+                placeholder={t("doableAi.eraseModal.confirmPlaceholder")}
                 data-testid="embed-confirm-input"
               />
             </div>
@@ -515,7 +525,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
                 disabled={embedBusy}
                 className="rounded-md border px-3 py-2 text-sm"
               >
-                Cancel
+                {t("doableAi.eraseModal.cancel")}
               </button>
               <button
                 type="button"
@@ -525,7 +535,7 @@ export function DoableAiTab({ projectId, workspaceId, addToast }: Props) {
                 data-testid="embed-erase-confirm"
               >
                 {embedBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Erase embeddings & switch model
+                {t("doableAi.eraseModal.confirm")}
               </button>
             </div>
           </div>

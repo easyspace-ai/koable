@@ -1,15 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { PLAN_LIMITS, type PlanLimits } from "@doable/shared";
 import type { WorkspacePlan } from "@doable/shared";
 
 export const adminPlanLimitsRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminPlanLimitsRoutes.use("*", authMiddleware);
-adminPlanLimitsRoutes.use("*", platformAdminMiddleware);
 
 const PLANS = ["free", "pro", "business", "enterprise"] as const;
 

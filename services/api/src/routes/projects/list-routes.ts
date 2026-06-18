@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { sql } from "../../db/index.js";
 import { starQueries } from "@doable/db";
@@ -16,6 +17,11 @@ import {
 import { projects, workspacesQ, getUserWorkspaceId, getUserWorkspaceIdWithMinRole, validateUuidQueryParam } from "./helpers.js";
 import { getEnabledFrameworkIds } from "../../frameworks/init.js";
 import { getEffectivePlanLimits } from "../admin-plan-limits.js";
+import { tracedQuery } from "../../db/traced.js";
+import {
+  createProjectSchema,
+  normalizeProjectCreateBody,
+} from "../../schemas/projects.js";
 
 const stars = starQueries(sql);
 const projectViews = projectViewQueries(sql);
@@ -41,21 +47,15 @@ projectListRoutes.get("/starred", async (c) => {
     return c.json({ data: [] });
   }
 
-  // Fetch full project details for each starred project, filtering to accessible ones
-  const projectPromises = starredIds.map((id) => projects.findById(id));
-  const projectResults = await Promise.all(projectPromises);
-  const validProjects = projectResults.filter((p): p is NonNullable<typeof p> => p != null);
+  const validProjects = await projects.findByIds(starredIds);
+  const starredSet = new Set(starredIds);
 
-  // Filter to only projects the user has workspace access to
-  const accessChecks = await Promise.all(
-    validProjects.map(async (p) => {
-      const role = await workspacesQ.getMemberRole(p.workspace_id, userId);
-      return role ? p : null;
-    })
-  );
-  const data = accessChecks
-    .filter((p): p is NonNullable<typeof p> => p != null)
-    .map((p) => ({ ...p, starred: true }));
+  const workspaceIds = [...new Set(validProjects.map((p) => p.workspace_id))];
+  const accessible = await workspacesQ.filterAccessibleWorkspaceIds(userId, workspaceIds);
+
+  const data = validProjects
+    .filter((p) => accessible.has(p.workspace_id))
+    .map((p) => ({ ...p, starred: starredSet.has(p.id) }));
 
   return c.json({ data });
 });
@@ -137,13 +137,18 @@ projectListRoutes.get("/", async (c) => {
     return c.json({ error: "Invalid status filter" }, 400);
   }
 
-  const { rows, total } = await projects.listByWorkspace(workspaceId, {
-    page,
-    pageSize,
-    status,
-    search,
-    folderId,
-  });
+  const { rows, total } = await tracedQuery(
+    "projects.listByWorkspace",
+    "projects list by workspace with pagination",
+    () =>
+      projects.listByWorkspace(workspaceId, {
+        page,
+        pageSize,
+        status,
+        search,
+        folderId,
+      }),
+  );
 
   const starredIds = await stars.listStarredProjectIds(userId);
   const starredSet = new Set(starredIds);
@@ -165,19 +170,6 @@ projectListRoutes.get("/", async (c) => {
 });
 
 // ─── Create Project ─────────────────────────────────────────
-/** Strip HTML/script tags from user-supplied names to prevent stored XSS */
-const safeName = (s: string) => s.replace(/<[^>]*>/g, "").trim();
-
-const createSchema = z.object({
-  name: z.string().min(1).max(100).transform(safeName).pipe(z.string().min(1, "Name cannot be empty after sanitization")),
-  slug: z.string().min(SLUG_MIN_LENGTH).max(SLUG_MAX_LENGTH).regex(SLUG_REGEX).optional(),
-  description: z.string().max(500).optional(),
-  templateId: z.string().uuid().optional(),
-  folderId: z.string().uuid().optional(),
-  workspaceId: z.string().uuid().optional(),
-  prompt: z.string().max(5000).optional(),
-  frameworkId: z.string().max(50).optional(),
-});
 
 function generateSlug(name: string): string {
   let slug = name
@@ -192,40 +184,14 @@ function generateSlug(name: string): string {
   return slug || "project";
 }
 
-projectListRoutes.post("/", async (c) => {
+projectListRoutes.post(
+  "/",
+  zValidator("json", z.preprocess(normalizeProjectCreateBody, createProjectSchema)),
+  async (c) => {
   const userId = c.get("userId");
-  const rawBody = await c.req.json();
-  // Accept snake_case + bare aliases for legacy clients (workspace_id,
-  // template_id, folder_id, framework_id, framework). Without this, zod
-  // silently strips unknown keys and the handler falls back to the user's
-  // first workspace (their personal one), which silently mis-routes the
-  // project. See BUG-PWA-002. The `framework` alias is required so that
-  // BUG-API-002 (invalid framework values silently accepted) can validate
-  // — without it, `{"framework":"cobol"}` is dropped before validation.
-  const body = (rawBody && typeof rawBody === "object" && !Array.isArray(rawBody))
-    ? {
-        ...rawBody,
-        workspaceId: (rawBody as Record<string, unknown>).workspaceId
-          ?? (rawBody as Record<string, unknown>).workspace_id,
-        templateId: (rawBody as Record<string, unknown>).templateId
-          ?? (rawBody as Record<string, unknown>).template_id,
-        folderId: (rawBody as Record<string, unknown>).folderId
-          ?? (rawBody as Record<string, unknown>).folder_id,
-        frameworkId: (rawBody as Record<string, unknown>).frameworkId
-          ?? (rawBody as Record<string, unknown>).framework_id
-          ?? (rawBody as Record<string, unknown>).framework,
-      }
-    : rawBody;
-  const parsed = createSchema.safeParse(body);
+  const parsed = c.req.valid("json");
 
-  if (!parsed.success) {
-    return c.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      400
-    );
-  }
-
-  const { prompt, frameworkId: explicitFrameworkId, ...data } = parsed.data;
+  const { prompt, frameworkId: explicitFrameworkId, ...data } = parsed;
 
   // BUG-WS-002: workspaceId is required — silently falling back to the
   // caller's default workspace mis-routes projects (a user with multiple

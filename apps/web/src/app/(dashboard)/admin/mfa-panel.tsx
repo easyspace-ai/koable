@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Admin view for users who have opted into MFA. The platform admin can:
@@ -21,6 +22,7 @@ import { AlertTriangle, Loader2, ShieldCheck } from "lucide-react";
  * Resets are audit-logged via admin_audit_log (action="mfa.reset").
  */
 export function AdminMfaPanel() {
+  const { t } = useTranslation("admin");
   const [rows, setRows] = useState<AdminMfaUserRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +38,12 @@ export function AdminMfaPanel() {
       setError(
         err && typeof err === "object" && "body" in err
           ? (err as { body: { error: string } }).body.error
-          : "Failed to load MFA users",
+          : t("mfa.loadFailed"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void refresh();
@@ -53,9 +55,9 @@ export function AdminMfaPanel() {
         <div className="flex items-start gap-3">
           <ShieldCheck className="h-4 w-4 mt-0.5 text-brand-400" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">User MFA status</p>
+            <p className="text-sm font-medium text-foreground">{t("mfa.intro.title")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              MFA is optional and user-controlled. Use the reset action only when a user has lost access to both their authenticator app and recovery codes.
+              {t("mfa.intro.description")}
             </p>
           </div>
         </div>
@@ -70,10 +72,10 @@ export function AdminMfaPanel() {
 
       <div className="rounded-lg border border-border bg-card">
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground border-b border-border">
-          <span>User</span>
-          <span>Enrolled</span>
-          <span>Last used</span>
-          <span>Recovery</span>
+          <span>{t("mfa.table.user")}</span>
+          <span>{t("mfa.table.enrolled")}</span>
+          <span>{t("mfa.table.lastUsed")}</span>
+          <span>{t("mfa.table.recovery")}</span>
         </div>
         {loading && (
           <div className="flex items-center justify-center py-8">
@@ -82,7 +84,7 @@ export function AdminMfaPanel() {
         )}
         {!loading && rows && rows.length === 0 && (
           <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            No users have enabled MFA yet.
+            {t("mfa.empty")}
           </p>
         )}
         {!loading && rows && rows.map((r) => (
@@ -100,11 +102,11 @@ export function AdminMfaPanel() {
               {r.verifiedAt ? new Date(r.verifiedAt).toLocaleDateString() : "—"}
             </span>
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {r.lastUsedAt ? new Date(r.lastUsedAt).toLocaleDateString() : "never"}
+              {r.lastUsedAt ? new Date(r.lastUsedAt).toLocaleDateString() : t("mfa.lastUsedNever")}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground tabular-nums">
-                {r.unusedRecoveryCodes} left
+                {t("mfa.recoveryCodesLeft", { count: r.unusedRecoveryCodes })}
               </span>
               <Button
                 size="sm"
@@ -112,7 +114,7 @@ export function AdminMfaPanel() {
                 className="rounded-md"
                 onClick={() => setResetTarget(r)}
               >
-                Reset
+                {t("mfa.actions.reset")}
               </Button>
             </div>
           </div>
@@ -137,6 +139,7 @@ function ResetMfaDialog({
   onOpenChange: (open: boolean) => void;
   onDone: () => void;
 }) {
+  const { t } = useTranslation("admin");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,7 +159,7 @@ function ResetMfaDialog({
       setError(
         err && typeof err === "object" && "body" in err
           ? (err as { body: { error: string } }).body.error
-          : "Failed to reset MFA",
+          : t("mfa.dialog.resetFailed"),
       );
     } finally {
       setBusy(false);
@@ -167,9 +170,9 @@ function ResetMfaDialog({
     <Dialog open={!!target} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reset MFA for {target?.email}?</DialogTitle>
+          <DialogTitle>{t("mfa.dialog.title", { email: target?.email ?? "" })}</DialogTitle>
           <DialogDescription>
-            This will remove all MFA factors and recovery codes for this user, and sign them out of every active session. They will be able to sign in with just their password until they enroll again.
+            {t("mfa.dialog.description")}
           </DialogDescription>
         </DialogHeader>
         {error && (
@@ -179,10 +182,10 @@ function ResetMfaDialog({
           </div>
         )}
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button variant="destructive" disabled={busy} onClick={handleReset} className="rounded-lg">
             {busy ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-            Reset MFA
+            {t("mfa.dialog.confirmReset")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,0 +1,460 @@
+{
+  "panel": {
+    "title": "集成",
+    "refreshTitle": "刷新",
+    "add": "添加",
+    "customMcpHeading": "自定义 MCP 连接器",
+    "loading": "正在加载集成...",
+    "empty": {
+      "title": "暂无集成",
+      "description": "连接第三方服务和 AI 工具以扩展您的项目。",
+      "cta": "添加集成"
+    },
+    "scopeSections": {
+      "workspace": "此工作区的所有人",
+      "project": "此项目的所有人",
+      "user": "仅我（个人）"
+    },
+    "footer": {
+      "connectedCount": "{count, plural, one {已连接 # 个集成} other {已连接 # 个集成}}"
+    }
+  },
+  "catalog": {
+    "searchPlaceholder": "搜索集成...",
+    "categoryAll": "全部",
+    "sections": {
+      "connected": "已连接",
+      "available": "可用"
+    },
+    "loadMore": "加载更多（剩余 {remaining} 个）",
+    "empty": {
+      "noMatchTitle": "没有匹配的集成",
+      "noMatchHint": "请尝试调整搜索或筛选条件。",
+      "noneAvailableTitle": "暂无可用集成",
+      "noneAvailableHint": "配置完成后，原生集成将显示在此处。"
+    }
+  },
+  "card": {
+    "status": {
+      "connected": "已连接",
+      "available": "可用"
+    },
+    "actions": {
+      "manage": "管理",
+      "connect": "连接"
+    },
+    "noDescription": "暂无描述。"
+  },
+  "detailSheet": {
+    "noDescription": "暂无描述。",
+    "sections": {
+      "activeConnections": "活跃连接",
+      "availableActions": "可用操作"
+    },
+    "connection": {
+      "defaultName": "连接",
+      "test": "测试",
+      "disconnect": "断开",
+      "confirmDisconnect": "确认断开？",
+      "healthy": "连接正常",
+      "failed": "连接失败"
+    },
+    "actions": {
+      "loading": "正在加载操作...",
+      "empty": "尚未发现此集成的操作。",
+      "count": "（{count}）"
+    },
+    "footer": {
+      "connected": "已连接",
+      "addAnother": "添加另一个连接",
+      "connect": "连接 {name}"
+    },
+    "errors": {
+      "testFailed": "测试失败"
+    }
+  },
+  "connectFlow": {
+    "title": "连接 {name}",
+    "noAuth": {
+      "connecting": "正在连接到 {name}...",
+      "tryAgain": "重试"
+    },
+    "enhancedAuth": {
+      "connecting": "连接中…",
+      "connectDefault": "连接 {name}"
+    },
+    "errors": {
+      "connectionFailed": "连接失败"
+    }
+  },
+  "connectFlowForms": {
+    "oauth": {
+      "description": "您将被重定向到 {name} 以授权访问。将打开弹窗供您登录。",
+      "cancel": "取消",
+      "connecting": "连接中...",
+      "signIn": "使用 {name} 登录"
+    },
+    "secretText": {
+      "apiKeyLabel": "API 密钥",
+      "apiKeyPlaceholder": "输入您的 API 密钥",
+      "labelOptional": "标签",
+      "optionalSuffix": "（可选）",
+      "labelPlaceholder": "我的 {name} 连接",
+      "cancel": "取消",
+      "connecting": "连接中...",
+      "connect": "连接"
+    },
+    "basicAuth": {
+      "usernameLabel": "用户名",
+      "usernamePlaceholder": "输入用户名",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "输入密码",
+      "labelOptional": "标签",
+      "optionalSuffix": "（可选）",
+      "labelPlaceholder": "我的 {name} 连接",
+      "cancel": "取消",
+      "connecting": "连接中...",
+      "connect": "连接"
+    },
+    "customAuth": {
+      "optionalSuffix": "（可选）",
+      "selectPlaceholder": "选择...",
+      "enterFieldPlaceholder": "输入 {fieldName}",
+      "authTokenLabel": "认证令牌",
+      "authTokenPlaceholder": "输入您的认证令牌",
+      "labelOptional": "标签",
+      "labelPlaceholder": "我的 {name} 连接",
+      "cancel": "取消",
+      "connecting": "连接中...",
+      "connect": "Connect"
+    }
+  },
+  "panelCards": {
+    "builtInCard": {
+      "connect": "连接",
+      "disconnect": "断开"
+    },
+    "customCard": {
+      "capability": "{count, plural, one {# 个能力} other {# 个能力}}",
+      "availableCapabilities": "可用能力",
+      "noCapabilities": "尚未发现能力。测试连接以发现可用功能。",
+      "testConnection": "测试连接",
+      "remove": "移除",
+      "confirmRemove": "确认移除",
+      "testResults": {
+        "success": "连接成功",
+        "failed": "连接失败"
+      }
+    }
+  },
+  "addForm": {
+    "title": "新集成",
+    "fields": {
+      "name": {
+        "label": "名称",
+        "placeholder": "例如 Notion、Slack、My API"
+      },
+      "availability": {
+        "label": "可用范围",
+        "workspace": {
+          "label": "所有人",
+          "description": "所有工作区成员"
+        },
+        "project": {
+          "label": "此项目",
+          "description": "项目成员"
+        },
+        "user": {
+          "label": "仅我",
+          "description": "个人"
+        }
+      },
+      "serverUrl": {
+        "label": "服务器 URL",
+        "placeholder": "https://api.example.com/mcp"
+      },
+      "command": {
+        "label": "命令",
+        "placeholder": "npx -y @modelcontextprotocol/server"
+      }
+    },
+    "advanced": {
+      "toggle": "高级选项",
+      "connectionType": {
+        "label": "连接类型",
+        "streamableHttp": "Web 服务（HTTP 流式）",
+        "httpSse": "Web 服务（HTTP SSE）"
+      },
+      "authentication": {
+        "label": "身份验证",
+        "none": "无",
+        "apiKey": "API 密钥",
+        "bearerToken": "Bearer 令牌"
+      },
+      "credential": {
+        "apiKeyLabel": "API 密钥",
+        "bearerTokenLabel": "Bearer 令牌",
+        "apiKeyPlaceholder": "sk-...",
+        "bearerTokenPlaceholder": "eyJhbGci..."
+      }
+    },
+    "actions": {
+      "cancel": "取消",
+      "submit": "添加集成"
+    },
+    "errors": {
+      "failedToCreate": "创建失败"
+    }
+  },
+  "supabaseDialog": {
+    "title": "连接 Supabase",
+    "descriptionDefault": "从您的组织中选择现有 Supabase 项目，或让 Doable 创建一个全新的项目。无论哪种方式，API 密钥都会自动配置。",
+    "loadingOrgs": "正在加载您的 Supabase 组织...",
+    "actions": {
+      "cancel": "取消",
+      "creating": "创建中...",
+      "createProject": "创建项目"
+    },
+    "errors": {
+      "failedToLoadOrgs": "加载组织失败（{status}）",
+      "failedToListProjects": "列出项目失败（{status}）",
+      "failedToStartSignIn": "启动 Supabase 登录失败（{status}）",
+      "failedToConnect": "连接失败（{status}）",
+      "provisioningFailed": "配置失败",
+      "provisioningFailedWithStatus": "配置失败（{status}）",
+      "noResponseBody": "无响应体"
+    }
+  },
+  "supabaseViews": {
+    "oauthRequired": {
+      "description": "使用 Supabase 登录，以便 Doable 代表您创建项目。您将短暂重定向到 Supabase 授权，然后返回此处。",
+      "waiting": "等待 Supabase…",
+      "signIn": "使用 Supabase 登录"
+    },
+    "existingProjects": {
+      "hint": "选择一个项目 — Doable 将获取其 API 密钥并自动接入此应用。",
+      "connect": "连接"
+    },
+    "createNew": {
+      "noProjectsHint": "您还没有 Supabase 项目 — 让我们创建第一个。",
+      "projectNameLabel": "项目名称",
+      "projectNamePlaceholder": "例如 My App",
+      "organizationLabel": "Supabase 组织",
+      "regionLabel": "区域"
+    },
+    "modeToggle": {
+      "existing": "连接现有项目",
+      "new": "创建新项目"
+    }
+  },
+  "configForm": {
+    "noConfigNeeded": "{name} 无需配置。直接启用即可。",
+    "providerHelp": {
+      "genericOAuth": "从提供商开发者控制台获取 OAuth client_id 和 client_secret，然后粘贴到下方。",
+      "genericCredentials": "从提供商开发者控制台获取凭据，然后粘贴到下方。",
+      "openConsole": "打开提供商控制台",
+      "requiredScopes": "所需范围："
+    },
+    "oauth": {
+      "redirectUriHeading": "在提供商控制台中设置此重定向 URI：",
+      "copied": "已复制",
+      "copy": "复制",
+      "existingEnv": "当前通过 {envSource} 环境变量配置。在此保存将覆盖为数据库存储的凭据。",
+      "existingReplace": "当前已配置{clientIdHint}。提交将替换现有凭据。",
+      "existingReplaceClientIdHint": "（客户端 ID：{hint}）",
+      "clientIdLabel": "客户端 ID",
+      "clientIdPlaceholder": "来自提供商控制台的 OAuth 客户端 ID",
+      "clientSecretLabel": "客户端密钥",
+      "clientSecretPlaceholder": "OAuth 客户端密钥",
+      "clientIdRequired": "客户端 ID 和客户端密钥为必填项。",
+      "saving": "保存中",
+      "saveCredentials": "保存凭据"
+    },
+    "nonOAuth": {
+      "existingReplace": "当前已配置{displayHint}。提交将替换现有凭据。",
+      "existingReplaceHint": "（…{hint}）",
+      "apiKeyLabel": "API 密钥",
+      "apiKeyPlaceholder": "粘贴您的 {name} API 密钥",
+      "usernameLabel": "用户名",
+      "usernamePlaceholder": "用户名",
+      "passwordLabel": "密码",
+      "passwordPlaceholder": "密码",
+      "authTokenLabel": "认证令牌",
+      "authTokenPlaceholder": "认证令牌",
+      "enterFieldPlaceholder": "输入 {fieldName}",
+      "optionalSuffix": "（可选）",
+      "selectPlaceholder": "选择…",
+      "encryptionNote": "密钥静态加密存储。仅平台管理员可查看配置状态。",
+      "workspaceScopedUnsupported": "此管理表单尚不支持工作区范围的非 OAuth 凭据。",
+      "saving": "保存中",
+      "saveCredentials": "保存凭据"
+    },
+    "testConnection": {
+      "button": "测试连接",
+      "ok": "正常",
+      "failed": "失败",
+      "testFailed": "测试失败"
+    },
+    "actions": {
+      "cancel": "取消"
+    }
+  },
+  "adminPanel": {
+    "platformModeBanner": "此处启用的集成全局应用于所有工作区（现有和新建）。平台用户将在目录中看到这些集成。",
+    "summary": {
+      "enabled": "已启用",
+      "configuredDb": "已配置（数据库）",
+      "viaEnvVars": "通过环境变量",
+      "needsConfig": "已启用，需配置"
+    },
+    "warnings": {
+      "unconfigured": "{count} 个集成已启用但缺少凭据。用户无法连接，直到配置凭据。点击下方行的配置以修复。",
+      "envConfigured": "{count} 个集成已通过服务器环境变量预配置（例如 GOOGLE_CLIENT_ID、OAUTH_*_CLIENT_ID）。这些无需在此手动 OAuth 设置即可自动工作。"
+    },
+    "presets": {
+      "quickStart": "快速开始：",
+      "productivity": {
+        "label": "生产力",
+        "description": "邮件、日历、文档、聊天"
+      },
+      "dev": {
+        "label": "开发",
+        "description": "源码、工单、错误、值班"
+      },
+      "marketing": {
+        "label": "营销",
+        "description": "邮件、CRM、支付、预约"
+      },
+      "noneInCatalog": "此预设的集成尚未出现在目录中。"
+    },
+    "bulk": {
+      "selected": "{count, plural, one {已选择 # 个集成} other {已选择 # 个集成}}",
+      "enabling": "启用中",
+      "disabling": "禁用中",
+      "progress": "· {kind} {done}/{total}…",
+      "enableSelected": "启用所选",
+      "disableSelected": "禁用所选",
+      "clear": "清除",
+      "partialFailure": "{failures}/{total} 个{kind}操作失败。列表已刷新。"
+    },
+    "filters": {
+      "searchPlaceholder": "搜索集成...",
+      "allCategories": "所有类别",
+      "all": "全部",
+      "enabled": "已启用",
+      "envVars": "环境变量",
+      "needsConfig": "需配置"
+    },
+    "list": {
+      "selectAllInCategory": "选择 {category} 中的全部",
+      "selectIntegration": "选择 {name}",
+      "envBadge": "ENV",
+      "envBadgeTitle": "配置来源：{source}",
+      "dbBadge": "DB",
+      "dbBadgeTitle": "平台凭据已配置",
+      "configure": "配置",
+      "update": "更新",
+      "configureTitle": "配置凭据",
+      "updateTitle": "更新凭据",
+      "enable": "启用",
+      "enabled": "已启用"
+    },
+    "statusChip": {
+      "oauth": "OAuth",
+      "apiKey": "API 密钥",
+      "userPass": "用户名/密码",
+      "custom": "自定义"
+    },
+    "empty": "没有匹配筛选条件的集成。",
+    "workspaceSelector": {
+      "label": "工作区："
+    },
+    "errors": {
+      "failedToLoad": "加载集成失败",
+      "failedToUpdate": "更新失败"
+    }
+  },
+  "shared": {
+    "categories": {
+      "communication": "通信",
+      "productivity": "生产力",
+      "developer_tools": "开发者工具",
+      "crm_sales": "CRM 与销售",
+      "marketing": "营销",
+      "finance_payments": "金融与支付",
+      "ai_ml": "AI 与 ML",
+      "data_storage": "数据与存储",
+      "social_media": "社交媒体",
+      "ecommerce": "电子商务",
+      "project_management": "项目管理",
+      "customer_support": "客户支持",
+      "hr": "人力资源",
+      "analytics": "分析",
+      "content": "内容",
+      "automation": "自动化",
+      "other": "其他"
+    },
+    "authTypes": {
+      "oauth2": "登录",
+      "secret_text": "API 密钥",
+      "custom_auth": "自定义",
+      "basic_auth": "用户名和密码",
+      "none": "无需认证"
+    },
+    "transportTypes": {
+      "streamable_http": {
+        "friendly": "Web 服务",
+        "technical": "HTTP 流式"
+      },
+      "http_sse": {
+        "friendly": "Web 服务",
+        "technical": "HTTP SSE"
+      },
+      "stdio": {
+        "friendly": "内置应用",
+        "technical": "托管"
+      }
+    },
+    "supabaseRegions": {
+      "us-east-1": "美国东部（弗吉尼亚北部）",
+      "us-west-1": "美国西部（加利福尼亚北部）",
+      "eu-west-1": "欧洲西部（爱尔兰）",
+      "eu-central-1": "欧洲中部（法兰克福）",
+      "ap-southeast-1": "亚太（新加坡）",
+      "ap-northeast-1": "亚太（东京）",
+      "ap-south-1": "亚太（孟买）",
+      "sa-east-1": "南美（圣保罗）"
+    },
+    "actions": {
+      "cancel": "取消",
+      "connect": "连接",
+      "disconnect": "断开",
+      "manage": "管理",
+      "optional": "（可选）",
+      "select": "选择…"
+    },
+    "errors": {
+      "connectionFailed": "连接失败",
+      "testFailed": "测试失败",
+      "failedToLoadIntegrations": "加载集成失败",
+      "failedToUpdate": "更新失败",
+      "failedToSaveCredentials": "保存凭据失败",
+      "failedToCreate": "创建失败"
+    },
+    "emptyDescription": "暂无描述。",
+    "oauthMessages": {
+      "popupBlocked": "弹窗被阻止。请允许此网站的弹窗后重试。",
+      "failedToStartOAuth": "启动 OAuth 流程失败",
+      "oauthNotSetUp": "{name} 的 OAuth 尚未设置。请让工作区管理员在设置中配置 OAuth 凭据。",
+      "failedToStartEnhancedAuth": "启动增强认证失败",
+      "enhancedAuthNotSetUp": "{name} 的增强认证尚未设置。您仍可在下方手动连接。",
+      "connectionFailedWithReason": "连接失败：{error}"
+    },
+    "supabaseOauthMessages": {
+      "popupBlocked": "弹窗被阻止 — 请允许此网站的弹窗后重试。",
+      "signInCancelled": "Supabase 登录已取消或失败。",
+      "windowClosed": "Supabase 登录窗口已关闭。",
+      "timedOut": "Supabase 登录在 2 分钟后超时。"
+    }
+  }
+}

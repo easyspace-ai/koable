@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Save, Check, AlertCircle, Eye, EyeOff, Sparkles } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Platform-default embedding provider panel.
@@ -22,10 +23,12 @@ interface Status {
   apiKeyMasked: string | null;
 }
 
+type PresetId = "openai" | "gemini" | "custom";
+
 interface Preset {
-  id: "openai" | "gemini" | "custom";
-  name: string;
-  description: string;
+  id: PresetId;
+  nameKey: string;
+  descriptionKey: string;
   defaultBaseUrl: string;
   defaultModel: string;
   apiKeyHelp?: string;
@@ -34,30 +37,31 @@ interface Preset {
 const PRESETS: readonly Preset[] = [
   {
     id: "openai",
-    name: "OpenAI",
-    description: "text-embedding-3-small / large. $0.02/1M tokens, 1536–3072 dims.",
+    nameKey: "embedding.presets.openai.name",
+    descriptionKey: "embedding.presets.openai.description",
     defaultBaseUrl: "https://api.openai.com/v1",
     defaultModel: "text-embedding-3-small",
     apiKeyHelp: "https://platform.openai.com/api-keys",
   },
   {
     id: "gemini",
-    name: "Google Gemini",
-    description: "gemini-embedding-001 via Gemini's OpenAI-compatible /v1 endpoint.",
+    nameKey: "embedding.presets.gemini.name",
+    descriptionKey: "embedding.presets.gemini.description",
     defaultBaseUrl: "https://generativelanguage.googleapis.com/v1beta/openai",
     defaultModel: "gemini-embedding-001",
     apiKeyHelp: "https://aistudio.google.com/app/apikey",
   },
   {
     id: "custom",
-    name: "Custom OpenAI-compatible",
-    description: "Any /v1/embeddings endpoint — Ollama, vLLM, Voyage proxy, etc.",
+    nameKey: "embedding.presets.custom.name",
+    descriptionKey: "embedding.presets.custom.description",
     defaultBaseUrl: "",
     defaultModel: "",
   },
 ];
 
 export function EmbeddingProviderPanel() {
+  const { t } = useTranslation("admin");
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Preset | null>(null);
@@ -75,7 +79,6 @@ export function EmbeddingProviderPanel() {
       const res = await apiFetch<{ data: Status }>("/admin/embedding-provider");
       setStatus(res.data);
       if (res.data.configured) {
-        // Preselect matching tile so the form is pre-populated.
         const tile = PRESETS.find((p) =>
           res.data.baseUrl ? p.defaultBaseUrl === res.data.baseUrl : false,
         );
@@ -90,14 +93,15 @@ export function EmbeddingProviderPanel() {
         }
       }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Failed to load status");
+      setErrorMsg(err instanceof Error ? err.message : t("embedding.loadFailed"));
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadStatus();
+    void loadStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function selectPreset(p: Preset) {
@@ -112,7 +116,7 @@ export function EmbeddingProviderPanel() {
     if (!selected) return;
     if (!apiKey.trim() || !baseUrl.trim() || !model.trim()) {
       setSaveState("error");
-      setErrorMsg("Provider, base URL, model and API key are all required.");
+      setErrorMsg(t("embedding.validation.required"));
       return;
     }
     setSaveState("saving");
@@ -136,7 +140,7 @@ export function EmbeddingProviderPanel() {
       await loadStatus();
     } catch (err) {
       setSaveState("error");
-      setErrorMsg(err instanceof Error ? err.message : "Failed to save");
+      setErrorMsg(err instanceof Error ? err.message : t("embedding.saveFailed"));
     }
   }
 
@@ -157,17 +161,15 @@ export function EmbeddingProviderPanel() {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-foreground">
-              Platform Embedding Model
+              {t("embedding.title")}
             </h3>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Set once — every workspace inherits this for chatbots, semantic
-              search and RAG. End users of generated apps never see this UI;
-              they just prompt the AI to build a chatbot.
+              {t("embedding.description")}
             </p>
             {status?.configured ? (
               <div className="mt-3 flex items-center gap-2 text-xs">
                 <Check className="h-3.5 w-3.5 text-green-500" />
-                <span className="text-green-500 font-medium">Configured</span>
+                <span className="text-green-500 font-medium">{t("embedding.status.configured")}</span>
                 <span className="text-muted-foreground">
                   · {status.model} · {status.baseUrl}
                 </span>
@@ -176,7 +178,7 @@ export function EmbeddingProviderPanel() {
               <div className="mt-3 flex items-center gap-2 text-xs">
                 <AlertCircle className="h-3.5 w-3.5 text-yellow-500" />
                 <span className="text-yellow-500">
-                  Not configured — calls to /__doable/ai/embed will return EMBEDDING_NOT_CONFIGURED
+                  {t("embedding.status.notConfigured")}
                 </span>
               </div>
             )}
@@ -186,7 +188,7 @@ export function EmbeddingProviderPanel() {
 
       <div className="rounded-lg border border-border bg-card p-4 space-y-4">
         <div>
-          <h4 className="text-sm font-medium text-foreground mb-2">Pick provider</h4>
+          <h4 className="text-sm font-medium text-foreground mb-2">{t("embedding.pickProvider")}</h4>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {PRESETS.map((p) => (
               <button
@@ -199,8 +201,8 @@ export function EmbeddingProviderPanel() {
                     : "border-border bg-background hover:border-brand-500/40"
                 }`}
               >
-                <p className="text-sm font-medium text-foreground">{p.name}</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>
+                <p className="text-sm font-medium text-foreground">{t(p.nameKey)}</p>
+                <p className="text-xs text-muted-foreground line-clamp-2">{t(p.descriptionKey)}</p>
               </button>
             ))}
           </div>
@@ -209,19 +211,19 @@ export function EmbeddingProviderPanel() {
         {selected && (
           <div className="space-y-3 border-t border-border pt-4">
             <div>
-              <label className="text-xs font-medium text-foreground">Base URL</label>
+              <label className="text-xs font-medium text-foreground">{t("embedding.fields.baseUrl")}</label>
               <input
                 type="url"
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder={selected.defaultBaseUrl || "https://api.example.com/v1"}
+                placeholder={selected.defaultBaseUrl || t("embedding.fields.baseUrlPlaceholder")}
                 className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs font-medium text-foreground">API key</label>
+                <label className="text-xs font-medium text-foreground">{t("embedding.fields.apiKey")}</label>
                 {selected.apiKeyHelp && (
                   <a
                     href={selected.apiKeyHelp}
@@ -229,7 +231,7 @@ export function EmbeddingProviderPanel() {
                     rel="noreferrer"
                     className="text-xs text-brand-400 hover:text-brand-300 underline underline-offset-2"
                   >
-                    Get a key
+                    {t("embedding.fields.getKey")}
                   </a>
                 )}
               </div>
@@ -238,7 +240,7 @@ export function EmbeddingProviderPanel() {
                   type={showKey ? "text" : "password"}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={status?.configured ? "Leave blank to keep current key (replace any to update)" : "Paste API key"}
+                  placeholder={status?.configured ? t("embedding.fields.apiKeyPlaceholderKeep") : t("embedding.fields.apiKeyPlaceholderPaste")}
                   autoComplete="new-password"
                   autoCorrect="off"
                   spellCheck={false}
@@ -256,12 +258,12 @@ export function EmbeddingProviderPanel() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-foreground">Embedding model</label>
+              <label className="text-xs font-medium text-foreground">{t("embedding.fields.model")}</label>
               <input
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
-                placeholder={selected.defaultModel || "e.g. text-embedding-3-small"}
+                placeholder={selected.defaultModel || t("embedding.fields.modelPlaceholder")}
                 className="mt-1 h-9 w-full rounded-md border border-input bg-background px-3 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -273,12 +275,12 @@ export function EmbeddingProviderPanel() {
                 )}
                 {saveState === "saved" && (
                   <span className="text-green-500">
-                    Saved {dims ? `(${dims}-dim vectors)` : ""}
+                    {dims ? t("embedding.savedWithDims", { dims }) : t("common.save")}
                   </span>
                 )}
                 {saveState === "idle" && (
                   <span className="text-muted-foreground">
-                    Validates with a probe call before persisting.
+                    {t("embedding.saveHint")}
                   </span>
                 )}
               </div>
@@ -289,7 +291,7 @@ export function EmbeddingProviderPanel() {
                 className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saveState === "saving" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-                {status?.configured ? "Update" : "Save"}
+                {status?.configured ? t("embedding.actions.update") : t("common.save")}
               </button>
             </div>
           </div>

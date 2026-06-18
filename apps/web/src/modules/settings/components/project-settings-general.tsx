@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Eye,
   EyeOff,
@@ -36,6 +37,7 @@ export function GeneralTab({
   onUpdate: (p: ApiProject) => void;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("settings");
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description ?? "");
   const [visibility, setVisibility] = useState(project.visibility);
@@ -55,9 +57,9 @@ export function GeneralTab({
         visibility,
       });
       onUpdate(data);
-      addToast("success", "Project settings saved");
+      addToast("success", t("general.toasts.saved"));
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to save");
+      addToast("error", err instanceof Error ? err.message : t("general.toasts.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -66,38 +68,38 @@ export function GeneralTab({
   return (
     <div className="space-y-6">
       {/* Project Details */}
-      <SectionCard title="Project Details">
+      <SectionCard title={t("general.projectDetails.title")}>
         <div className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="settings-name" className="text-sm font-medium">
-              Project Name
+              {t("general.projectDetails.nameLabel")}
             </label>
             <input
               id="settings-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Project"
+              placeholder={t("general.projectDetails.namePlaceholder")}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           <div className="space-y-2">
             <label htmlFor="settings-description" className="text-sm font-medium">
-              Description
+              {t("general.projectDetails.descriptionLabel")}
             </label>
             <textarea
               id="settings-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="A brief description of your project"
+              placeholder={t("general.projectDetails.descriptionPlaceholder")}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Visibility</label>
+            <label className="text-sm font-medium">{t("general.projectDetails.visibilityLabel")}</label>
             <div className="flex gap-3">
               <button
                 onClick={() => setVisibility("public")}
@@ -110,8 +112,8 @@ export function GeneralTab({
               >
                 <Eye className="h-4 w-4" />
                 <div className="text-left">
-                  <div className="font-medium">Public</div>
-                  <div className="text-xs text-muted-foreground">Anyone can view</div>
+                  <div className="font-medium">{t("general.projectDetails.public.label")}</div>
+                  <div className="text-xs text-muted-foreground">{t("general.projectDetails.public.description")}</div>
                 </div>
               </button>
               <button
@@ -125,8 +127,8 @@ export function GeneralTab({
               >
                 <EyeOff className="h-4 w-4" />
                 <div className="text-left">
-                  <div className="font-medium">Private</div>
-                  <div className="text-xs text-muted-foreground">Only you can access</div>
+                  <div className="font-medium">{t("general.projectDetails.private.label")}</div>
+                  <div className="text-xs text-muted-foreground">{t("general.projectDetails.private.description")}</div>
                 </div>
               </button>
             </div>
@@ -134,7 +136,7 @@ export function GeneralTab({
 
           <div className="flex items-center justify-between pt-2">
             <div className="text-sm text-muted-foreground">
-              {hasChanges && "You have unsaved changes"}
+              {hasChanges && t("general.projectDetails.unsavedChanges")}
             </div>
             <button
               onClick={() => void handleSave()}
@@ -151,24 +153,24 @@ export function GeneralTab({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? t("general.projectDetails.saving") : t("general.projectDetails.saveChanges")}
             </button>
           </div>
         </div>
       </SectionCard>
 
       {/* Project Info */}
-      <SectionCard title="Project Information" description="Read-only metadata about your project.">
+      <SectionCard title={t("general.projectInfo.title")} description={t("general.projectInfo.description")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoItem
             icon={Hash}
-            label="Project ID"
+            label={t("general.projectInfo.projectId")}
             value={project.id}
             mono
           />
           <InfoItem
             icon={Calendar}
-            label="Created"
+            label={t("general.projectInfo.created")}
             value={new Date(project.created_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
@@ -177,7 +179,7 @@ export function GeneralTab({
           />
           <InfoItem
             icon={Clock}
-            label="Last Updated"
+            label={t("general.projectInfo.lastUpdated")}
             value={new Date(project.updated_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
@@ -188,19 +190,19 @@ export function GeneralTab({
           />
           <InfoItem
             icon={Link2}
-            label="Project URL"
+            label={t("general.projectInfo.projectUrl")}
             value={`${project.slug}.doable.me`}
             mono
           />
           <InfoItem
             icon={Shield}
-            label="Status"
+            label={t("general.projectInfo.status")}
             value={project.status}
             badge
           />
           <InfoItem
             icon={Eye}
-            label="Visibility"
+            label={t("general.projectInfo.visibility")}
             value={project.visibility}
             badge
           />
@@ -215,6 +217,7 @@ export function GeneralTab({
 // ═══════════════════════════════════════════════════════════════
 
 export function IntegrationsPanelWrapper({ projectId }: { projectId: string }) {
+  const t = useTranslations("settings");
   const { user } = useAuth();
   const { accessToken } = getStoredTokens();
   const workspaceId =
@@ -231,8 +234,8 @@ export function IntegrationsPanelWrapper({ projectId }: { projectId: string }) {
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Integrations"
-        description="Connect third-party services and AI tools to extend your project."
+        title={t("integrationsTab.title")}
+        description={t("integrationsTab.description")}
       >
         <IntegrationsPanel
           workspaceId={workspaceId}
@@ -245,8 +248,8 @@ export function IntegrationsPanelWrapper({ projectId }: { projectId: string }) {
       {/* Full GitHub push/pull controls when connected */}
       {accessToken && (
         <SectionCard
-          title="GitHub Sync"
-          description="Push and pull code changes to keep your project in sync."
+          title={t("integrationsTab.githubSync.title")}
+          description={t("integrationsTab.githubSync.description")}
         >
           <GitHubSettings
             projectId={projectId}

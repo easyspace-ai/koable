@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, Table2, Rows3, FileStack, ShieldCheck } from "lucide-react";
 import { SectionCard } from "@/modules/settings/components/project-settings-shared";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
 import type { DataTokenState } from "../hooks/use-data-token";
 import type { SchemaResult } from "../api";
 
@@ -14,7 +14,7 @@ interface OverviewPaneProps {
 }
 
 export function OverviewPane({ tokenState, onNavigate }: OverviewPaneProps) {
-  const { t } = useTranslation("editor");
+  const t = useTranslations("settings");
   const { client, loading: tokenLoading, error: tokenError } = tokenState;
   const [schema, setSchema] = useState<SchemaResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +40,7 @@ export function OverviewPane({ tokenState, onNavigate }: OverviewPaneProps) {
 
   if (tokenError) {
     return (
-      <SectionCard title={t("settings.database.overviewTitle")}>
+      <SectionCard title={t("database.overviewTitle")}>
         <p className="text-sm text-destructive">{tokenError}</p>
       </SectionCard>
     );
@@ -54,8 +54,8 @@ export function OverviewPane({ tokenState, onNavigate }: OverviewPaneProps) {
   return (
     <div className="space-y-6">
       <SectionCard
-        title={t("settings.database.overviewTitle")}
-        description={t("settings.database.overviewDescription")}
+        title={t("database.overviewTitle")}
+        description={t("database.overviewDescription")}
       >
         {loading ? (
           <div className="flex items-center justify-center py-8">
@@ -66,41 +66,41 @@ export function OverviewPane({ tokenState, onNavigate }: OverviewPaneProps) {
         ) : !schema || tables.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed p-8 text-center">
             <Table2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm font-medium">{t("settings.database.noTablesTitle")}</p>
+            <p className="text-sm font-medium">{t("database.noTablesTitle")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t("settings.database.noTablesDescription")}
+              {t("database.noTablesDescription")}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatCard icon={Table2} label={t("settings.database.statTables")} value={tables.length} />
-            <StatCard icon={Rows3} label={t("settings.database.statTotalRows")} value={totalRows.toLocaleString()} />
-            <StatCard icon={FileStack} label={t("settings.database.statIndexes")} value={totalIndexes} />
-            <StatCard icon={ShieldCheck} label={t("settings.database.statPolicies")} value={totalPolicies} />
+            <StatCard icon={Table2} label={t("database.statTables")} value={tables.length} />
+            <StatCard icon={Rows3} label={t("database.statTotalRows")} value={totalRows.toLocaleString()} />
+            <StatCard icon={FileStack} label={t("database.statIndexes")} value={totalIndexes} />
+            <StatCard icon={ShieldCheck} label={t("database.statPolicies")} value={totalPolicies} />
           </div>
         )}
       </SectionCard>
 
       {tables.length > 0 && (
-        <SectionCard title={t("settings.database.quickActions")}>
+        <SectionCard title={t("database.quickActions")}>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => onNavigate("schema")}
               className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
-              {t("settings.database.openSchema")}
+              {t("database.openSchema")}
             </button>
             <button
               onClick={() => onNavigate("rows")}
               className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
-              {t("settings.database.browseRows")}
+              {t("database.browseRows")}
             </button>
             <button
               onClick={() => onNavigate("queries")}
               className="rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
             >
-              {t("settings.database.runQuery")}
+              {t("database.runQuery")}
             </button>
           </div>
         </SectionCard>

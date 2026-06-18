@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 
 // ─── Types ──────────────────────────────────────────────────
@@ -31,6 +32,7 @@ export interface Rule {
 // ─── Hook ───────────────────────────────────────────────────
 
 export function useSkills(workspaceId: string, projectId?: string) {
+  const t = useTranslations("skills");
   const [skills, setSkills] = useState<Skill[]>([]);
   const [rules, setRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,11 +54,11 @@ export function useSkills(workspaceId: string, projectId?: string) {
       setSkills(skillsJson.data);
       setRules(rulesJson.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load skills");
+      setError(err instanceof Error ? err.message : t("errors.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, projectId]);
+  }, [workspaceId, projectId, t]);
 
   useEffect(() => {
     void refresh();

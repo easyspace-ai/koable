@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { apiFetch } from "@/lib/api";
 import { Lightbulb, Slash, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// ─── Types ──────────────────────────────────────────────────
 
 export interface SkillManifestEntry {
   id: string;
@@ -15,8 +14,6 @@ export interface SkillManifestEntry {
   scope: "workspace" | "project" | "user";
   auto_invoke: boolean;
 }
-
-// ─── Hook: fetch skill manifest ─────────────────────────────
 
 export function useSkillManifest(workspaceId: string | undefined, projectId: string | undefined) {
   const [manifest, setManifest] = useState<SkillManifestEntry[]>([]);
@@ -41,8 +38,6 @@ export function useSkillManifest(workspaceId: string | undefined, projectId: str
   return { manifest, refresh };
 }
 
-// ─── Skill Picker Button + Popover ──────────────────────────
-
 interface SkillPickerButtonProps {
   manifest: SkillManifestEntry[];
   onSelect: (skillName: string) => void;
@@ -50,6 +45,7 @@ interface SkillPickerButtonProps {
 }
 
 export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerButtonProps) {
+  const t = useTranslations("skills");
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -57,17 +53,15 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
   const filterInputRef = useRef<HTMLInputElement>(null);
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
-  // Position the popover above the button
   useEffect(() => {
     if (!open || !buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     setPopoverPos({
-      top: rect.top - 8, // 8px gap above button
+      top: rect.top - 8,
       left: rect.left,
     });
   }, [open]);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -84,7 +78,6 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Focus filter input when opened
   useEffect(() => {
     if (open) {
       setTimeout(() => filterInputRef.current?.focus(), 50);
@@ -105,7 +98,6 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
 
   return (
     <>
-      {/* / button */}
       <button
         ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
@@ -117,12 +109,11 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
             : "border-border bg-accent text-muted-foreground hover:bg-accent hover:text-foreground",
           "disabled:opacity-40 disabled:cursor-not-allowed"
         )}
-        title="Skills"
+        title={t("picker.title")}
       >
         <Slash className="h-3.5 w-3.5" />
       </button>
 
-      {/* Portal popover */}
       {open &&
         popoverPos &&
         createPortal(
@@ -135,9 +126,8 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
               transform: "translateY(-100%)",
             }}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
-              <span className="text-xs font-semibold text-muted-foreground">Skills</span>
+              <span className="text-xs font-semibold text-muted-foreground">{t("picker.header")}</span>
               <button
                 onClick={() => {
                   setOpen(false);
@@ -149,7 +139,6 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
               </button>
             </div>
 
-            {/* Search */}
             {manifest.length > 3 && (
               <div className="px-3 py-2 border-b">
                 <input
@@ -157,17 +146,16 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
                   type="text"
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  placeholder="Search skills..."
+                  placeholder={t("picker.searchPlaceholder")}
                   className="w-full rounded-md border border-input bg-background px-2.5 py-1 text-xs outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
                 />
               </div>
             )}
 
-            {/* Skill list */}
             <div className="max-h-52 overflow-y-auto">
               {filtered.length === 0 ? (
                 <div className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  {filter ? "No matching skills" : "No skills configured"}
+                  {filter ? t("picker.emptyNoMatch") : t("picker.emptyNoneConfigured")}
                 </div>
               ) : (
                 filtered.map((skill) => (
@@ -187,7 +175,7 @@ export function SkillPickerButton({ manifest, onSelect, disabled }: SkillPickerB
                     </div>
                     {!skill.auto_invoke && (
                       <span className="text-[10px] text-muted-foreground/60 mt-0.5 shrink-0">
-                        manual
+                        {t("picker.badgeManual")}
                       </span>
                     )}
                   </button>

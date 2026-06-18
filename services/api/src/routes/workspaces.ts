@@ -1,14 +1,17 @@
 import { Hono, type Context } from "hono";
 import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
 import { sql } from "../db/index.js";
 import { workspaceQueries, userQueries, environmentQueries } from "@doable/db";
 import { type AuthEnv } from "../middleware/auth.js";
 import { authMiddlewareWithRls } from "../middleware/rls.js";
 import { requireRole } from "../middleware/workspace-role.js";
-import { SLUG_REGEX, SLUG_MIN_LENGTH, SLUG_MAX_LENGTH, type WorkspacePlan } from "@doable/shared";
+import { type WorkspacePlan } from "@doable/shared";
 import { getEffectivePlanLimits } from "./admin-plan-limits.js";
 import { sendTemplatedEmail } from "../lib/email.js";
 import { ensureBuiltinConnectorsForWorkspace } from "../mcp/builtin-connectors.js";
+import { tracedQuery } from "../db/traced.js";
+import { createWorkspaceSchema, updateWorkspaceSchema } from "../schemas/workspaces.js";
 
 const workspaces = workspaceQueries(sql);
 const users = userQueries(sql);
@@ -23,82 +26,39 @@ workspaceRoutes.use("*", authMiddlewareWithRls);
 
 // ─── List User's Workspaces (with member count + credits) ───
 workspaceRoutes.get("/", async (c) => {
-  try {
-    const userId = c.get("userId");
-    if (!userId) {
-      console.error("[workspaces] No userId in context");
-      return c.json({ error: "Authentication required" }, 401);
-    }
-
-    let rows;
-    try {
-      rows = await workspaces.listByUser(userId);
-    } catch (dbErr: any) {
-      console.error("[workspaces] Database error listing workspaces:", dbErr);
-      return c.json({ error: `Database error: ${dbErr?.message || "Unknown error"}` }, 500);
-    }
-
-    // Enrich each workspace with member count, credits, and user's role
-    let data;
-    try {
-      data = await Promise.all(
-        rows.map(async (ws) => {
-          const [members, credits, userRole] = await Promise.all([
-            workspaces.listMembers(ws.id),
-            workspaces.getCredits(ws.id),
-            workspaces.getMemberRole(ws.id, userId),
-          ]);
-          return {
-            ...ws,
-            userRole: userRole ?? "member",
-            memberCount: members.length,
-            credits: credits
-              ? {
-                  dailyRemaining: credits.daily_remaining,
-                  dailyTotal: credits.daily_total,
-                  monthlyRemaining: credits.monthly_remaining,
-                  rolloverCredits: credits.rollover_credits,
-                }
-              : null,
-          };
-        })
-      );
-    } catch (enrichErr: any) {
-      console.error("[workspaces] Error enriching data:", enrichErr);
-      return c.json({ error: `Enrichment error: ${enrichErr?.message || "Unknown error"}` }, 500);
-    }
-
-    return c.json({ data });
-  } catch (err: any) {
-    console.error("[workspaces] Unexpected error:", err);
-    return c.json({ error: `Server error: ${err?.message || "Unknown error"}` }, 500);
+  const userId = c.get("userId");
+  if (!userId) {
+    return c.json({ error: "Authentication required" }, 401);
   }
+
+  const rows = await tracedQuery(
+    "workspaces.listByUserEnriched",
+    "workspaces enriched list for user",
+    () => workspaces.listByUserEnriched(userId),
+  );
+  const data = rows.map(({ credits, userRole, memberCount, ...workspace }) => ({
+    ...workspace,
+    userRole: userRole ?? "member",
+    memberCount,
+    credits: credits
+      ? {
+          dailyRemaining: credits.daily_remaining,
+          dailyTotal: credits.daily_total,
+          monthlyRemaining: credits.monthly_remaining,
+          rolloverCredits: credits.rollover_credits,
+        }
+      : null,
+  }));
+
+  return c.json({ data });
 });
 
 // ─── Create Workspace ───────────────────────────────────────
-/** Strip HTML/script tags from user-supplied names to prevent stored XSS */
-const safeName = (s: string) => s.replace(/<[^>]*>/g, "").trim();
-
-const createSchema = z.object({
-  name: z.string().min(1).max(100).transform(safeName).pipe(z.string().min(1, "Name cannot be empty after sanitization")),
-  slug: z.string().min(SLUG_MIN_LENGTH).max(SLUG_MAX_LENGTH).regex(SLUG_REGEX),
-  description: z.string().max(500).optional(),
-  environmentId: z.string().uuid().optional(),
-});
-
-workspaceRoutes.post("/", async (c) => {
+workspaceRoutes.post("/", zValidator("json", createWorkspaceSchema), async (c) => {
   const userId = c.get("userId");
-  const body = await c.req.json();
-  const parsed = createSchema.safeParse(body);
+  const parsed = c.req.valid("json");
 
-  if (!parsed.success) {
-    return c.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      400
-    );
-  }
-
-  const existing = await workspaces.findBySlug(parsed.data.slug);
+  const existing = await workspaces.findBySlug(parsed.slug);
   if (existing) {
     return c.json({ error: "A workspace with this slug already exists" }, 409);
   }
@@ -117,9 +77,9 @@ workspaceRoutes.post("/", async (c) => {
   let workspace;
   try {
     workspace = await workspaces.create({
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      description: parsed.data.description,
+      name: parsed.name,
+      slug: parsed.slug,
+      description: parsed.description,
       ownerId: userId,
       plan: inheritedPlan,
     });
@@ -142,13 +102,12 @@ workspaceRoutes.post("/", async (c) => {
   await ensureBuiltinConnectorsForWorkspace(workspace.id, userId);
 
   // If an environment was selected, clone it into the new workspace and apply
-  if (parsed.data.environmentId) {
+  if (parsed.environmentId) {
     try {
-      const cloned = await envs.clone(parsed.data.environmentId, workspace.id, userId);
+      const cloned = await envs.clone(parsed.environmentId, workspace.id, userId);
       await envs.applyToWorkspace(workspace.id, cloned.id);
     } catch {
-      // Non-fatal: workspace created but environment clone failed
-      console.warn(`Failed to clone environment ${parsed.data.environmentId} into workspace ${workspace.id}`);
+      console.warn(`Failed to clone environment ${parsed.environmentId} into workspace ${workspace.id}`);
     }
   }
 
@@ -215,25 +174,11 @@ workspaceRoutes.get("/:id", requireRole("viewer"), async (c) => {
 });
 
 // ─── Update Workspace ───────────────────────────────────────
-const updateSchema = z.object({
-  name: z.string().min(1).max(100).transform(safeName).pipe(z.string().min(1)).optional(),
-  description: z.string().max(500).optional(),
-  avatarUrl: z.string().url().optional(),
-});
-
-workspaceRoutes.patch("/:id", requireRole("admin"), async (c) => {
+workspaceRoutes.patch("/:id", requireRole("admin"), zValidator("json", updateWorkspaceSchema), async (c) => {
   const id = c.req.param("id");
-  const body = await c.req.json();
-  const parsed = updateSchema.safeParse(body);
+  const parsed = c.req.valid("json");
 
-  if (!parsed.success) {
-    return c.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      400
-    );
-  }
-
-  const workspace = await workspaces.update(id, parsed.data);
+  const workspace = await workspaces.update(id, parsed);
 
   if (!workspace) {
     return c.json({ error: "Workspace not found" }, 404);

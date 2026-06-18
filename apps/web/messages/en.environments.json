@@ -1,0 +1,182 @@
+{
+  "tabs": {
+    "integrations": "Integrations",
+    "knowledge": "Knowledge",
+    "skills": "Skills",
+    "variables": "Variables",
+    "settings": "Settings"
+  },
+  "shared": {
+    "clickToEdit": "Click to edit",
+    "empty": "Empty",
+    "scope": {
+      "workspace": "workspace",
+      "project": "project",
+      "user": "user"
+    },
+    "itemList": {
+      "count": "({count})",
+      "defaultEmpty": "None configured",
+      "removeTitle": "Remove"
+    },
+    "refPicker": {
+      "count": "({count})",
+      "edit": "Edit",
+      "done": "Done",
+      "noneSelected": "None selected",
+      "emptyWorkspace": "No {titleLower} in workspace. Create them in the {title} panel first."
+    },
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
+    "update": "Update",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "create": "Create"
+  },
+  "knowledgeTab": {
+    "fileCount": "{count, plural, one {# file} other {# files}}",
+    "addFile": "Add file",
+    "filenamePlaceholder": "knowledge.md",
+    "contentPlaceholder": "# Knowledge\n\nAdd context about your project...",
+    "emptyTitle": "No knowledge files yet",
+    "emptyDescription": "Add files to give your AI context about this project.",
+    "chars": "{count} chars",
+    "editTitle": "Edit",
+    "removeTitle": "Remove"
+  },
+  "skillsTab": {
+    "skillsTitle": "Skills",
+    "rulesTitle": "Rules"
+  },
+  "settingsTab": {
+    "activeEnvironment": "Active Environment",
+    "change": "Change",
+    "customLoading": "Custom environment (loading...)",
+    "workspaceDefault": "Workspace Default",
+    "badgeAuto": "Auto",
+    "inheritingDescription": "Inheriting workspace skills, rules & connectors",
+    "inheritAllItems": "Inherit all workspace items",
+    "noCustomEnvironments": "No custom environments yet. Create one from Workspace Settings.",
+    "workspaceDefaults": "Workspace Defaults"
+  },
+  "variablesTab": {
+    "targets": {
+      "all": "All",
+      "development": "Development",
+      "preview": "Preview",
+      "production": "Production"
+    },
+    "addVariable": "Add Variable",
+    "keyPlaceholder": "KEY_NAME",
+    "valuePlaceholder": "Value",
+    "descriptionOptionalPlaceholder": "Description (optional)",
+    "secretMasked": "Secret (masked after save)",
+    "plaintext": "Plaintext",
+    "emptyTitle": "No environment variables",
+    "emptyDescription": "Variables are injected into dev server and builds",
+    "newValuePlaceholder": "New value (leave blank to keep)",
+    "descriptionPlaceholder": "Description",
+    "maskedValue": "••••••••",
+    "toggleValueTitle": "Toggle value",
+    "editTitle": "Edit",
+    "deleteTitle": "Delete",
+    "inheritedFromWorkspace": "Inherited from workspace ({count})",
+    "badgeInherited": "inherited"
+  },
+  "forms": {
+    "create": {
+      "title": "New Environment",
+      "iconLabel": "Icon",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. React + Supabase",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Full-stack environment with React, Tailwind, and Supabase tools",
+      "colorLabel": "Color"
+    },
+    "editMeta": {
+      "title": "Edit Environment",
+      "descriptionPlaceholder": "Description"
+    },
+    "instructions": {
+      "title": "Custom Instructions",
+      "count": "({count})",
+      "add": "Add",
+      "empty": "No custom instructions",
+      "filenamePlaceholder": "coding-standards.md",
+      "contentPlaceholder": "# Instructions\n\nAlways..."
+    }
+  },
+  "cards": {
+    "default": {
+      "title": "Workspace Defaults",
+      "badgeAuto": "Auto",
+      "subtitle": "Items available to all environments",
+      "itemCount": "{count} items",
+      "description": "Workspace-level items automatically included in all projects unless overridden by a project environment.",
+      "skillsTitle": "Skills",
+      "rulesTitle": "Rules",
+      "knowledgeTitle": "Knowledge",
+      "knowledgeEmpty": "None — add workspace knowledge in Workspace Settings",
+      "connectorsTitle": "Connectors"
+    },
+    "environment": {
+      "badgeDefault": "Default",
+      "badgeTemplate": "Template",
+      "itemCount": "{count} items",
+      "editMeta": "Edit name, icon & color",
+      "skillsTitle": "Skills",
+      "rulesTitle": "Rules",
+      "knowledgeTitle": "Knowledge",
+      "knowledgeEmpty": "No knowledge files",
+      "knowledgeChars": "{count} chars",
+      "connectorsTitle": "Connectors",
+      "setAsDefault": "Set as Default",
+      "clone": "Clone",
+      "export": "Export",
+      "delete": "Delete",
+      "confirmDelete": "Sure?",
+      "confirmYes": "Yes",
+      "confirmNo": "No"
+    }
+  },
+  "panel": {
+    "installedMarketplace": {
+      "title": "Installed from Marketplace",
+      "fallbackListingTitle": "Marketplace listing",
+      "installedMeta": "v{version} · installed {date}",
+      "modified": "· modified",
+      "uninstallTitle": "Uninstall — removes the cloned environment from this workspace",
+      "uninstall": "Uninstall"
+    },
+    "templates": {
+      "title": "Environment Templates",
+      "emptyTitle": "No templates available yet",
+      "emptyDescription": "Templates will appear here once created by your team.",
+      "useTemplate": "Use Template"
+    },
+    "workspace": {
+      "title": "Environments",
+      "refreshTitle": "Refresh",
+      "templates": "Templates",
+      "import": "Import",
+      "new": "New",
+      "description": "Environments bundle workspace skills, rules, knowledge, and connectors into reusable presets.",
+      "descriptionStrong": "default",
+      "descriptionSuffix": "environment includes all workspace items automatically.",
+      "emptyDescription": "Create a custom environment to bundle a specific subset of your workspace items.",
+      "createEnvironment": "Create Environment"
+    }
+  },
+  "projectView": {
+    "title": "Environment",
+    "refreshTitle": "Refresh",
+    "dockToSidebarTitle": "Dock to sidebar",
+    "openAsPopupTitle": "Open as popup",
+    "closeTitle": "Close",
+    "empty": "No environment loaded"
+  },
+  "errors": {
+    "failedToLoad": "Failed to load environments"
+  }
+}

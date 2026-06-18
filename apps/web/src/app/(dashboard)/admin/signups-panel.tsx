@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, X, Ban, Loader2, MailX, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiFetch } from "@/lib/api";
 import { useToasts } from "@/hooks/use-toasts";
 import { ToastContainer } from "@/components/ui/toast-container";
+import { useTranslation } from "@/lib/i18n";
 
 interface SignupApprovalConfig {
   enabled: boolean;
@@ -39,15 +39,8 @@ function formatDate(iso: string): string {
   return d.toLocaleString();
 }
 
-function providerBadge(row: PendingSignupRow): string {
-  const parts: string[] = [];
-  if (row.has_password) parts.push("Email");
-  if (row.has_github) parts.push("GitHub");
-  if (row.has_google) parts.push("Google");
-  return parts.join(" · ") || "—";
-}
-
 export function SignupsPanel() {
+  const { t } = useTranslation("admin");
   const { toasts, addToast, dismissToast } = useToasts();
   const [config, setConfig] = useState<SignupApprovalConfig | null>(null);
   const [pending, setPending] = useState<PendingSignupRow[]>([]);
@@ -58,6 +51,14 @@ export function SignupsPanel() {
   const [busyUserId, setBusyUserId] = useState<string | null>(null);
   const [draftEnabled, setDraftEnabled] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
+
+  function providerBadge(row: PendingSignupRow): string {
+    const parts: string[] = [];
+    if (row.has_password) parts.push(t("signups.provider.email"));
+    if (row.has_github) parts.push(t("signups.provider.github"));
+    if (row.has_google) parts.push(t("signups.provider.google"));
+    return parts.join(" · ") || "—";
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,11 +75,11 @@ export function SignupsPanel() {
       setBlocked(blockedRes.blocked);
     } catch (err) {
       console.error("Failed to load signups:", err);
-      addToast("error", "Failed to load signups");
+      addToast("error", t("signups.toast.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+  }, [addToast, t]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -92,9 +93,9 @@ export function SignupsPanel() {
       setConfig(next);
       setDraftEnabled(next.enabled);
       setDraftMessage(next.pending_message);
-      addToast("success", next.enabled ? "Signup approvals enabled" : "Signup approvals disabled");
+      addToast("success", next.enabled ? t("signups.toast.enabled") : t("signups.toast.disabled"));
     } catch {
-      addToast("error", "Failed to save settings");
+      addToast("error", t("signups.toast.saveFailed"));
     } finally {
       setSavingConfig(false);
     }
@@ -102,34 +103,44 @@ export function SignupsPanel() {
 
   async function decide(userId: string, action: "approve" | "deny" | "block", email: string) {
     if (action === "block") {
-      const confirmed = window.confirm(
-        `Block ${email}? Their account will be denied AND the email will be permanently prevented from signing up again, even if you later delete the user.`
-      );
+      const confirmed = window.confirm(t("signups.confirm.block", { email }));
       if (!confirmed) return;
     } else if (action === "deny") {
-      const confirmed = window.confirm(`Deny ${email}? They will not be able to log in.`);
+      const confirmed = window.confirm(t("signups.confirm.deny", { email }));
       if (!confirmed) return;
     }
     setBusyUserId(userId);
     try {
       await apiFetch(`/admin/signups/${userId}/${action}`, { method: "POST", body: JSON.stringify({}) });
-      addToast("success", action === "approve" ? `Approved ${email}` : action === "deny" ? `Denied ${email}` : `Blocked ${email}`);
+      const toastKey =
+        action === "approve"
+          ? "signups.toast.approved"
+          : action === "deny"
+            ? "signups.toast.denied"
+            : "signups.toast.blocked";
+      addToast("success", t(toastKey, { email }));
       await load();
     } catch {
-      addToast("error", `Failed to ${action} ${email}`);
+      const actionLabel =
+        action === "approve"
+          ? t("signups.actions.approve")
+          : action === "deny"
+            ? t("signups.actions.deny")
+            : t("signups.actions.block");
+      addToast("error", t("signups.toast.actionFailed", { action: actionLabel, email }));
     } finally {
       setBusyUserId(null);
     }
   }
 
   async function unblock(email: string) {
-    if (!window.confirm(`Unblock ${email}? They will be able to sign up again.`)) return;
+    if (!window.confirm(t("signups.confirm.unblock", { email }))) return;
     try {
       await apiFetch(`/admin/signups/blocked/${encodeURIComponent(email)}`, { method: "DELETE" });
-      addToast("success", `Unblocked ${email}`);
+      addToast("success", t("signups.toast.unblocked", { email }));
       await load();
     } catch {
-      addToast("error", `Failed to unblock ${email}`);
+      addToast("error", t("signups.toast.unblockFailed", { email }));
     }
   }
 
@@ -145,12 +156,10 @@ export function SignupsPanel() {
 
   return (
     <div className="space-y-8">
-      {/* ─── Settings ─────────────────────────────── */}
       <section className="rounded-xl border border-border bg-card p-5">
-        <h3 className="text-sm font-semibold text-foreground">Signup approval</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t("signups.settings.title")}</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          When on, new signups go to a pending queue and cannot log in until you approve them.
-          Existing accounts are unaffected.
+          {t("signups.settings.description")}
         </p>
 
         <div className="mt-4 flex items-center gap-2">
@@ -162,13 +171,13 @@ export function SignupsPanel() {
             className="h-4 w-4 rounded border-border bg-transparent text-brand-700 focus:ring-brand-700 focus:ring-offset-0"
           />
           <label htmlFor="approvalsEnabled" className="text-sm text-foreground cursor-pointer select-none">
-            Require approval for new signups
+            {t("signups.settings.requireApproval")}
           </label>
         </div>
 
         <div className="mt-4 space-y-2">
           <Label htmlFor="pendingMessage" className="text-xs">
-            Message shown to pending signups
+            {t("signups.settings.pendingMessageLabel")}
           </Label>
           <textarea
             id="pendingMessage"
@@ -177,10 +186,10 @@ export function SignupsPanel() {
             rows={4}
             maxLength={2000}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-            placeholder="Doable is invite-only right now..."
+            placeholder={t("signups.settings.pendingMessagePlaceholder")}
           />
           <p className="text-[11px] text-muted-foreground">
-            Shown on the signup screen after a new user submits, and on the login screen if they try to sign in while pending.
+            {t("signups.settings.pendingMessageHint")}
           </p>
         </div>
 
@@ -191,20 +200,19 @@ export function SignupsPanel() {
               onClick={() => { if (config) { setDraftEnabled(config.enabled); setDraftMessage(config.pending_message); } }}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Discard changes
+              {t("signups.settings.discardChanges")}
             </button>
           )}
           <Button onClick={saveConfig} disabled={savingConfig || !configDirty} className="bg-brand-600 text-white hover:bg-brand-500">
-            {savingConfig ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Saving...</> : "Save settings"}
+            {savingConfig ? <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />{t("signups.settings.saving")}</> : t("signups.settings.saveSettings")}
           </Button>
         </div>
       </section>
 
-      {/* ─── Pending queue ────────────────────────── */}
       <section className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">
-            Pending approvals
+            {t("signups.pending.title")}
             {pending.length > 0 && (
               <span className="ml-2 inline-flex items-center justify-center rounded-full bg-brand-600/20 px-2 py-0.5 text-xs text-brand-300">
                 {pending.length}
@@ -212,13 +220,13 @@ export function SignupsPanel() {
             )}
           </h3>
           <button onClick={() => load()} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            Refresh
+            {t("signups.pending.refresh")}
           </button>
         </div>
 
         {pending.length === 0 ? (
           <p className="mt-6 text-center text-sm text-muted-foreground py-8">
-            No one is waiting for approval right now.
+            {t("signups.pending.empty")}
           </p>
         ) : (
           <div className="mt-4 space-y-2">
@@ -232,18 +240,18 @@ export function SignupsPanel() {
                     </p>
                     <p className="truncate text-xs text-muted-foreground">{row.email}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {providerBadge(row)} · signed up {formatDate(row.created_at)}
+                      {t("signups.provider.signedUp", { providers: providerBadge(row), date: formatDate(row.created_at) })}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button size="sm" disabled={busy} onClick={() => decide(row.id, "approve", row.email)} className="bg-green-600 text-white hover:bg-green-500 h-8 px-2.5 text-xs">
-                      <Check className="h-3.5 w-3.5 mr-1" />Approve
+                      <Check className="h-3.5 w-3.5 mr-1" />{t("signups.actions.approve")}
                     </Button>
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => decide(row.id, "deny", row.email)} className="h-8 px-2.5 text-xs">
-                      <X className="h-3.5 w-3.5 mr-1" />Deny
+                      <X className="h-3.5 w-3.5 mr-1" />{t("signups.actions.deny")}
                     </Button>
                     <Button size="sm" variant="outline" disabled={busy} onClick={() => decide(row.id, "block", row.email)} className="h-8 px-2.5 text-xs text-red-500 hover:text-red-400">
-                      <Ban className="h-3.5 w-3.5 mr-1" />Block
+                      <Ban className="h-3.5 w-3.5 mr-1" />{t("signups.actions.block")}
                     </Button>
                   </div>
                 </div>
@@ -253,12 +261,11 @@ export function SignupsPanel() {
         )}
       </section>
 
-      {/* ─── Recently denied ──────────────────────── */}
       {recentlyDecided.length > 0 && (
         <section className="rounded-xl border border-border bg-card p-5">
-          <h3 className="text-sm font-semibold text-foreground">Recently denied</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("signups.recentlyDenied.title")}</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            These users were denied. They can&apos;t log in. Approve to grant access.
+            {t("signups.recentlyDenied.description")}
           </p>
           <div className="mt-4 space-y-2">
             {recentlyDecided.map((row) => (
@@ -268,7 +275,7 @@ export function SignupsPanel() {
                   <p className="truncate text-xs text-muted-foreground">{row.email}</p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => decide(row.id, "approve", row.email)} className="h-8 px-2.5 text-xs">
-                  <Check className="h-3.5 w-3.5 mr-1" />Approve
+                  <Check className="h-3.5 w-3.5 mr-1" />{t("signups.actions.approve")}
                 </Button>
               </div>
             ))}
@@ -276,19 +283,18 @@ export function SignupsPanel() {
         </section>
       )}
 
-      {/* ─── Blocked emails ───────────────────────── */}
       <section className="rounded-xl border border-border bg-card p-5">
         <div className="flex items-center gap-2">
           <MailX className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Blocked email addresses</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("signups.blocked.title")}</h3>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
-          These emails can never sign up — not even via GitHub or Google. Unblock to allow signup again.
+          {t("signups.blocked.description")}
         </p>
 
         {blocked.length === 0 ? (
           <p className="mt-6 text-center text-sm text-muted-foreground py-4">
-            No blocked emails.
+            {t("signups.blocked.empty")}
           </p>
         ) : (
           <div className="mt-4 space-y-2">
@@ -297,11 +303,11 @@ export function SignupsPanel() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm text-foreground">{row.email}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    blocked {formatDate(row.blocked_at)}{row.reason ? ` · ${row.reason}` : ""}
+                    {t("signups.blocked.blockedAt", { date: formatDate(row.blocked_at) })}{row.reason ? ` · ${row.reason}` : ""}
                   </p>
                 </div>
                 <Button size="sm" variant="outline" onClick={() => unblock(row.email)} className="h-8 px-2.5 text-xs">
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />Unblock
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />{t("signups.actions.unblock")}
                 </Button>
               </div>
             ))}

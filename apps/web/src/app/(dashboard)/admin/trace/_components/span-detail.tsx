@@ -5,6 +5,7 @@
  *   Attributes / Events / Exception / Logs (logs filtered to this span_id)
  */
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 import type { Span } from "./flame-graph";
 
 export interface TraceLog {
@@ -26,14 +27,15 @@ interface Props {
 type Tab = "attrs" | "events" | "exception" | "logs";
 
 export function SpanDetail({ span, logs }: Props) {
+  const { t } = useTranslation("admin");
   const [tab, setTab] = useState<Tab>("attrs");
 
   const spanLogs = logs.filter((l) => l.span_id === span.span_id);
   const tabs: { id: Tab; label: string; badge?: number | null }[] = [
-    { id: "attrs", label: "Attributes" },
-    { id: "events", label: "Events", badge: Array.isArray(span.events) ? span.events.length : 0 },
-    { id: "exception", label: "Exception", badge: span.exception ? 1 : 0 },
-    { id: "logs", label: "Logs", badge: spanLogs.length },
+    { id: "attrs", label: t("trace.tabAttributes") },
+    { id: "events", label: t("trace.tabEvents"), badge: Array.isArray(span.events) ? span.events.length : 0 },
+    { id: "exception", label: t("trace.tabException"), badge: span.exception ? 1 : 0 },
+    { id: "logs", label: t("trace.tabLogs"), badge: spanLogs.length },
   ];
 
   return (
@@ -42,15 +44,24 @@ export function SpanDetail({ span, logs }: Props) {
         <p className="text-xs uppercase tracking-wide text-muted-foreground">{span.service}</p>
         <h3 className="mt-1 break-all font-mono text-sm font-semibold text-foreground">{span.name}</h3>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>span_id: <code className="text-foreground">{span.span_id.slice(0, 16)}</code></span>
-          <span>kind: <code className="text-foreground">{span.kind ?? "—"}</code></span>
           <span>
-            status:{" "}
+            {t("trace.spanId")}{" "}
+            <code className="text-foreground">{span.span_id.slice(0, 16)}</code>
+          </span>
+          <span>
+            {t("trace.kind")}{" "}
+            <code className="text-foreground">{span.kind ?? "—"}</code>
+          </span>
+          <span>
+            {t("trace.statsStatus")}:{" "}
             <code className={span.status_code === "ERROR" ? "text-red-400" : "text-foreground"}>
               {span.status_code}
             </code>
           </span>
-          <span>duration: <code className="text-foreground">{span.duration_ms ?? "?"}ms</code></span>
+          <span>
+            {t("trace.duration")}{" "}
+            <code className="text-foreground">{span.duration_ms ?? "?"}ms</code>
+          </span>
         </div>
         {span.status_message && (
           <p className="mt-2 text-xs text-red-400">{span.status_message}</p>
@@ -58,31 +69,31 @@ export function SpanDetail({ span, logs }: Props) {
       </div>
 
       <div className="flex gap-1 border-b border-border p-2">
-        {tabs.map((t) => (
+        {tabs.map((tabItem) => (
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
+            key={tabItem.id}
+            onClick={() => setTab(tabItem.id)}
             className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-              tab === t.id
+              tab === tabItem.id
                 ? "bg-secondary text-secondary-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t.label}
-            {t.badge ? (
-              <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-[10px] text-white">{t.badge}</span>
+            {tabItem.label}
+            {tabItem.badge ? (
+              <span className="ml-1 rounded-full bg-brand-600 px-1.5 text-[10px] text-white">{tabItem.badge}</span>
             ) : null}
           </button>
         ))}
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto p-4">
-        {tab === "attrs" && <JsonBlock value={span.attributes} empty="No attributes" />}
-        {tab === "events" && <JsonBlock value={span.events} empty="No events" />}
-        {tab === "exception" && <JsonBlock value={span.exception} empty="No exception" />}
+        {tab === "attrs" && <JsonBlock value={span.attributes} empty={t("trace.noAttributes")} />}
+        {tab === "events" && <JsonBlock value={span.events} empty={t("trace.noEvents")} />}
+        {tab === "exception" && <JsonBlock value={span.exception} empty={t("trace.noException")} />}
         {tab === "logs" && (
           spanLogs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No logs for this span</p>
+            <p className="text-xs text-muted-foreground">{t("trace.noSpanLogs")}</p>
           ) : (
             <ul className="space-y-2">
               {spanLogs.map((l) => (
@@ -96,7 +107,7 @@ export function SpanDetail({ span, logs }: Props) {
                   {l.attributes && Object.keys(l.attributes).length > 0 && (
                     <details className="mt-1">
                       <summary className="cursor-pointer text-[10px] text-muted-foreground hover:text-foreground">
-                        attributes
+                        {t("trace.logAttributes")}
                       </summary>
                       <JsonBlock value={l.attributes} empty="" />
                     </details>

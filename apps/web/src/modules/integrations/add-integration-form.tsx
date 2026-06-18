@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useIntegrations, TRANSPORT_LABELS } from "./use-integrations";
+import { useIntegrations } from "./use-integrations";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -26,6 +27,7 @@ export function AddIntegrationForm({
   onCreated,
   onCancel,
 }: AddIntegrationFormProps) {
+  const t = useTranslations("integrations");
   const { createIntegration } = useIntegrations(workspaceId);
 
   const [name, setName] = useState("");
@@ -45,6 +47,26 @@ export function AddIntegrationForm({
     name.trim().length > 0 &&
     (isHttp ? serverUrl.trim().length > 0 : serverCommand.trim().length > 0);
 
+  const scopeOptions = [
+    ...(isAdmin
+      ? [{
+          value: "workspace" as const,
+          label: t("addForm.fields.availability.workspace.label"),
+          desc: t("addForm.fields.availability.workspace.description"),
+        }]
+      : []),
+    {
+      value: "project" as const,
+      label: t("addForm.fields.availability.project.label"),
+      desc: t("addForm.fields.availability.project.description"),
+    },
+    {
+      value: "user" as const,
+      label: t("addForm.fields.availability.user.label"),
+      desc: t("addForm.fields.availability.user.description"),
+    },
+  ];
+
   const handleSubmit = useCallback(async () => {
     if (!canSubmit) return;
     setSaving(true);
@@ -60,7 +82,9 @@ export function AddIntegrationForm({
       });
       onCreated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create");
+      setError(
+        err instanceof Error ? err.message : t("addForm.errors.failedToCreate"),
+      );
     } finally {
       setSaving(false);
     }
@@ -75,13 +99,13 @@ export function AddIntegrationForm({
     authType,
     createIntegration,
     onCreated,
+    t,
   ]);
 
   return (
     <div className="rounded-xl border bg-muted/20">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
-        <span className="text-sm font-semibold">New Integration</span>
+        <span className="text-sm font-semibold">{t("addForm.title")}</span>
         <button
           onClick={onCancel}
           className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -90,33 +114,26 @@ export function AddIntegrationForm({
         </button>
       </div>
 
-      {/* Fields */}
       <div className="p-4 space-y-4">
-        {/* Name */}
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            Name
+            {t("addForm.fields.name.label")}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Notion, Slack, My API"
+            placeholder={t("addForm.fields.name.placeholder")}
             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
           />
         </div>
 
-        {/* Availability (scope) */}
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-            Availability
+            {t("addForm.fields.availability.label")}
           </label>
           <div className={cn("grid gap-2", isAdmin ? "grid-cols-3" : "grid-cols-2")}>
-            {([
-              ...(isAdmin ? [{ value: "workspace" as const, label: "Everyone", desc: "All workspace members" }] : []),
-              { value: "project" as const, label: "This project", desc: "Project members" },
-              { value: "user" as const, label: "Only me", desc: "Personal" },
-            ]).map((option) => (
+            {scopeOptions.map((option) => (
               <button
                 key={option.value}
                 onClick={() => setScope(option.value)}
@@ -134,39 +151,36 @@ export function AddIntegrationForm({
           </div>
         </div>
 
-        {/* Server URL (default for HTTP) */}
         {isHttp && (
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-              Server URL
+              {t("addForm.fields.serverUrl.label")}
             </label>
             <input
               type="url"
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
-              placeholder="https://api.example.com/mcp"
+              placeholder={t("addForm.fields.serverUrl.placeholder")}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
             />
           </div>
         )}
 
-        {/* Server Command (for stdio) */}
         {!isHttp && (
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-              Command
+              {t("addForm.fields.command.label")}
             </label>
             <input
               type="text"
               value={serverCommand}
               onChange={(e) => setServerCommand(e.target.value)}
-              placeholder="npx -y @modelcontextprotocol/server"
+              placeholder={t("addForm.fields.command.placeholder")}
               className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
             />
           </div>
         )}
 
-        {/* Advanced toggle */}
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
           className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -176,15 +190,14 @@ export function AddIntegrationForm({
           ) : (
             <ChevronRight className="h-3 w-3" />
           )}
-          Advanced options
+          {t("addForm.advanced.toggle")}
         </button>
 
         {showAdvanced && (
           <div className="space-y-4 pl-1 border-l-2 border-muted ml-1">
-            {/* Connection type */}
             <div className="pl-3">
               <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                Connection Type
+                {t("addForm.advanced.connectionType.label")}
               </label>
               <select
                 value={transportType}
@@ -192,41 +205,45 @@ export function AddIntegrationForm({
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               >
                 <option value="streamable_http">
-                  Web service (HTTP streaming)
+                  {t("addForm.advanced.connectionType.streamableHttp")}
                 </option>
                 <option value="http_sse">
-                  Web service (HTTP SSE)
+                  {t("addForm.advanced.connectionType.httpSse")}
                 </option>
               </select>
             </div>
 
-            {/* Authentication */}
             <div className="pl-3">
               <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                Authentication
+                {t("addForm.advanced.authentication.label")}
               </label>
               <select
                 value={authType}
                 onChange={(e) => setAuthType(e.target.value as AuthType)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
               >
-                <option value="none">None</option>
-                <option value="api_key">API Key</option>
-                <option value="bearer_token">Bearer Token</option>
+                <option value="none">{t("addForm.advanced.authentication.none")}</option>
+                <option value="api_key">{t("addForm.advanced.authentication.apiKey")}</option>
+                <option value="bearer_token">{t("addForm.advanced.authentication.bearerToken")}</option>
               </select>
             </div>
 
-            {/* Auth credential */}
             {authType !== "none" && (
               <div className="pl-3">
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                  {authType === "api_key" ? "API Key" : "Bearer Token"}
+                  {authType === "api_key"
+                    ? t("addForm.advanced.credential.apiKeyLabel")
+                    : t("addForm.advanced.credential.bearerTokenLabel")}
                 </label>
                 <input
                   type="password"
                   value={authCredential}
                   onChange={(e) => setAuthCredential(e.target.value)}
-                  placeholder={authType === "api_key" ? "sk-..." : "eyJhbGci..."}
+                  placeholder={
+                    authType === "api_key"
+                      ? t("addForm.advanced.credential.apiKeyPlaceholder")
+                      : t("addForm.advanced.credential.bearerTokenPlaceholder")
+                  }
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
                 />
               </div>
@@ -234,20 +251,18 @@ export function AddIntegrationForm({
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className="text-xs text-red-600 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2.5">
             {error}
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onCancel}
             className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Cancel
+            {t("addForm.actions.cancel")}
           </button>
           <button
             onClick={() => void handleSubmit()}
@@ -259,7 +274,7 @@ export function AddIntegrationForm({
             )}
           >
             {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            Add Integration
+            {t("addForm.actions.submit")}
           </button>
         </div>
       </div>

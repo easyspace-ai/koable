@@ -233,6 +233,19 @@ export function workspaceQueries(sql: postgres.Sql) {
       return member?.role ?? null;
     },
 
+    /** Batch membership check — returns workspace IDs the user can access. */
+    async filterAccessibleWorkspaceIds(
+      userId: string,
+      workspaceIds: string[],
+    ): Promise<Set<string>> {
+      if (workspaceIds.length === 0) return new Set();
+      const rows = await sql<{ workspace_id: string }[]>`
+        SELECT workspace_id FROM workspace_members
+        WHERE user_id = ${userId} AND workspace_id = ANY(${workspaceIds})
+      `;
+      return new Set(rows.map((r) => r.workspace_id));
+    },
+
     async getUserWorkspaces(
       userId: string
     ): Promise<(WorkspaceRow & { role: WorkspaceRole })[]> {
@@ -397,6 +410,105 @@ export function workspaceQueries(sql: postgres.Sql) {
         if (count?.n === "0") return undefined;
       }
       return row;
+    },
+
+    /**
+     * Batch credit summary for multiple workspaces. Mirrors getCredits() logic
+     * per workspace_id — used by listByUserEnriched to avoid N+1 queries.
+     */
+    async getCreditsBatch(
+      workspaceIds: string[],
+    ): Promise<Map<string, CreditsRow>> {
+      if (workspaceIds.length === 0) return new Map();
+
+      const rows = await sql<CreditsRow[]>`
+        SELECT
+          workspace_id,
+          gen_random_uuid() as id,
+          LEAST(COALESCE(SUM(
+            CASE WHEN daily_reset_at <= now()
+              THEN daily_credits::bigint
+              ELSE (daily_credits - daily_credits_used)::bigint
+            END
+          ), 0), 2147483647)::int as daily_remaining,
+          LEAST(COALESCE(SUM(daily_credits::bigint), 0), 2147483647)::int as daily_total,
+          LEAST(COALESCE(SUM(
+            CASE WHEN monthly_reset_at <= now()
+              THEN monthly_credits::bigint
+              ELSE (monthly_credits - monthly_credits_used)::bigint
+            END
+          ), 0), 2147483647)::int as monthly_remaining,
+          LEAST(COALESCE(SUM(rollover_credits::bigint), 0), 2147483647)::int as rollover_credits,
+          MIN(daily_reset_at) as last_daily_reset,
+          MIN(monthly_reset_at) as last_monthly_reset
+        FROM credit_balances
+        WHERE workspace_id = ANY(${workspaceIds})
+        GROUP BY workspace_id
+      `;
+
+      const balanceCounts = await sql<{ workspace_id: string; n: string }[]>`
+        SELECT workspace_id, count(*)::text as n
+        FROM credit_balances
+        WHERE workspace_id = ANY(${workspaceIds})
+        GROUP BY workspace_id
+      `;
+      const countByWs = new Map(
+        balanceCounts.map((r) => [r.workspace_id, parseInt(r.n, 10)]),
+      );
+
+      const result = new Map<string, CreditsRow>();
+      for (const row of rows) {
+        if (
+          row.daily_remaining === 0 &&
+          row.monthly_remaining === 0 &&
+          row.rollover_credits === 0 &&
+          (countByWs.get(row.workspace_id) ?? 0) === 0
+        ) {
+          continue;
+        }
+        result.set(row.workspace_id, row);
+      }
+      return result;
+    },
+
+    /**
+     * List workspaces for a user with member count, credits, and role in
+     * three batched queries instead of 3N per-workspace round-trips.
+     */
+    async listByUserEnriched(userId: string): Promise<
+      Array<
+        WorkspaceRow & {
+          userRole: WorkspaceRole;
+          memberCount: number;
+          credits: CreditsRow | undefined;
+        }
+      >
+    > {
+      const workspaceRows = await this.getUserWorkspaces(userId);
+      if (workspaceRows.length === 0) return [];
+
+      const ids = workspaceRows.map((w) => w.id);
+
+      const [memberCounts, creditsByWs] = await Promise.all([
+        sql<{ workspace_id: string; member_count: number }[]>`
+          SELECT workspace_id, count(*)::int AS member_count
+          FROM workspace_members
+          WHERE workspace_id = ANY(${ids})
+          GROUP BY workspace_id
+        `,
+        this.getCreditsBatch(ids),
+      ]);
+
+      const memberCountByWs = new Map(
+        memberCounts.map((r) => [r.workspace_id, r.member_count]),
+      );
+
+      return workspaceRows.map(({ role, ...workspace }) => ({
+        ...workspace,
+        userRole: role,
+        memberCount: memberCountByWs.get(workspace.id) ?? 0,
+        credits: creditsByWs.get(workspace.id),
+      }));
     },
   };
 }

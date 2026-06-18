@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStoredTokens } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -28,15 +29,51 @@ interface KnowledgeTabProps {
 
 const AUTO_SAVE_DELAY = 2500;
 
-const FILE_DESCRIPTIONS: Record<string, string> = {
-  "knowledge.md": "Tech stack, conventions, domain terms",
-  "instructions.md": "Rules for the AI to follow",
-  "identity.md": "Brand voice and personality",
-  "soul.md": "Core values and mission",
-  "memory.md": "Persistent facts and preferences",
-  "user.md": "User context and background",
-  "plan.md": "Project roadmap and milestones",
-};
+const KNOWN_FILES = [
+  "knowledge.md",
+  "instructions.md",
+  "identity.md",
+  "soul.md",
+  "memory.md",
+  "user.md",
+  "plan.md",
+] as const;
+
+function filenameToDescriptionKey(filename: string): string {
+  return filename.replace(/\./g, "_");
+}
+
+function getFileDescription(
+  filename: string,
+  t: (key: string) => string,
+): string {
+  if ((KNOWN_FILES as readonly string[]).includes(filename)) {
+    return t(`knowledge.fileDescriptions.${filenameToDescriptionKey(filename)}`);
+  }
+  return t("knowledge.customContext");
+}
+
+function formatRelativeDate(
+  dateStr: string,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60_000);
+    if (minutes < 1) return t("knowledge.justNow");
+    if (minutes < 60) return t("knowledge.minutesAgo", { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return t("knowledge.hoursAgo", { count: hours });
+    const days = Math.floor(hours / 24);
+    return t("knowledge.daysAgo", { count: days });
+  } catch {
+    return "";
+  }
+}
+
+import { AddFileDialog, FileEditorView } from "./knowledge-tab-parts";
 
 function getAuthHeaders(): Record<string, string> {
   const { accessToken } = getStoredTokens();
@@ -48,25 +85,6 @@ function getAuthHeaders(): Record<string, string> {
   }
   return headers;
 }
-
-function formatDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60_000);
-    if (minutes < 1) return "just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  } catch {
-    return "";
-  }
-}
-
-import { AddFileDialog, FileEditorView } from "./knowledge-tab-parts";
 
 // ─── File List View ─────────────────────────────────────────
 
@@ -85,11 +103,13 @@ function FileListView({
   onAddFile: () => void;
   onRetry: () => void;
 }) {
+  const { t } = useTranslation("editor");
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        Loading knowledge base...
+        {t("knowledge.loading")}
       </div>
     );
   }
@@ -103,7 +123,7 @@ function FileListView({
           onClick={onRetry}
           className="mt-3 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          Retry
+          {t("knowledge.retry")}
         </button>
       </div>
     );
@@ -113,13 +133,13 @@ function FileListView({
     <div className="flex-1 overflow-y-auto">
       {/* Hint */}
       <div className="px-4 py-2 border-b border-border text-xs text-muted-foreground leading-relaxed">
-        Context files the AI reads before every interaction. Click to edit.
+        {t("knowledge.hint")}
       </div>
 
       {/* File list */}
       <div className="px-2 py-1">
         {files.map((file) => {
-          const desc = FILE_DESCRIPTIONS[file.filename] ?? "Custom context";
+          const desc = getFileDescription(file.filename, t);
           const hasContent = file.content.trim().length > 0;
           return (
             <button
@@ -139,7 +159,7 @@ function FileListView({
                     {file.filename}
                   </span>
                   <span className="text-[10px] text-muted-foreground flex-none">
-                    {formatDate(file.updatedAt)}
+                    {formatRelativeDate(file.updatedAt, t)}
                   </span>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground truncate">
@@ -147,7 +167,7 @@ function FileListView({
                 </p>
                 {hasContent && (
                   <p className="mt-0.5 text-[10px] text-muted-foreground/60">
-                    {file.content.length} chars
+                    {t("knowledge.chars", { count: file.content.length })}
                   </p>
                 )}
               </div>
@@ -163,7 +183,7 @@ function FileListView({
           className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-xs text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
         >
           <Plus className="h-3 w-3" />
-          Add Knowledge File
+          {t("knowledge.addKnowledgeFile")}
         </button>
       </div>
     </div>
@@ -176,6 +196,7 @@ export const KnowledgeTab = ({
   projectId,
   apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
 }: KnowledgeTabProps) => {
+  const { t } = useTranslation("editor");
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,15 +212,15 @@ export const KnowledgeTab = ({
         `${apiBaseUrl}/projects/${projectId}/context`,
         { headers: getAuthHeaders() }
       );
-      if (!res.ok) throw new Error("Failed to load context files");
+      if (!res.ok) throw new Error(t("knowledge.failedLoad"));
       const json = await res.json() as { data: { files: ContextFile[] } };
       setFiles(json.data.files);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      setError(err instanceof Error ? err.message : t("knowledge.unknownError"));
     } finally {
       setLoading(false);
     }
-  }, [projectId, apiBaseUrl]);
+  }, [projectId, apiBaseUrl, t]);
 
   useEffect(() => {
     void fetchFiles();
@@ -219,8 +240,8 @@ export const KnowledgeTab = ({
           }
         );
         if (!res.ok) {
-          const body = await res.json().catch(() => ({ error: "Failed to create file" }));
-          throw new Error(body.error ?? "Failed to create file");
+          const body = await res.json().catch(() => ({ error: t("knowledge.failedCreate") }));
+          throw new Error(body.error ?? t("knowledge.failedCreate"));
         }
         const json = await res.json() as { data: ContextFile };
         // Add to list and open immediately
@@ -230,7 +251,7 @@ export const KnowledgeTab = ({
         console.error("Failed to create context file:", err);
       }
     },
-    [projectId, apiBaseUrl]
+    [projectId, apiBaseUrl, t]
   );
 
   // Open file for editing — re-fetch latest content
@@ -280,7 +301,7 @@ export const KnowledgeTab = ({
         <div className="flex items-center gap-2">
           <Brain className="h-3.5 w-3.5 text-muted-foreground" />
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Project Knowledge
+            {t("knowledge.title")}
           </h3>
         </div>
         <button
@@ -288,7 +309,7 @@ export const KnowledgeTab = ({
           className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
         >
           <Plus className="h-3 w-3" />
-          Add
+          {t("knowledge.add")}
         </button>
       </div>
 

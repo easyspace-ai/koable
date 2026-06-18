@@ -17,9 +17,11 @@ import { useVersionHistory } from "./use-version-history";
 import { groupVersionsByDate } from "./version-history-types";
 import type { VersionEntry } from "./version-history-types";
 import { VersionItem } from "./version-history-item";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Main Component ─────────────────────────────────────────
 export function VersionHistory() {
+  const { t } = useTranslation("editor");
   const { projectId } = useEditorStore();
 
   const {
@@ -75,7 +77,10 @@ export function VersionHistory() {
       ? versions.filter((v) => v.bookmarked)
       : versions;
 
-  const grouped = groupVersionsByDate(filtered);
+  const grouped = groupVersionsByDate(filtered, {
+    today: t("versionHistory.today"),
+    yesterday: t("versionHistory.yesterday"),
+  });
 
   // ─── Current version indicator ────────────────────────────
 
@@ -89,7 +94,7 @@ export function VersionHistory() {
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Version History
+            {t("versionHistory.title")}
           </h3>
           {total > 0 && (
             <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -101,7 +106,7 @@ export function VersionHistory() {
           <button
             onClick={() => fetchVersions(1)}
             className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title="Refresh"
+            title={t("versionHistory.refresh")}
             disabled={loading}
           >
             <RefreshCw
@@ -117,7 +122,7 @@ export function VersionHistory() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              All
+              {t("versionHistory.filterAll")}
             </button>
             <button
               onClick={() => setFilter("bookmarked")}
@@ -128,7 +133,7 @@ export function VersionHistory() {
               }`}
             >
               <Star className="h-3 w-3 inline-block mr-0.5 -mt-px" />
-              Saved
+              {t("versionHistory.filterSaved")}
             </button>
           </div>
         </div>
@@ -140,7 +145,7 @@ export function VersionHistory() {
         {loading && versions.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mb-2" />
-            <p className="text-xs">Loading versions...</p>
+            <p className="text-xs">{t("versionHistory.loading")}</p>
           </div>
         )}
 
@@ -153,7 +158,7 @@ export function VersionHistory() {
               onClick={() => fetchVersions(1)}
               className="text-xs text-primary hover:text-primary/80 underline"
             >
-              Try again
+              {t("versionHistory.tryAgain")}
             </button>
           </div>
         )}
@@ -163,10 +168,10 @@ export function VersionHistory() {
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <Clock className="h-6 w-6 text-muted-foreground/50 mb-2" />
             <p className="text-sm font-medium text-muted-foreground">
-              No versions yet
+              {t("versionHistory.emptyTitle")}
             </p>
             <p className="mt-1 text-xs text-muted-foreground/70">
-              Versions are created automatically as the AI makes changes.
+              {t("versionHistory.emptyDescription")}
             </p>
           </div>
         )}
@@ -180,10 +185,10 @@ export function VersionHistory() {
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Bookmark className="h-6 w-6 text-muted-foreground/50 mb-2" />
               <p className="text-sm font-medium text-muted-foreground">
-                No bookmarked versions
+                {t("versionHistory.noBookmarkedTitle")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground/70">
-                Click the bookmark icon on any version to save it.
+                {t("versionHistory.noBookmarkedDescription")}
               </p>
             </div>
           )}
@@ -236,13 +241,13 @@ export function VersionHistory() {
                   {loadingMore ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      Loading...
+                      {t("versionHistory.loadingMore")}
                     </>
                   ) : (
                     <>
-                      Load older versions
+                      {t("versionHistory.loadOlder")}
                       <span className="text-muted-foreground/50">
-                        ({total - versions.length} remaining)
+                        {t("versionHistory.remaining", { count: total - versions.length })}
                       </span>
                     </>
                   )}

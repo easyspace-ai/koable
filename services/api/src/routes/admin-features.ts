@@ -7,8 +7,7 @@ import {
   PLATFORM_SETTING_KEYS,
   parseDnsMode,
 } from "@doable/db";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { WORKSPACE_PLANS, WORKSPACE_ROLES } from "@doable/shared";
 import { getZoneInfo } from "../lib/cloudflare-zone-info.js";
 import { getCfApiTokenSource, encryptPlatformValue } from "../lib/cloudflare-token.js";
@@ -18,14 +17,12 @@ import {
   listZoneWildcards,
   deleteCloudflareDns,
 } from "../deploy/adapters/doable-cloud.js";
+import { internalServerError, operationFailed } from "../lib/api-error.js";
 
 const featureFlags = featureFlagQueries(sql);
 const platformSettings = platformSettingQueries(sql);
 
 export const adminFeatureRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminFeatureRoutes.use("*", authMiddleware);
-adminFeatureRoutes.use("*", platformAdminMiddleware);
 
 // ─── Feature Flags ─────────────────────────────────────────
 
@@ -83,7 +80,7 @@ adminFeatureRoutes.post("/features", async (c) => {
     if (err instanceof Error && err.message.includes("duplicate")) {
       return c.json({ error: "Feature key already exists" }, 409);
     }
-    throw err;
+    return internalServerError(c, "admin/features/create", err);
   }
 });
 
@@ -155,10 +152,11 @@ adminFeatureRoutes.put("/dns-mode", async (c) => {
       userId,
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    // Most common cause: migration 081 not applied yet.
-    return c.json(
-      { error: "Failed to persist DNS mode. Has migration 081 been applied?", detail: msg },
+    return operationFailed(
+      c,
+      "admin/dns-mode",
+      err,
+      "Failed to persist DNS mode. Has migration 081 been applied?",
       503,
     );
   }
@@ -333,7 +331,7 @@ adminFeatureRoutes.delete("/dns-mode/wildcard", async (c) => {
     // Reuse the existing not-ready reason mapping — caller can't act on
     // wildcards without zone access.
     return c.json(
-      { error: zone.error ?? "Cloudflare zone lookup failed", reason: "zone-lookup-failed" },
+      { error: "Cloudflare zone lookup failed", reason: "zone-lookup-failed" },
       400,
     );
   }
@@ -353,8 +351,7 @@ adminFeatureRoutes.delete("/dns-mode/wildcard", async (c) => {
   try {
     deleted = await deleteCloudflareDns(body.hostname);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json({ error: `Failed to delete wildcard CNAME: ${msg}` }, 502);
+    return operationFailed(c, "admin/dns-mode/wildcard/delete", err, "Failed to delete wildcard CNAME", 502);
   }
 
   if (!deleted) {
@@ -458,8 +455,7 @@ adminFeatureRoutes.post("/dns-mode/auto-wildcard", async (c) => {
   try {
     cnameResult = await ensureWildcardCname(tunnelId, effectiveWildcard);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json({ error: `Failed to create wildcard CNAME: ${msg}` }, 502);
+    return operationFailed(c, "admin/dns-mode/auto-wildcard", err, "Failed to create wildcard CNAME", 502);
   }
 
   const userId = c.get("userId");
@@ -474,9 +470,11 @@ adminFeatureRoutes.post("/dns-mode/auto-wildcard", async (c) => {
       userId,
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json(
-      { error: "Wildcard CNAME created but failed to persist DNS mode. Has migration 081 been applied?", detail: msg },
+    return operationFailed(
+      c,
+      "admin/dns-mode/auto-wildcard/persist",
+      err,
+      "Wildcard CNAME created but failed to persist DNS mode. Has migration 081 been applied?",
       503,
     );
   }
@@ -529,7 +527,8 @@ adminFeatureRoutes.post("/dns-mode/cf-token", async (c) => {
       return c.json({ error: "Cloudflare rejected the token", reason: "token-invalid" }, 400);
     }
   } catch (err) {
-    return c.json({ error: `Could not reach Cloudflare to verify: ${err instanceof Error ? err.message : String(err)}`, reason: "token-invalid" }, 400);
+    console.error("[admin/dns-mode/cf-token/verify]", err);
+    return c.json({ error: "Could not reach Cloudflare to verify token", reason: "token-invalid" }, 400);
   }
 
   // Probe 2: the whole point — token must have SSL/Certificates:Read scope.
@@ -564,15 +563,18 @@ adminFeatureRoutes.post("/dns-mode/cf-token", async (c) => {
         userId,
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return c.json(
-        { error: "Token validated but persisting failed. Has migration 081 been applied?", detail: msg },
+      return operationFailed(
+        c,
+        "admin/dns-mode/cf-token/persist",
+        err,
+        "Token validated but persisting failed. Has migration 081 been applied?",
         503,
       );
     }
     return c.json({ persisted: true, acmStatus });
   } catch (err) {
-    return c.json({ error: `SSL scope probe failed: ${err instanceof Error ? err.message : String(err)}`, reason: "token-invalid" }, 400);
+    console.error("[admin/dns-mode/cf-token/ssl-probe]", err);
+    return c.json({ error: "SSL scope probe failed", reason: "token-invalid" }, 400);
   }
 });
 
@@ -583,8 +585,13 @@ adminFeatureRoutes.delete("/dns-mode/cf-token", async (c) => {
     // Using set(...,"") instead of a DELETE keeps the audit trail (updated_by/at).
     await platformSettings.set(PLATFORM_SETTING_KEYS.CF_API_TOKEN, "", userId);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return c.json({ error: "Failed to clear override. Has migration 081 been applied?", detail: msg }, 503);
+    return operationFailed(
+      c,
+      "admin/dns-mode/cf-token/clear",
+      err,
+      "Failed to clear override. Has migration 081 been applied?",
+      503,
+    );
   }
   const fallbackSource = process.env.CF_API_TOKEN ? "env" : "none";
   return c.json({ reverted: true, fallbackSource });

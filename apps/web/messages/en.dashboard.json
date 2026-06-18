@@ -74,7 +74,7 @@
       "passwordStrength": "Password strength: {label}",
       "passwordsDoNotMatch": "Passwords do not match",
       "passwordsMatch": "Passwords match",
-      "agreeToTerms": "I agree to the {terms} and {privacy}",
+      "agreeToTerms": "I agree to the <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
       "termsOfService": "Terms of Service",
       "privacyPolicy": "Privacy Policy",
       "createAccount": "Create account",
@@ -101,7 +101,56 @@
         "number": "Number",
         "special": "Special character"
       }
+    },
+    "forgotPassword": {
+      "title": "Forgot your password?",
+      "description": "No worries. Enter your email and we'll send you reset instructions.",
+      "emailLabel": "Email address",
+      "sending": "Sending...",
+      "sendButton": "Send reset instructions",
+      "successTitle": "Check your email",
+      "successDescription": "If an account exists for {email}, we've sent password reset instructions to your inbox.",
+      "successHintBefore": "Didn't receive the email? Check your spam folder or",
+      "tryAgainLink": "try again",
+      "requestFailed": "Request failed",
+      "genericError": "Something went wrong. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set new password",
+      "description": "Your new password must be different from your previous password.",
+      "invalidLinkTitle": "Invalid reset link",
+      "invalidLinkDescription": "This password reset link is invalid or has expired. Please request a new one.",
+      "requestNewLink": "Request new reset link",
+      "successTitle": "Password reset successful",
+      "successDescription": "Your password has been updated. You can now sign in with your new password.",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "confirmPlaceholder": "Re-enter your password",
+      "resetting": "Resetting password...",
+      "resetButton": "Reset password",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooWeak": "Password is too weak. Use at least 8 characters with uppercase, lowercase, and numbers.",
+      "genericError": "Something went wrong. Please try again.",
+      "passwordStrength": "Password strength: {label}",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "passwordsMatch": "Passwords match",
+      "strength": {
+        "weak": "Weak",
+        "fair": "Fair",
+        "good": "Good",
+        "strong": "Strong"
+      },
+      "criteria": {
+        "minLength": "At least 8 characters",
+        "uppercase": "Uppercase letter",
+        "lowercase": "Lowercase letter",
+        "number": "Number",
+        "special": "Special character"
+      }
     }
+  },
+  "layout": {
+    "openMenu": "Open menu"
   },
   "sidebar": {
     "recent": "Recent",
@@ -110,7 +159,29 @@
     "noProjectsYet": "No projects yet",
     "noStarredProjects": "No starred projects",
     "noFolders": "No folders",
-    "createFolder": "Create folder"
+    "createFolder": "Create folder",
+    "search": "Search",
+    "templates": "Templates",
+    "discover": "Discover",
+    "marketplace": "Marketplace",
+    "runningInstances": "Running instances",
+    "projects": "Projects",
+    "allProjects": "All projects",
+    "importProject": "Import project",
+    "workspaceSettings": "Workspace settings",
+    "projectsLimit": "(limit)",
+    "planMembers": "{plan} plan · {count} members",
+    "planOnly": "{plan} plan",
+    "deleteFolderConfirm": "Are you sure you want to delete \"{name}\"? Projects inside this folder will be moved to the root level.",
+    "upgradeToPro": "Upgrade to Pro",
+    "upgradeDescription": "Get unlimited projects and priority AI generation.",
+    "upgradeNow": "Upgrade now",
+    "settings": "Settings",
+    "aiSettings": "AI Settings",
+    "usage": "Usage",
+    "billing": "Billing",
+    "systemAdmin": "System Admin",
+    "signOut": "Sign out"
   },
   "dashboard": {
     "greetings": {
@@ -158,6 +229,16 @@
     "creatingProject": "Creating project…",
     "connectingToAi": "Connecting to AI…",
     "createProjectFailed": "Failed to create project. Please try again.",
+    "createProjectFailedWithMessage": "Failed to create project: {message}",
+    "status": {
+      "creating": "Creating"
+    },
+    "projectActions": {
+      "shareToDiscover": "Share to Discover",
+      "updateDiscoverListing": "Update Discover listing",
+      "sharedToDiscover": "Shared to Discover",
+      "discover": "Discover"
+    },
     "toolbar": {
       "recentlyViewed": "Recently viewed",
       "myProjects": "My projects",
@@ -202,7 +283,9 @@
     },
     "contextMenu": {
       "openInEditor": "Open in editor",
+      "rename": "Rename",
       "duplicate": "Duplicate",
+      "moveToFolder": "Move to folder",
       "star": "Star",
       "unstar": "Unstar"
     },
@@ -283,7 +366,40 @@
       "private": "Private",
       "public": "Public",
       "elapsed": "{time} elapsed",
-      "largeRepoHint": "This may take a moment for large repositories"
+      "largeRepoHint": "This may take a moment for large repositories",
+      "description": "Import an existing repository to continue working on it in Doable.",
+      "connectTitle": "Connect your GitHub account",
+      "connectDescription": "Authorize Doable to access your repositories.",
+      "connectWithGitHub": "Connect with GitHub",
+      "connectedAs": "Connected as {username}",
+      "disconnecting": "Disconnecting…",
+      "loadingRepos": "Loading repositories...",
+      "import": "Import",
+      "cloning": "Cloning {repo}...",
+      "switchAccountConfirm": "Disconnect {username} and connect a different one?",
+      "switchAccountConfirmHint": "Existing project-to-repo links won't be deleted, but new pushes/pulls and imports will use the next account you sign in with."
+    },
+    "workspaceSetup": {
+      "environmentTitle": "Set up your workspace",
+      "environmentDescription": "Every workspace needs an environment — it defines what your AI assistant knows and can do.",
+      "icon": "Icon",
+      "color": "Color",
+      "envNamePlaceholder": "My Environment",
+      "createEnvFailed": "Failed to create environment",
+      "skipSetup": "Skip setup",
+      "createAndContinue": "Create & Continue",
+      "knowledgeTitle": "Add knowledge",
+      "knowledgeDescription": "Tell your AI what it should know about your projects. You can always add more later.",
+      "knowledgePlaceholder": "e.g. We use React with TypeScript.\nOur API follows REST conventions.\nAlways use Tailwind for styling.",
+      "knowledgeHint": "These instructions guide your AI assistant across all projects in this workspace.",
+      "skip": "Skip",
+      "saveAndContinue": "Save & Continue",
+      "integrationsTitle": "Connect tools",
+      "integrationsDescription": "Connect external tools to supercharge your workflow. You can set these up anytime from Settings.",
+      "integrationsHint": "Integrations can be connected from workspace settings at any time.",
+      "doneTitle": "You're all set!",
+      "doneDescription": "{name} is ready to go. Start creating projects and let AI help you build.",
+      "goToWorkspace": "Go to workspace"
     }
   },
   "setup": {
@@ -350,19 +466,133 @@
       "stripePriceHint": "Price IDs for Pro/Business can be added in /admin/billing.",
       "saveStripe": "Save Stripe",
       "planLimitsHint": "Want to fine-tune what each plan (free / pro / business / enterprise) can do? Set projects-per-user, daily credits, file size limits, custom domains, and more in /admin/plan-limits — sensible defaults apply automatically until then.",
-      "finishSetup": "Finish setup"
+      "finishSetup": "Finish setup",
+      "billingSaveError": "Could not save"
+    },
+    "planDefaults": {
+      "loading": "Loading plan defaults…",
+      "loadError": "Could not load plan defaults — you can configure them later in /admin/plans.",
+      "empty": "No plan defaults configured. The provider you set in Step 3 should already be applied to all plans. If this list is empty, you can configure them later from /admin/plans.",
+      "title": "AI model defaults per plan",
+      "description": "The provider+model you chose in Step 3 was applied to all plans automatically. Optionally override the model for individual plans (e.g. a cheaper model on Free, a more capable one on Enterprise). You can change these any time in /admin/plans.",
+      "planColumn": "Plan",
+      "providerColumn": "Provider",
+      "modelColumn": "Default model",
+      "customProvider": "Custom provider",
+      "githubCopilot": "GitHub Copilot",
+      "modelPlaceholder": "e.g. MiniMax-M2.7, gpt-4o, claude-sonnet-4",
+      "saved": "Saved",
+      "saveError": "Could not save {plan} default — verify in /admin/plans after setup."
     },
     "cloudflare": {
       "title": "Cloudflare Tunnel",
+      "description": "We strongly recommend running Doable behind a Cloudflare Tunnel. Your server never exposes ports 80 or 443 to the public internet — all traffic enters through Cloudflare's edge, with built-in DDoS protection and TLS.",
       "active": "Cloudflare Tunnel active",
       "notConfigured": "Cloudflare Tunnel not yet configured",
       "nextSteps": "Next steps",
       "openDashboard": "Open Cloudflare dashboard",
       "skipDirectPorts": "Skip and use direct ports?",
-      "waitingForTunnel": "Waiting for tunnel…"
+      "waitingForTunnel": "Waiting for tunnel…",
+      "binaryInstalled": "cloudflared binary: installed",
+      "binaryNotInstalled": "cloudflared binary: not installed",
+      "tunnelPresent": "tunnel config: present",
+      "tunnelMissing": "tunnel config: missing",
+      "serviceRunning": "cloudflared service: running",
+      "serviceStopped": "cloudflared service: stopped",
+      "publicHostname": "public hostname:",
+      "installStep": "Install cloudflared on the server:",
+      "loginStep": "Log in to Cloudflare and create a tunnel:",
+      "loginStepThen": "Then create + route the tunnel:",
+      "startServiceStep": "Start the cloudflared service:",
+      "recheckStatus": "Re-check status",
+      "allSetMessage": "All set — your install is reachable through Cloudflare without exposing any ports.",
+      "skipCloudflare": "Skip Cloudflare",
+      "skipConfirmDescription": "Without Cloudflare your server will need ports 80 and 443 open to the public. You become directly responsible for DDoS handling, TLS cert renewal, and origin IP exposure. You can add Cloudflare later in /admin.",
+      "skipCloudflareAnyway": "Skip Cloudflare anyway"
+    },
+    "aiProvider": {
+      "title": "Connect an AI provider",
+      "description": "Pick one to start — you can add more in /admin/ai-providers later.",
+      "searchPlaceholder": "Search providers (e.g. minimax, groq, ollama)",
+      "showAll": "Show all {count} providers",
+      "popularShown": "({count} popular shown)",
+      "noMatch": "No providers match \"{query}\". Clear the search or toggle \"Show all\".",
+      "freeTier": "free tier",
+      "saveError": "Could not save. Try again.",
+      "modelRequired": "Pick or type a model — chat needs one to know which engine to call.",
+      "copilotConnectFirst": "Click \"Connect with GitHub\" first — Copilot needs a connected account before saving.",
+      "copilotTimeout": "Connection timed out. If you completed OAuth on GitHub, reload this page and check /admin/ai-settings.",
+      "noWorkspace": "No workspace yet. Reload the page and try again.",
+      "popupBlocked": "Popup blocked — allow popups for this site and try again.",
+      "waitingForGitHub": "Waiting for GitHub…",
+      "connectWithGitHub": "Connect with GitHub",
+      "validateAndSave": "Validate & Save",
+      "validating": "Validating…",
+      "setAsPlanDefault": "Use this model as the default for every plan (Free, Pro, Business, Enterprise) and as the suggestions model. You can fine-tune per-plan and suggestions models later in /admin/plan-defaults."
     }
   },
+  "templatesPage": {
+    "title": "Templates",
+    "subtitle": "Start from a template to build your next project",
+    "searchPlaceholder": "Search templates...",
+    "loading": "Loading templates...",
+    "noResultsSearch": "No templates matching \"{query}\"",
+    "noResultsCategory": "No templates in this category yet.",
+    "categories": {
+      "all": "All Templates",
+      "starter": "Starters",
+      "dashboard": "Dashboards",
+      "marketing": "Marketing",
+      "ecommerce": "E-commerce",
+      "content": "Content",
+      "personal": "Personal",
+      "productivity": "Productivity"
+    }
+  },
+  "templates": {
+    "official": "Official",
+    "file": "file",
+    "files": "files",
+    "previewAlt": "{name} preview",
+    "byDoable": "by Doable",
+    "useTemplate": "Use template",
+    "closePreview": "Close preview",
+    "previewTitle": "Preview of {name}",
+    "remixTitle": "Remix project",
+    "remixDescription": "By remixing a project, you will create a copy that you own.",
+    "projectName": "Project name",
+    "remixing": "Remixing...",
+    "remix": "Remix",
+    "remixDefaultName": "Remix of {name}",
+    "createFailed": "Failed to create project. Please try again."
+  },
+  "marketplace": {
+    "noWorkspace": "No workspace found"
+  },
   "billing": {
+    "page": {
+      "loading": "Loading billing...",
+      "unableToLoad": "Unable to load billing",
+      "signInPrompt": "Please sign in to manage your subscription and credits.",
+      "signIn": "Sign in",
+      "title": "Billing",
+      "subtitle": "Manage your subscription, credits, and usage.",
+      "backToDashboard": "Back to dashboard",
+      "subscriptionUpdated": "Subscription updated successfully!",
+      "checkoutCanceled": "Checkout was canceled. No changes were made.",
+      "creditsAdded": "Credits added successfully!",
+      "dismissError": "Dismiss error",
+      "manageSubscription": "Manage Subscription",
+      "buyCredits": "Buy 100 Credits",
+      "plansTitle": "Plans",
+      "plansLoadFailed": "Unable to load plans. Please try again later.",
+      "usageTitle": "Usage History",
+      "noUsage": "No usage recorded yet.",
+      "noUsageHint": "Credit usage will appear here once you start using AI features.",
+      "tableAction": "Action",
+      "tableCredits": "Credits",
+      "tableDate": "Date"
+    },
     "credits": {
       "title": "Credits",
       "noInfo": "No credit information available. Subscribe to a plan to get started.",
@@ -467,7 +697,12 @@
       "linkFailed": "Failed to generate link",
       "copyFailed": "Failed to copy to clipboard",
       "updateRoleFailed": "Failed to update role",
-      "revokeFailed": "Failed to revoke invite"
+      "revokeFailed": "Failed to revoke invite",
+      "roleUpdated": "Updated {name}'s role to {role}",
+      "revokedInvite": "Revoked invite for {email}",
+      "you": "You",
+      "generateLink": "Generate Link",
+      "expires": "Expires {date}"
     }
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { Credits } from "../hooks/use-billing";
 
@@ -31,25 +32,22 @@ function isUnlimited(value: number): boolean {
   return value >= UNLIMITED_THRESHOLD;
 }
 
-function formatCredits(value: number): string {
-  return isUnlimited(value) ? "Unlimited" : value.toLocaleString();
-}
-
 function CreditBar({
   label,
   remaining,
   total,
   color,
+  unlimitedLabel,
+  usedLabel,
 }: {
   label: string;
   remaining: number;
   total: number;
   color: string;
+  unlimitedLabel: string;
+  usedLabel: (used: number, total: number) => string;
 }) {
   const unlimited = isUnlimited(total);
-  // BUG-BILLING-001: clamp `used` at 0 — if the API ever reports remaining
-  // > total (e.g. plan-limit mismatch, top-up credits showing as monthly),
-  // we must never display a negative "used" number like "-400 / 100".
   const used = Math.max(0, total - remaining);
   const percentage = unlimited ? 0 : total > 0 ? Math.min((used / total) * 100, 100) : 0;
   const isLow = !unlimited && remaining <= Math.ceil(total * 0.2);
@@ -59,7 +57,7 @@ function CreditBar({
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-foreground">{label}</span>
         <span className={cn("tabular-nums text-muted-foreground", isLow && "text-orange-400")}>
-          {unlimited ? "Unlimited" : `${used} / ${total} used`}
+          {unlimited ? unlimitedLabel : usedLabel(used, total)}
         </span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
@@ -73,6 +71,9 @@ function CreditBar({
 }
 
 export function CreditDisplay({ credits, loading, className }: CreditDisplayProps) {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
+
   if (loading) {
     return (
       <div className={cn("space-y-4 rounded-xl border border-border bg-card p-6", className)}>
@@ -88,7 +89,7 @@ export function CreditDisplay({ credits, loading, className }: CreditDisplayProp
   if (!credits) {
     return (
       <div className={cn("rounded-xl border border-border bg-card p-6 text-center text-muted-foreground", className)}>
-        No credit information available. Subscribe to a plan to get started.
+        {t("billing.credits.noInfo")}
       </div>
     );
   }
@@ -97,13 +98,7 @@ export function CreditDisplay({ credits, loading, className }: CreditDisplayProp
     credits.daily_remaining + credits.monthly_remaining + credits.rollover_credits;
   const showUnlimited = isUnlimited(totalAvailable) || isUnlimited(credits.daily_remaining);
 
-  // BUG-BILLING-001: Prefer the totals reported by the API (credits.*_total)
-  // over the hardcoded PLAN_*_LIMITS table. When the API reports a different
-  // monthly total than the local table (e.g. after a plan change or top-up),
-  // using the stale local value made `used = total - remaining` go negative
-  // (UI showed "-400 / 100 used"). Fall back to the table only if the API
-  // didn't supply a total.
-  const planKey = (credits as any).plan_type ?? "free";
+  const planKey = (credits as { plan_type?: string }).plan_type ?? "free";
   const dailyTotal =
     credits.daily_total > 0
       ? credits.daily_total
@@ -116,47 +111,56 @@ export function CreditDisplay({ credits, loading, className }: CreditDisplayProp
   return (
     <div className={cn("space-y-5 rounded-xl border border-border bg-card p-6", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Credits</h3>
+        <h3 className="text-lg font-semibold text-foreground">{t("billing.credits.title")}</h3>
         <div className="rounded-full bg-brand-500/10 border border-brand-500/20 px-3 py-1 text-sm font-medium text-brand-400">
-          {showUnlimited ? "Unlimited" : `${totalAvailable} available`}
+          {showUnlimited
+            ? t("common.unlimited")
+            : t("billing.credits.available", { count: totalAvailable })}
         </div>
       </div>
 
       <div className="space-y-4">
         <CreditBar
-          label="Daily Credits"
+          label={t("billing.credits.dailyCredits")}
           remaining={credits.daily_remaining}
           total={dailyTotal}
           color="bg-blue-500"
+          unlimitedLabel={t("common.unlimited")}
+          usedLabel={(used, total) => t("billing.credits.used", { used, total })}
         />
         {monthlyTotal > 0 && (
           <CreditBar
-            label="Monthly Credits"
+            label={t("billing.credits.monthlyCredits")}
             remaining={credits.monthly_remaining}
             total={monthlyTotal}
             color="bg-brand-500"
+            unlimitedLabel={t("common.unlimited")}
+            usedLabel={(used, total) => t("billing.credits.used", { used, total })}
           />
         )}
         {credits.rollover_credits > 0 && (
           <CreditBar
-            label="Rollover Credits"
+            label={t("billing.credits.rolloverCredits")}
             remaining={credits.rollover_credits}
             total={credits.rollover_credits}
             color="bg-green-500"
+            unlimitedLabel={t("common.unlimited")}
+            usedLabel={(used, total) => t("billing.credits.used", { used, total })}
           />
         )}
       </div>
 
       <div className="grid grid-cols-3 gap-3 pt-2">
-        <CreditStat label="Daily" value={credits.daily_remaining} />
-        <CreditStat label="Monthly" value={credits.monthly_remaining} />
-        <CreditStat label="Rollover" value={credits.rollover_credits} />
+        <CreditStat label={t("billing.credits.daily")} value={credits.daily_remaining} unlimitedLabel={t("common.unlimited")} />
+        <CreditStat label={t("billing.credits.monthly")} value={credits.monthly_remaining} unlimitedLabel={t("common.unlimited")} />
+        <CreditStat label={t("billing.credits.rollover")} value={credits.rollover_credits} unlimitedLabel={t("common.unlimited")} />
       </div>
 
       {credits.last_daily_reset && (
         <p className="text-xs text-muted-foreground">
-          Daily credits reset:{" "}
-          {new Date(credits.last_daily_reset).toLocaleString()}
+          {t("billing.credits.resetAt", {
+            date: new Date(credits.last_daily_reset).toLocaleString(locale),
+          })}
         </p>
       )}
     </div>
@@ -173,6 +177,8 @@ export function CreditToolbarIndicator({
   loading?: boolean;
   onUpgrade?: () => void;
 }) {
+  const t = useTranslations("dashboard");
+
   if (loading || !credits) return null;
 
   const total = credits.daily_remaining + credits.monthly_remaining + credits.rollover_credits;
@@ -188,18 +194,28 @@ export function CreditToolbarIndicator({
           ? "bg-orange-500/15 text-orange-700 dark:text-orange-400 hover:bg-orange-500/25"
           : "bg-secondary text-muted-foreground hover:bg-accent"
       )}
-      title={unlimited ? "Unlimited credits" : `${total} credits remaining`}
+      title={unlimited ? t("billing.credits.toolbarUnlimited") : t("billing.credits.toolbarTitle", { count: total })}
     >
       <span className="tabular-nums">{unlimited ? "∞" : total}</span>
-      <span className="text-muted-foreground">credits</span>
+      <span className="text-muted-foreground">{t("billing.credits.toolbarLabel")}</span>
     </button>
   );
 }
 
-function CreditStat({ label, value }: { label: string; value: number }) {
+function CreditStat({
+  label,
+  value,
+  unlimitedLabel,
+}: {
+  label: string;
+  value: number;
+  unlimitedLabel: string;
+}) {
   return (
     <div className="rounded-lg bg-secondary border border-border p-3 text-center">
-      <p className="text-2xl font-bold tabular-nums text-foreground">{formatCredits(value)}</p>
+      <p className="text-2xl font-bold tabular-nums text-foreground">
+        {isUnlimited(value) ? unlimitedLabel : value.toLocaleString()}
+      </p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );

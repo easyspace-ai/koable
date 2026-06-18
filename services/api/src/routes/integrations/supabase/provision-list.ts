@@ -121,7 +121,8 @@ provisionListRoutes.post(
         return c.json({ error: "Supabase project not found — it may have been deleted or is not accessible with your token" }, 404);
       }
     } catch (err) {
-      return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+      console.error("[supabase/use-existing] Failed to list Supabase projects:", err);
+      return c.json({ error: "Failed to list Supabase projects" }, 500);
     }
 
     // Pull the picked project's keys and assemble the credential row.
@@ -129,7 +130,8 @@ provisionListRoutes.post(
     try {
       extracted = await supabaseEnhancedAuthModule.extractCredentials(token, resource);
     } catch (err) {
-      return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+      console.error("[supabase/use-existing] Failed to extract credentials:", err);
+      return c.json({ error: "Failed to extract Supabase credentials" }, 500);
     }
 
     // Clean up any stale project-scoped supabase row for this Doable project

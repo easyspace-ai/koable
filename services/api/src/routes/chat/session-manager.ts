@@ -3,6 +3,7 @@
  * and session recreation on engine loss during sendMessage.
  */
 import { sql } from "../../db/index.js";
+import { isUuid } from "../../lib/uuid.js";
 import { getCopilotManager } from "../../ai/providers/copilot-manager.js";
 import { createAllTools, type ByokProviderConfig } from "../../ai/providers/copilot.js";
 import type { TraceCollector } from "../../ai/trace-collector.js";
@@ -270,7 +271,7 @@ export async function persistSessionToDb(
     // workspace-scoped (RLS-ready). ai_sessions.project_id was loosened
     // to text in migration 008 — guard against non-uuid project ids
     // (legacy / frontend-generated) by treating them as workspace-less.
-    const isUuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
+    const isUuidLike = isUuid(projectId);
     let workspaceId: string | null = null;
     if (isUuidLike) {
       const [wsRow] = await sql<{ workspace_id: string | null }[]>`

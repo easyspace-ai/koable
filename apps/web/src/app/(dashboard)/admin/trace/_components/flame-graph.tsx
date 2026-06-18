@@ -15,6 +15,7 @@
  * placed at depth 0.
  */
 import { useMemo } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 export interface Span {
   span_id: string;
@@ -76,6 +77,7 @@ export function FlameGraph({
   onSelect,
   width = CANVAS_DEFAULT,
 }: Props) {
+  const { t } = useTranslation("admin");
   const { laid, height } = useMemo(() => {
     if (spans.length === 0) return { laid: [] as Laid[], height: ROW_H };
 
@@ -120,7 +122,7 @@ export function FlameGraph({
 
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-card p-2">
-      <svg width={width} height={height} role="img" aria-label="Trace flame graph">
+      <svg width={width} height={height} role="img" aria-label={t("trace.flameGraphAria")}>
         {laid.map(({ span, depth, xPx, widthPx }) => {
           const isSelected = selectedSpanId === span.span_id;
           const fill = colorFor(span);

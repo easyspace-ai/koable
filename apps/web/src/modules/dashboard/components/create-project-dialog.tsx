@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -80,6 +81,7 @@ export function CreateProjectDialog({
   onOpenChange,
   onCreate,
 }: CreateProjectDialogProps) {
+  const t = useTranslations("dashboard");
   const [mode, setMode] = useState<CreationMode>("blank");
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -150,11 +152,11 @@ export function CreateProjectDialog({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      setError("Project name is required");
+      setError(t("dashboard.createProject.nameRequired"));
       return;
     }
     if (!slug.trim() || slug.length < 3) {
-      setError("Slug must be at least 3 characters");
+      setError(t("dashboard.createProject.slugMinLength"));
       return;
     }
 
@@ -175,7 +177,7 @@ export function CreateProjectDialog({
       reset();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create project");
+      setError(err instanceof Error ? err.message : t("dashboard.createProject.createFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -185,18 +187,18 @@ export function CreateProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl">Create a new project</DialogTitle>
+          <DialogTitle className="text-xl">{t("dashboard.createProject.title")}</DialogTitle>
           <DialogDescription>
-            Start from scratch, describe what you want, or pick a template.
+            {t("dashboard.createProject.description")}
           </DialogDescription>
         </DialogHeader>
 
         {/* Mode Selector */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { key: "blank" as const, icon: FileCode, label: "Blank", desc: "Start fresh" },
-            { key: "prompt" as const, icon: MessageSquare, label: "From prompt", desc: "AI generates" },
-            { key: "template" as const, icon: LayoutTemplate, label: "Template", desc: "Pre-built" },
+            { key: "blank" as const, icon: FileCode, label: t("dashboard.createProject.modeBlank"), desc: t("dashboard.createProject.modeBlankDesc") },
+            { key: "prompt" as const, icon: MessageSquare, label: t("dashboard.createProject.modePrompt"), desc: t("dashboard.createProject.modePromptDesc") },
+            { key: "template" as const, icon: LayoutTemplate, label: t("dashboard.createProject.modeTemplate"), desc: t("dashboard.createProject.modeTemplateDesc") },
           ].map(({ key, icon: Icon, label, desc }) => (
             <button
               key={key}
@@ -219,7 +221,7 @@ export function CreateProjectDialog({
         {/* Framework selector — shown for blank and prompt modes */}
         {(mode === "blank" || mode === "prompt") && (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-300">Framework</label>
+            <label className="text-sm font-medium text-zinc-300">{t("dashboard.createProject.framework")}</label>
             <div className="grid grid-cols-2 gap-2">
               {frameworks.map((fw) => {
                 const meta = FRAMEWORK_META[fw.id] ?? { icon: Globe, color: "text-white" };
@@ -256,9 +258,9 @@ export function CreateProjectDialog({
         {/* Form */}
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-sm font-medium">Name</label>
+            <label className="mb-1 block text-sm font-medium">{t("common.name")}</label>
             <Input
-              placeholder="My Awesome Project"
+              placeholder={t("dashboard.createProject.namePlaceholder")}
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               autoFocus
@@ -266,9 +268,9 @@ export function CreateProjectDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Slug</label>
+            <label className="mb-1 block text-sm font-medium">{t("dashboard.createProject.slug")}</label>
             <Input
-              placeholder="my-awesome-project"
+              placeholder={t("dashboard.createProject.slugPlaceholder")}
               value={slug}
               onChange={(e) => {
                 setSlug(e.target.value);
@@ -279,11 +281,11 @@ export function CreateProjectDialog({
 
           <div>
             <label className="mb-1 block text-sm font-medium">
-              Description{" "}
-              <span className="font-normal text-muted-foreground">(optional)</span>
+              {t("common.description")}{" "}
+              <span className="font-normal text-muted-foreground">{t("common.optional")}</span>
             </label>
             <Input
-              placeholder="A brief description..."
+              placeholder={t("dashboard.createProject.descriptionPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -292,11 +294,11 @@ export function CreateProjectDialog({
           {mode === "prompt" && (
             <div>
               <label className="mb-1 block text-sm font-medium">
-                What do you want to build?
+                {t("dashboard.createProject.promptLabel")}
               </label>
               <textarea
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Describe your application in detail..."
+                placeholder={t("dashboard.createProject.promptPlaceholder")}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={3}
@@ -307,32 +309,32 @@ export function CreateProjectDialog({
           {mode === "template" && (
             <div>
               <label className="mb-1 block text-sm font-medium">
-                Choose a template
+                {t("dashboard.createProject.chooseTemplate")}
               </label>
               {templatesLoading ? (
                 <div className="flex items-center justify-center py-6 text-xs text-muted-foreground">
                   <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                  Loading templates…
+                  {t("dashboard.createProject.loadingTemplates")}
                 </div>
               ) : templates.length === 0 ? (
                 <div className="py-6 text-center text-xs text-muted-foreground">
-                  No templates available.
+                  {t("dashboard.empty.noTemplates")}
                 </div>
               ) : (
                 <div className="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto">
-                  {templates.map((t) => (
+                  {templates.map((tpl) => (
                     <button
-                      key={t.id}
-                      onClick={() => setSelectedTemplate(t.id)}
+                      key={tpl.id}
+                      onClick={() => setSelectedTemplate(tpl.id)}
                       className={`rounded-lg border p-3 text-left text-sm transition-colors ${
-                        selectedTemplate === t.id
+                        selectedTemplate === tpl.id
                           ? "border-primary bg-primary/5"
                           : "hover:border-primary/50"
                       }`}
                     >
-                      <span className="font-medium">{t.name}</span>
+                      <span className="font-medium">{tpl.name}</span>
                       <span className="mt-0.5 block text-xs text-muted-foreground">
-                        {t.category}
+                        {tpl.category}
                       </span>
                     </button>
                   ))}
@@ -354,11 +356,11 @@ export function CreateProjectDialog({
               onOpenChange(false);
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create project
+            {t("dashboard.createProject.createProject")}
           </Button>
         </DialogFooter>
       </DialogContent>

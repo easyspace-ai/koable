@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Plus,
   Trash2,
@@ -22,7 +23,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   useMcpConnectors,
-  TRANSPORT_LABELS,
   type McpConnector,
   type McpTool,
   type CreateConnectorPayload,
@@ -39,6 +39,7 @@ interface McpPanelProps {
 // ─── Main Panel ─────────────────────────────────────────────
 
 export function McpPanel({ workspaceId }: McpPanelProps) {
+  const t = useTranslations("settings");
   const {
     connectors,
     loading,
@@ -70,16 +71,16 @@ export function McpPanel({ workspaceId }: McpPanelProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">MCP Servers</h2>
+          <h2 className="text-lg font-semibold">{t("mcp.panel.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Connect Model Context Protocol servers to give your AI assistant access to external tools and data.
+            {t("mcp.panel.description")}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => void refresh()}
             className="p-2 rounded-md hover:bg-muted transition-colors"
-            title="Refresh"
+            title={t("mcp.panel.refreshTitle")}
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
           </button>
@@ -88,7 +89,7 @@ export function McpPanel({ workspaceId }: McpPanelProps) {
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add MCP Server
+            {t("mcp.panel.addServer")}
           </button>
         </div>
       </div>
@@ -96,11 +97,11 @@ export function McpPanel({ workspaceId }: McpPanelProps) {
       {/* Stats */}
       {connectors.length > 0 && (
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span>{connectors.length} server{connectors.length !== 1 ? "s" : ""} configured</span>
+          <span>{t("mcp.panel.stats.configured", { count: connectors.length })}</span>
           <span className="text-muted-foreground/40">&middot;</span>
           <span className="flex items-center gap-1">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            {activeCount} active
+            {t("mcp.panel.stats.active", { count: activeCount })}
           </span>
         </div>
       )}
@@ -129,7 +130,7 @@ export function McpPanel({ workspaceId }: McpPanelProps) {
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Loading MCP servers...
+            {t("mcp.panel.loading")}
           </div>
         </div>
       )}
@@ -140,16 +141,16 @@ export function McpPanel({ workspaceId }: McpPanelProps) {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
             <Terminal className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">No MCP servers configured</p>
+          <p className="text-sm font-medium">{t("mcp.panel.empty.title")}</p>
           <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-            MCP servers let your AI assistant use external tools like databases, APIs, file systems, and more.
+            {t("mcp.panel.empty.description")}
           </p>
           <button
             onClick={() => setShowForm(true)}
             className="mt-4 flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            Add Your First Server
+            {t("mcp.panel.empty.addFirst")}
           </button>
         </div>
       )}

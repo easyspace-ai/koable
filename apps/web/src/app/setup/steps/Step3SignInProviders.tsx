@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Check, Copy, ChevronDown, ChevronUp, Loader2, ArrowRight, ArrowLeft, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,62 +24,37 @@ interface ProviderState {
   errorMsg: string | null;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? (typeof window !== "undefined" ? window.location.origin : "https://yourdomain.com");
-// OAuth callbacks go through the API server, not the web server
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-const OAUTH_PROVIDERS: {
+const OAUTH_PROVIDER_META: {
   id: OAuthProvider;
-  label: string;
-  description: string;
   callbackPath: string;
   consoleUrl: string;
-  consoleLabel: string;
 }[] = [
   {
     id: "google",
-    label: "Google",
-    description: "Sign in with Google accounts",
     callbackPath: "/auth/google/callback",
     consoleUrl: "https://console.cloud.google.com/apis/credentials",
-    consoleLabel: "Open Google Cloud Console",
   },
   {
     id: "github",
-    label: "GitHub",
-    // Register the PARENT path (with trailing slash) in the GitHub OAuth App's
-    // "Authorization callback URL" field. GitHub validates the actual
-    // redirect_uri at OAuth time using a subdirectory-match rule, so the
-    // single registration covers all three first-party flows:
-    //   /oauth/github/login/callback   — sign-in
-    //   /oauth/github/copilot/callback — Copilot AI provider
-    //   /oauth/github/repo/callback    — repo push/pull from the editor
-    // Registering a leaf callback (e.g. `/oauth/github/login/callback` only)
-    // makes GitHub reject the sibling Copilot + repo redirect URIs with
-    // "redirect_uri is not associated with this application".
-    description: "Sign-in + Copilot AI + repo push/pull — ONE OAuth App, register the parent URL below",
     callbackPath: "/oauth/github/",
     consoleUrl: "https://github.com/settings/developers",
-    consoleLabel: "Open GitHub Developer Settings",
   },
   {
     id: "supabase",
-    label: "Supabase",
-    description:
-      "Lets users authorize Doable to provision Supabase projects on their behalf when the AI builds a backend-enabled app. Without this, users see a sign-in prompt mid-build.",
     callbackPath: "/integrations/enhanced-auth/callback",
     consoleUrl: "https://supabase.com/dashboard/account/tokens",
-    consoleLabel: "Open Supabase OAuth Apps",
   },
 ];
 
 function deriveCallbackUrl(apiUrl: string, path: string): string {
-  // Strip trailing slash, compose callback
   const base = apiUrl.replace(/\/$/, "");
   return `${base}${path}`;
 }
 
 export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
+  const t = useTranslations("dashboard");
   const [states, setStates] = useState<Record<OAuthProvider, ProviderState>>({
     google: { expanded: false, clientId: "", clientSecret: "", showSecret: false, status: "idle", errorMsg: null },
     github: { expanded: false, clientId: "", clientSecret: "", showSecret: false, status: "idle", errorMsg: null },
@@ -109,11 +85,11 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
         method: "POST",
         body: JSON.stringify({ clientId: s.clientId.trim(), clientSecret: s.clientSecret.trim() }),
       });
-      update(id, { status: "success", clientId: "", clientSecret: "" }); // clear plaintext after save
+      update(id, { status: "success", clientId: "", clientSecret: "" });
     } catch (err) {
       update(id, {
         status: "error",
-        errorMsg: err instanceof Error ? err.message : "Could not save. Try again.",
+        errorMsg: err instanceof Error ? err.message : t("setup.signInProviders.saveError"),
       });
     }
   }
@@ -121,18 +97,20 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold text-foreground tracking-tight">Sign-in providers</h2>
+        <h2 className="text-2xl font-semibold text-foreground tracking-tight">
+          {t("setup.signInProviders.title")}
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Let your users sign in with Google or GitHub. Register the callback URL in each
-          provider&apos;s dashboard, then paste the credentials below.
+          {t("setup.signInProviders.description")}
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {OAUTH_PROVIDERS.map((p) => {
+        {OAUTH_PROVIDER_META.map((p) => {
           const s = states[p.id];
           const callbackUrl = deriveCallbackUrl(API_URL, p.callbackPath);
           const copyKey = `${p.id}-callback`;
+          const providerLabel = t(`setup.signInProviders.providers.${p.id}.label`);
 
           return (
             <div
@@ -142,7 +120,6 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                 s.expanded ? "border-brand-500/40" : "border-border",
               )}
             >
-              {/* Header row */}
               <button
                 type="button"
                 onClick={() => update(p.id, { expanded: !s.expanded })}
@@ -157,8 +134,12 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                     <div className="h-5 w-5 rounded-full border-2 border-border" />
                   )}
                   <div>
-                    <p className="text-sm font-medium text-foreground">Connect {p.label}</p>
-                    <p className="text-xs text-muted-foreground">{p.description}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {t("setup.signInProviders.connect", { provider: providerLabel })}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t(`setup.signInProviders.providers.${p.id}.description`)}
+                    </p>
                   </div>
                 </div>
                 {s.expanded ? (
@@ -168,14 +149,12 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                 )}
               </button>
 
-              {/* Expanded body */}
               {s.expanded && (
                 <div className="border-t border-border/60 px-4 pb-4 pt-3 flex flex-col gap-4">
-                  {/* Callback URL display */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <p className="text-xs font-medium text-foreground">
-                        1. Register this callback URL in the {p.label} developer console
+                        {t("setup.signInProviders.registerCallback", { provider: providerLabel })}
                       </p>
                       <a
                         href={p.consoleUrl}
@@ -183,7 +162,8 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-xs text-brand-400 hover:text-brand-300 underline-offset-2 hover:underline"
                       >
-                        {p.consoleLabel} <ExternalLink className="h-3 w-3" />
+                        {t(`setup.signInProviders.providers.${p.id}.consoleLabel`)}{" "}
+                        <ExternalLink className="h-3 w-3" />
                       </a>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
@@ -196,24 +176,25 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                         className="shrink-0 flex items-center gap-1 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                       >
                         {copied[copyKey] ? (
-                          <><Check className="h-3 w-3 text-green-500" /> Copied</>
+                          <><Check className="h-3 w-3 text-green-500" /> {t("common.copied")}</>
                         ) : (
-                          <><Copy className="h-3 w-3" /> Copy</>
+                          <><Copy className="h-3 w-3" /> {t("common.copy")}</>
                         )}
                       </button>
                     </div>
                   </div>
 
-                  {/* Credentials */}
                   {s.status !== "success" ? (
                     <div className="flex flex-col gap-3">
-                      <p className="text-xs font-medium text-foreground">2. Paste your credentials</p>
+                      <p className="text-xs font-medium text-foreground">
+                        {t("setup.signInProviders.pasteCredentials")}
+                      </p>
                       <div className="flex flex-col gap-2">
                         <input
                           type="text"
                           value={s.clientId}
                           onChange={(e) => update(p.id, { clientId: e.target.value, status: "idle" })}
-                          placeholder="Client ID"
+                          placeholder={t("setup.signInProviders.clientId")}
                           autoComplete="off"
                           className="h-9 rounded-md border border-input bg-background px-3 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                         />
@@ -222,7 +203,7 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                             type={s.showSecret ? "text" : "password"}
                             value={s.clientSecret}
                             onChange={(e) => update(p.id, { clientSecret: e.target.value, status: "idle" })}
-                            placeholder="Client Secret"
+                            placeholder={t("setup.signInProviders.clientSecret")}
                             autoComplete="new-password"
                             className="h-9 w-full rounded-md border border-input bg-background pr-9 pl-3 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                           />
@@ -252,13 +233,13 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
                         className="self-start bg-brand-600 text-white hover:bg-brand-500 gap-2"
                       >
                         {s.status === "saving" && <Loader2 className="h-3 w-3 animate-spin" />}
-                        {s.status === "saving" ? "Saving…" : "Save credentials"}
+                        {s.status === "saving" ? t("common.saving") : t("setup.signInProviders.saveCredentials")}
                       </Button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-green-500">
                       <Check className="h-4 w-4" />
-                      Credentials saved. Value masked for security.
+                      {t("setup.signInProviders.credentialsSaved")}
                     </div>
                   )}
                 </div>
@@ -269,13 +250,12 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
       </div>
 
       <div className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-xs text-muted-foreground">
-        Sign-in providers are optional. You can configure them later in{" "}
-        <span className="text-foreground font-medium">/admin</span>.
+        {t("setup.signInProviders.optionalNote")}
       </div>
 
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2 text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {t("common.back")}
         </Button>
         <div className="flex items-center gap-3">
           <button
@@ -283,10 +263,10 @@ export function Step3SignInProviders({ onNext, onBack, onSkip }: StepProps) {
             onClick={onSkip}
             className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
           >
-            Skip for now
+            {t("common.skipForNow")}
           </button>
           <Button onClick={onNext} className="bg-brand-600 text-white hover:bg-brand-500 gap-2">
-            Continue <ArrowRight className="h-4 w-4" />
+            {t("common.continue")} <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </div>

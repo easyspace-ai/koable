@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, X, Loader2, Save, Check, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { COLOR_OPTIONS, ICON_OPTIONS, InlineEdit } from "./env-shared";
@@ -14,6 +15,7 @@ export function CreateEnvironmentForm({
   onSubmit: (data: { name: string; description?: string; icon?: string; color?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
+  const t = useTranslations("environments");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("🔧");
@@ -29,30 +31,30 @@ export function CreateEnvironmentForm({
   return (
     <div className="rounded-lg border bg-muted/30">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold">New Environment</span>
+        <span className="text-xs font-semibold">{t("forms.create.title")}</span>
         <button onClick={onCancel} className="rounded-md p-1 hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
       </div>
       <div className="space-y-3 p-3">
         <div className="flex gap-2">
           <div className="flex flex-col items-center gap-1">
-            <label className="block text-xs font-medium text-muted-foreground">Icon</label>
+            <label className="block text-xs font-medium text-muted-foreground">{t("forms.create.iconLabel")}</label>
             <select value={icon} onChange={(e) => setIcon(e.target.value)} className="h-9 w-14 rounded-md border bg-background text-center text-lg">
               {ICON_OPTIONS.map((i) => <option key={i} value={i}>{i}</option>)}
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. React + Supabase" autoFocus
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t("forms.create.nameLabel")}</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("forms.create.namePlaceholder")} autoFocus
               className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground" />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Description</label>
-          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Full-stack environment with React, Tailwind, and Supabase tools"
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("forms.create.descriptionLabel")}</label>
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("forms.create.descriptionPlaceholder")}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Color</label>
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("forms.create.colorLabel")}</label>
           <div className="flex gap-1.5">
             {COLOR_OPTIONS.map((c) => (
               <button key={c.value} onClick={() => setColor(c.value)}
@@ -61,11 +63,11 @@ export function CreateEnvironmentForm({
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">Cancel</button>
+          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">{t("shared.cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !name.trim()}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
             {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-            <Save className="h-3 w-3" /> Create
+            <Save className="h-3 w-3" /> {t("shared.create")}
           </button>
         </div>
       </div>
@@ -80,6 +82,7 @@ export function EditMetaForm({ env, onSave, onCancel }: {
   onSave: (data: { name?: string; description?: string; icon?: string; color?: string }) => Promise<void>;
   onCancel: () => void;
 }) {
+  const t = useTranslations("environments");
   const [name, setName] = useState(env.name);
   const [description, setDescription] = useState(env.description);
   const [icon, setIcon] = useState(env.icon);
@@ -89,7 +92,7 @@ export function EditMetaForm({ env, onSave, onCancel }: {
   return (
     <div className="rounded-md border bg-muted/20 p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold">Edit Environment</span>
+        <span className="text-xs font-semibold">{t("forms.editMeta.title")}</span>
         <button onClick={onCancel} className="rounded p-0.5 hover:bg-muted"><X className="h-3 w-3" /></button>
       </div>
       <div className="flex gap-2">
@@ -98,7 +101,7 @@ export function EditMetaForm({ env, onSave, onCancel }: {
         </select>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="flex-1 rounded border bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring" />
       </div>
-      <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description"
+      <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("forms.editMeta.descriptionPlaceholder")}
         className="w-full rounded border bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring" />
       <div className="flex gap-1.5">
         {COLOR_OPTIONS.map((c) => (
@@ -107,10 +110,10 @@ export function EditMetaForm({ env, onSave, onCancel }: {
         ))}
       </div>
       <div className="flex justify-end gap-1">
-        <button onClick={onCancel} className="rounded border px-2 py-1 text-xs hover:bg-muted">Cancel</button>
+        <button onClick={onCancel} className="rounded border px-2 py-1 text-xs hover:bg-muted">{t("shared.cancel")}</button>
         <button onClick={async () => { setSaving(true); try { await onSave({ name, description, icon, color }); } finally { setSaving(false); } }}
           disabled={saving} className="flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-primary-foreground disabled:opacity-50">
-          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Save
+          {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} {t("shared.save")}
         </button>
       </div>
     </div>
@@ -127,6 +130,7 @@ export function InstructionsSection({
   hooks: ReturnType<typeof useEnvironments>;
   onReload: () => Promise<void>;
 }) {
+  const t = useTranslations("environments");
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
@@ -142,16 +146,16 @@ export function InstructionsSection({
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          <FileText className="h-3.5 w-3.5" /> Custom Instructions <span className="text-[10px]">({instructions.length})</span>
+          <FileText className="h-3.5 w-3.5" /> {t("forms.instructions.title")} <span className="text-[10px]">{t("forms.instructions.count", { count: instructions.length })}</span>
         </div>
         <button onClick={() => setAdding(!adding)}
           className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground">
-          <Plus className="h-3 w-3" /> Add
+          <Plus className="h-3 w-3" /> {t("forms.instructions.add")}
         </button>
       </div>
 
       {instructions.length === 0 && !adding && (
-        <p className="text-[11px] text-muted-foreground/60 italic pl-5">No custom instructions</p>
+        <p className="text-[11px] text-muted-foreground/60 italic pl-5">{t("forms.instructions.empty")}</p>
       )}
 
       {instructions.map((instr) => (
@@ -170,14 +174,14 @@ export function InstructionsSection({
 
       {adding && (
         <div className="rounded-md border bg-muted/20 p-2 space-y-2 mt-1">
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="coding-standards.md" autoFocus
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("forms.instructions.filenamePlaceholder")} autoFocus
             className="w-full rounded border bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring" />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="# Instructions\n\nAlways..." rows={4}
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t("forms.instructions.contentPlaceholder")} rows={4}
             className="w-full rounded border bg-background px-2 py-1 text-xs font-mono outline-none focus:ring-1 focus:ring-ring resize-none" />
           <div className="flex justify-end gap-1">
-            <button onClick={() => setAdding(false)} className="rounded border px-2 py-1 text-xs hover:bg-muted">Cancel</button>
+            <button onClick={() => setAdding(false)} className="rounded border px-2 py-1 text-xs hover:bg-muted">{t("shared.cancel")}</button>
             <button onClick={handleAdd} disabled={saving || !name.trim()} className="flex items-center gap-1 rounded bg-primary px-2 py-1 text-xs text-primary-foreground disabled:opacity-50">
-              {saving && <Loader2 className="h-3 w-3 animate-spin" />} Add
+              {saving && <Loader2 className="h-3 w-3 animate-spin" />} {t("shared.add")}
             </button>
           </div>
         </div>

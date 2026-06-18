@@ -15,6 +15,10 @@ const workspacesQ = workspaceQueries(sql);
  *
  * Sets `creditBalance` in context so downstream handlers can read it.
  * Returns 429 with credit info if insufficient credits.
+ *
+ * Policy: fail-closed on infrastructure errors — if credit state cannot be
+ * verified, the request is rejected with 503 rather than proceeding
+ * without enforcement (prevents unbounded AI usage during DB outages).
  */
 export function requireCredits(minCredits: number = 1) {
   return createMiddleware<
@@ -112,9 +116,8 @@ export function requireCredits(minCredits: number = 1) {
       await next();
     } catch (err) {
       console.error("[Credits] Failed to check credit balance:", err);
-      // Allow request to proceed on credit system failure — don't block users
-      // due to infrastructure issues
-      await next();
+      // Fail closed: block AI operations when credit state cannot be verified.
+      return c.json({ error: "Credit system temporarily unavailable" }, 503);
     }
   });
 }

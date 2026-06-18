@@ -25,12 +25,15 @@ export function negotiateLocale(acceptLanguage: string | null | undefined): Loca
   const tags = acceptLanguage
     .split(",")
     .map((part) => {
-      const [tag, qPart] = part.trim().split(";q=");
-      return { tag: tag.toLowerCase(), q: qPart ? parseFloat(qPart) : 1 };
+      const [rawTag, qPart] = part.trim().split(";q=");
+      const tag = rawTag?.toLowerCase() ?? "";
+      return { tag, q: qPart ? parseFloat(qPart) : 1 };
     })
+    .filter(({ tag }) => tag.length > 0)
     .sort((a, b) => b.q - a.q);
 
   for (const { tag } of tags) {
+    if (!tag) continue;
     if (tag.startsWith("zh")) return "zh-CN";
     if (tag.startsWith("en")) return "en";
   }

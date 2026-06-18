@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Check, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Plan } from "../hooks/use-billing";
@@ -18,6 +19,7 @@ export function PricingCards({
   onSelect,
   loading,
 }: PricingCardsProps) {
+  const t = useTranslations("dashboard");
   const [interval, setInterval] = useState<"monthly" | "yearly">("monthly");
 
   return (
@@ -34,7 +36,7 @@ export function PricingCards({
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Monthly
+            {t("billing.pricing.monthly")}
           </button>
           <button
             onClick={() => setInterval("yearly")}
@@ -45,9 +47,9 @@ export function PricingCards({
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            Yearly
+            {t("billing.pricing.yearly")}
             <span className="ml-1.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-400">
-              -20%
+              {t("billing.pricing.yearlyDiscount")}
             </span>
           </button>
         </div>
@@ -76,7 +78,7 @@ export function PricingCards({
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <div className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-3 py-1 text-xs font-medium text-white shadow-sm">
                     <Sparkles className="h-3 w-3" />
-                    Most Popular
+                    {t("billing.pricing.mostPopular")}
                   </div>
                 </div>
               )}
@@ -93,16 +95,16 @@ export function PricingCards({
                   ${Math.round(price)}
                 </span>
                 {plan.priceMonthly > 0 && (
-                  <span className="text-muted-foreground">/mo</span>
+                  <span className="text-muted-foreground">{t("billing.pricing.perMonth")}</span>
                 )}
                 {interval === "yearly" && plan.priceYearly > 0 && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Billed ${plan.priceYearly}/year
+                    {t("billing.pricing.billedYearly", { amount: plan.priceYearly })}
                   </p>
                 )}
                 {plan.priceMonthly === 0 && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Free forever
+                    {t("billing.pricing.freeForever")}
                   </p>
                 )}
               </div>
@@ -131,11 +133,11 @@ export function PricingCards({
                 {loading ? (
                   <Loader2 className="mx-auto h-4 w-4 animate-spin" />
                 ) : isCurrent ? (
-                  "Current Plan"
+                  t("billing.pricing.currentPlan")
                 ) : plan.id === "free" ? (
-                  "Free Forever"
+                  t("billing.pricing.freeForeverButton")
                 ) : (
-                  `Upgrade to ${plan.name}`
+                  t("billing.pricing.upgradeTo", { plan: plan.name })
                 )}
               </button>
             </div>

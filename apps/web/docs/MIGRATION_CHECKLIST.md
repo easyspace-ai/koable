@@ -334,3 +334,26 @@ cd apps/web && pnpm lint
 ```
 
 Manually verify locale switch shows Chinese on: login, dashboard home, setup wizard, workspace settings, credit display.
+
+---
+
+## Migration status (Phase 2)
+
+| File | Status |
+|------|--------|
+| `src/app/(auth)/login/page.tsx` | ✅ Done |
+| `src/app/(dashboard)/dashboard/page.tsx` | ✅ Done |
+| `src/app/(dashboard)/dashboard/dashboard-toolbar.tsx` | ✅ Done |
+| `src/components/dashboard/sidebar.tsx` | ✅ Partial — nav labels (Search, Templates, etc.) and upgrade CTA still English |
+| `src/modules/dashboard/components/sidebar.tsx` | ✅ Done |
+| `src/app/setup/WizardShell.tsx` | ✅ Done |
+| `src/app/setup/steps/Step1Welcome.tsx` | ✅ Done |
+| `src/app/(dashboard)/dashboard/dashboard-dialogs.tsx` | ⬜ P1 remaining |
+| `src/app/(dashboard)/dashboard/dashboard-context-menu.tsx` | ⬜ P1 remaining |
+| `src/app/(dashboard)/dashboard/dashboard-constants.ts` | ⬜ P1 remaining |
+| `src/app/(dashboard)/dashboard/dashboard-hooks.ts` | ⬜ P1 remaining |
+| `src/app/(dashboard)/dashboard/use-dashboard.ts` | ⬜ P1 remaining |
+| `src/app/setup/steps/Step3SignInProviders.tsx` | ⬜ P2 |
+| `src/app/setup/steps/Step4Integrations.tsx` | ⬜ P2 |
+| `src/app/setup/steps/StepCloudflare.tsx` | ⬜ P2 |
+| `src/app/setup/steps/Step2AIProvider.tsx` | ⬜ P2 (shell only) |

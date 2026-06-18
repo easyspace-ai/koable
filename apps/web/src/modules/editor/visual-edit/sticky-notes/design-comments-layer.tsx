@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { MessageCircle, Eye, EyeOff } from "lucide-react";
 import { useCollaboration } from "@/modules/collaboration/collaboration-context";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from "@/lib/i18n";
 import { useDesignComments } from "./use-design-comments";
 import {
   DesignCommentsOverlay,
@@ -29,6 +30,7 @@ export function DesignCommentsLayer({
   containerRef,
   active,
 }: DesignCommentsLayerProps) {
+  const { t } = useTranslation("editor");
   const { user } = useAuth();
   const { subscribe, send, joined } = useCollaboration();
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
@@ -88,7 +90,7 @@ export function DesignCommentsLayer({
                 ? "bg-muted/80 text-foreground"
                 : "bg-muted/60 text-muted-foreground hover:text-foreground"
             }`}
-            title={dc.showResolved ? "Hide resolved" : "Show resolved"}
+            title={dc.showResolved ? t("visualEdit.comments.hideResolved") : t("visualEdit.comments.showResolved")}
           >
             {dc.showResolved ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
           </button>
@@ -103,10 +105,10 @@ export function DesignCommentsLayer({
               ? "bg-brand-500 text-white shadow-md"
               : "bg-muted/80 text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
-          title={dc.commentMode ? "Cancel (Esc)" : "Add comment"}
+          title={dc.commentMode ? t("visualEdit.comments.cancelEsc") : t("visualEdit.comments.addComment")}
         >
           <MessageCircle className="w-3.5 h-3.5" />
-          <span>{dc.commentMode ? "Click to place" : commentCount > 0 ? `${commentCount}` : "Comment"}</span>
+          <span>{dc.commentMode ? t("visualEdit.comments.clickToPlace") : commentCount > 0 ? `${commentCount}` : t("visualEdit.comments.comment")}</span>
         </button>
       </div>
 

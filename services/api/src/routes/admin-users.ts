@@ -2,17 +2,14 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
 import { featureFlagQueries, creditQueries } from "@doable/db";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { WORKSPACE_PLANS, WORKSPACE_ROLES, PLAN_LIMITS } from "@doable/shared";
+import { tracedQuery } from "../db/traced.js";
 
 const featureFlags = featureFlagQueries(sql);
 const credits = creditQueries(sql);
 
 export const adminUserRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminUserRoutes.use("*", authMiddleware);
-adminUserRoutes.use("*", platformAdminMiddleware);
 
 // ─── Check admin status ────────────────────────────────────
 adminUserRoutes.get("/status", async (c) => {
@@ -28,32 +25,42 @@ adminUserRoutes.get("/users", async (c) => {
   const offset = Math.max(parseInt(c.req.query("offset") ?? "0", 10) || 0, 0);
   const searchPattern = `%${search}%`;
 
-  const rows = await sql<{
-    id: string; email: string; display_name: string | null;
-    is_platform_admin: boolean; platform_role: string | null; created_at: Date;
-    plan: string | null; workspace_id: string | null;
-    ai_source: string | null; model: string | null;
-    daily_credits: number | null; monthly_credits: number | null; rollover_credits: number | null;
-  }[]>`
-    SELECT
-      u.id, u.email, u.display_name, u.is_platform_admin, u.platform_role, u.created_at,
-      w.plan, w.id AS workspace_id,
-      was.default_source AS ai_source, was.default_copilot_model AS model,
-      COALESCE(cb.daily_credits, 0)    AS daily_credits,
-      COALESCE(cb.monthly_credits, 0)  AS monthly_credits,
-      COALESCE(cb.rollover_credits, 0) AS rollover_credits
-    FROM users u
-    LEFT JOIN workspaces w ON w.owner_id = u.id
-    LEFT JOIN workspace_ai_settings was ON was.workspace_id = w.id
-    LEFT JOIN credit_balances cb ON cb.workspace_id = w.id AND cb.user_id = u.id
-    WHERE (
-      ${search} = '' OR
-      u.email ILIKE ${searchPattern} OR
-      u.display_name ILIKE ${searchPattern}
-    )
-    ORDER BY u.created_at DESC
-    LIMIT ${limit} OFFSET ${offset}
-  `;
+  const rows = await tracedQuery("admin.users.list", "platform admin user list", () =>
+    sql<{
+      id: string;
+      email: string;
+      display_name: string | null;
+      is_platform_admin: boolean;
+      platform_role: string | null;
+      created_at: Date;
+      plan: string | null;
+      workspace_id: string | null;
+      ai_source: string | null;
+      model: string | null;
+      daily_credits: number | null;
+      monthly_credits: number | null;
+      rollover_credits: number | null;
+    }[]>`
+      SELECT
+        u.id, u.email, u.display_name, u.is_platform_admin, u.platform_role, u.created_at,
+        w.plan, w.id AS workspace_id,
+        was.default_source AS ai_source, was.default_copilot_model AS model,
+        COALESCE(cb.daily_credits, 0)    AS daily_credits,
+        COALESCE(cb.monthly_credits, 0)  AS monthly_credits,
+        COALESCE(cb.rollover_credits, 0) AS rollover_credits
+      FROM users u
+      LEFT JOIN workspaces w ON w.owner_id = u.id
+      LEFT JOIN workspace_ai_settings was ON was.workspace_id = w.id
+      LEFT JOIN credit_balances cb ON cb.workspace_id = w.id AND cb.user_id = u.id
+      WHERE (
+        ${search} = '' OR
+        u.email ILIKE ${searchPattern} OR
+        u.display_name ILIKE ${searchPattern}
+      )
+      ORDER BY u.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `,
+  );
 
   // BUG-ADMIN-012 (regression of BUG-ADMIN-005): return a flat snake_case
   // array. The sole consumer (apps/web/src/hooks/use-platform-admin.ts)

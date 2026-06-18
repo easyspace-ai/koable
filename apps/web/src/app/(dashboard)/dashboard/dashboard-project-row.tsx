@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   MoreHorizontal,
   Copy,
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ApiProject } from "@/lib/api";
 import { PROJECT_DRAG_TYPE } from "@/components/dashboard/sidebar";
-import { STATUS_STYLES, formatRelativeTime } from "./dashboard-constants";
+import { formatRelativeTime, getProjectStatusStyle } from "./dashboard-constants";
 import { ShareDialog } from "@/modules/discover/share-dialog";
 
 export function ProjectRow({
@@ -49,7 +50,9 @@ export function ProjectRow({
   isShared?: boolean;
   onSharedChanged?: () => void;
 }) {
-  const statusStyle = STATUS_STYLES[project.status] ?? STATUS_STYLES.draft!;
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
+  const statusStyle = getProjectStatusStyle(project.status, t);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   return (
@@ -119,17 +122,17 @@ export function ProjectRow({
           {isShared && (
             <span
               className="inline-flex items-center gap-0.5 rounded-full border border-emerald-500/40 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400"
-              title="Shared to Discover"
+              title={t("dashboard.projectActions.sharedToDiscover")}
             >
               <Compass className="h-2.5 w-2.5" />
-              Discover
+              {t("dashboard.projectActions.discover")}
             </span>
           )}
         </div>
       </td>
 
       {/* Updated */}
-      <td className="px-3 py-3 text-sm text-muted-foreground">{formatRelativeTime(project.updated_at)}</td>
+      <td className="px-3 py-3 text-sm text-muted-foreground">{formatRelativeTime(project.updated_at, locale, t)}</td>
 
       {/* Actions */}
       <td className="w-10 px-3 py-3" onClick={(e) => e.stopPropagation()}>
@@ -139,24 +142,24 @@ export function ProjectRow({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={onClick}>
-              <ExternalLink className="mr-2 h-3.5 w-3.5" /> Open in editor
+              <ExternalLink className="mr-2 h-3.5 w-3.5" /> {t("dashboard.contextMenu.openInEditor")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onRename}>
-              <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+              <Pencil className="mr-2 h-3.5 w-3.5" /> {t("common.rename")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onDuplicate}>
-              <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
+              <Copy className="mr-2 h-3.5 w-3.5" /> {t("dashboard.contextMenu.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onStar}>
-              <Star className="mr-2 h-3.5 w-3.5" /> {project.starred ? "Unstar" : "Star"}
+              <Star className="mr-2 h-3.5 w-3.5" /> {project.starred ? t("dashboard.contextMenu.unstar") : t("dashboard.contextMenu.star")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
               <Compass className="mr-2 h-3.5 w-3.5" />
-              {isShared ? "Update Discover listing" : "Share to Discover"}
+              {isShared ? t("dashboard.projectActions.updateDiscoverListing") : t("dashboard.projectActions.shareToDiscover")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-400 focus:bg-red-500/10 focus:text-red-400" onClick={onDelete}>
-              <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Pencil, X, Check, Loader2, Plus,
   CheckSquare, Square, Sparkles, BookOpen, Brain,
@@ -30,15 +31,18 @@ export function getColorClass(color: string) {
 
 export type EnvTab = "knowledge" | "skills" | "integrations" | "variables" | "settings";
 
-export const ENV_TABS: { key: EnvTab; label: string; icon: React.ReactNode }[] = [
-  { key: "integrations", label: "Integrations", icon: <Plug className="h-3.5 w-3.5" /> },
-  { key: "knowledge", label: "Knowledge", icon: <Brain className="h-3.5 w-3.5" /> },
-  { key: "skills", label: "Skills", icon: <Sparkles className="h-3.5 w-3.5" /> },
-  { key: "variables", label: "Variables", icon: <Key className="h-3.5 w-3.5" /> },
-  { key: "settings", label: "Settings", icon: <Boxes className="h-3.5 w-3.5" /> },
-];
-
 export const ENV_PANEL_MODE_KEY = "doable:env-panel-mode";
+
+export function useEnvTabs(): { key: EnvTab; label: string; icon: React.ReactNode }[] {
+  const t = useTranslations("environments");
+  return [
+    { key: "integrations", label: t("tabs.integrations"), icon: <Plug className="h-3.5 w-3.5" /> },
+    { key: "knowledge", label: t("tabs.knowledge"), icon: <Brain className="h-3.5 w-3.5" /> },
+    { key: "skills", label: t("tabs.skills"), icon: <Sparkles className="h-3.5 w-3.5" /> },
+    { key: "variables", label: t("tabs.variables"), icon: <Key className="h-3.5 w-3.5" /> },
+    { key: "settings", label: t("tabs.settings"), icon: <Boxes className="h-3.5 w-3.5" /> },
+  ];
+}
 
 // ─── Inline Edit ────────────────────────────────────────────
 
@@ -51,6 +55,7 @@ export function InlineEdit({
   placeholder?: string;
   className?: string;
 }) {
+  const t = useTranslations("environments");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -65,8 +70,8 @@ export function InlineEdit({
 
   if (!editing) {
     return (
-      <button onClick={() => setEditing(true)} className={cn("group/edit flex items-center gap-1 text-left rounded px-1 -mx-1 hover:bg-muted/60 min-w-0", className)} title="Click to edit">
-        <span className="truncate">{value || <span className="text-muted-foreground/50 italic">{placeholder ?? "Empty"}</span>}</span>
+      <button onClick={() => setEditing(true)} className={cn("group/edit flex items-center gap-1 text-left rounded px-1 -mx-1 hover:bg-muted/60 min-w-0", className)} title={t("shared.clickToEdit")}>
+        <span className="truncate">{value || <span className="text-muted-foreground/50 italic">{placeholder ?? t("shared.empty")}</span>}</span>
         <Pencil className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40 opacity-0 group-hover/edit:opacity-100" />
       </button>
     );
@@ -104,14 +109,18 @@ export function InlineEdit({
 // ─── Scope Badge ────────────────────────────────────────────
 
 export function ScopeBadge({ scope }: { scope: string }) {
+  const t = useTranslations("environments");
   const colors: Record<string, string> = {
     workspace: "bg-blue-500/15 text-blue-500 border-blue-500/20",
     project: "bg-green-500/15 text-green-500 border-green-500/20",
     user: "bg-purple-500/15 text-purple-500 border-purple-500/20",
   };
+  const label = scope === "workspace" || scope === "project" || scope === "user"
+    ? t(`shared.scope.${scope}`)
+    : scope;
   return (
     <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", colors[scope] ?? "")}>
-      {scope}
+      {label}
     </Badge>
   );
 }
@@ -122,13 +131,14 @@ export function ItemList({ title, icon, items, emptyMessage, onRemove }: {
   title: string; icon: React.ReactNode; items: { name: string; sub: string }[];
   emptyMessage?: string; onRemove?: (index: number) => void;
 }) {
+  const t = useTranslations("environments");
   return (
     <div>
       <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1">
-        {icon} {title} <span className="text-[10px]">({items.length})</span>
+        {icon} {title} <span className="text-[10px]">{t("shared.itemList.count", { count: items.length })}</span>
       </div>
       {items.length === 0 ? (
-        <p className="text-[11px] text-muted-foreground/60 italic pl-5">{emptyMessage ?? "None configured"}</p>
+        <p className="text-[11px] text-muted-foreground/60 italic pl-5">{emptyMessage ?? t("shared.itemList.defaultEmpty")}</p>
       ) : (
         <div className="pl-1 space-y-0.5">
           {items.map((item, i) => (
@@ -136,7 +146,7 @@ export function ItemList({ title, icon, items, emptyMessage, onRemove }: {
               <span className="font-medium truncate">{item.name}</span>
               <span className="text-[10px] text-muted-foreground truncate ml-auto max-w-[120px]">{item.sub}</span>
               {onRemove && (
-                <button onClick={() => onRemove(i)} className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-destructive transition-all" title="Remove">
+                <button onClick={() => onRemove(i)} className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-destructive transition-all" title={t("shared.itemList.removeTitle")}>
                   <X className="h-3 w-3" />
                 </button>
               )}
@@ -158,6 +168,7 @@ export function RefPicker<T extends { id: string }>({
   getLabel: (item: T) => string; getSubLabel?: (item: T) => string;
   onAdd: (id: string) => Promise<void>; onRemove: (id: string) => Promise<void>;
 }) {
+  const t = useTranslations("environments");
   const [showPicker, setShowPicker] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const includedIds = new Set(included.map((i) => i.id));
@@ -172,18 +183,18 @@ export function RefPicker<T extends { id: string }>({
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-          {icon} {title} <span className="text-[10px]">({included.length})</span>
+          {icon} {title} <span className="text-[10px]">{t("shared.refPicker.count", { count: included.length })}</span>
         </div>
         <button onClick={() => setShowPicker(!showPicker)}
           className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground">
           {showPicker ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {showPicker ? "Done" : "Edit"}
+          {showPicker ? t("shared.refPicker.done") : t("shared.refPicker.edit")}
         </button>
       </div>
 
       {!showPicker ? (
         included.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/60 italic pl-5">None selected</p>
+          <p className="text-[11px] text-muted-foreground/60 italic pl-5">{t("shared.refPicker.noneSelected")}</p>
         ) : (
           <div className="space-y-0.5 pl-1">
             {included.map((item) => (
@@ -198,7 +209,7 @@ export function RefPicker<T extends { id: string }>({
         <div className="rounded-md border bg-muted/10 p-2 space-y-0.5 max-h-48 overflow-y-auto">
           {available.length === 0 ? (
             <p className="text-[11px] text-muted-foreground/60 italic text-center py-2">
-              No {title.toLowerCase()} in workspace. Create them in the {title} panel first.
+              {t("shared.refPicker.emptyWorkspace", { titleLower: title.toLowerCase(), title })}
             </p>
           ) : (
             available.map((item) => {

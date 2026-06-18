@@ -4,6 +4,7 @@
  * Phase 2A — Supabase platform-managed provisioner dialog.
  */
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +40,7 @@ export function SupabaseProvisionDialog({
   reason,
   onClose,
 }: SupabaseProvisionDialogProps) {
+  const t = useTranslations("integrations");
   const [orgs, setOrgs] = useState<SupabaseOrganization[] | null>(null);
   const [orgsLoading, setOrgsLoading] = useState(false);
   const [orgsError, setOrgsError] = useState<string | null>(null);
@@ -90,7 +92,7 @@ export function SupabaseProvisionDialog({
       if (res.status === 412) { setOauthRequired(true); return false; }
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Failed to load orgs (${res.status})`);
+        throw new Error(body.error ?? t("supabaseDialog.errors.failedToLoadOrgs", { status: res.status }));
       }
       const data = (await res.json()) as { data: SupabaseOrganization[] };
       setOauthRequired(false);
@@ -104,7 +106,7 @@ export function SupabaseProvisionDialog({
     } finally {
       setOrgsLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   const fetchExistingProjects = useCallback(async (): Promise<void> => {
     try {
@@ -116,14 +118,14 @@ export function SupabaseProvisionDialog({
       if (res.status === 412) return;
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Failed to list projects (${res.status})`);
+        throw new Error(body.error ?? t("supabaseDialog.errors.failedToListProjects", { status: res.status }));
       }
       const data = (await res.json()) as { data: ExistingSupabaseProject[] };
       setExistingProjects(data.data);
     } catch (err) {
       setConnectExistingError(err instanceof Error ? err.message : String(err));
     }
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -148,17 +150,17 @@ export function SupabaseProvisionDialog({
       );
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Failed to start Supabase sign-in (${res.status})`);
+        throw new Error(body.error ?? t("supabaseDialog.errors.failedToStartSignIn", { status: res.status }));
       }
       const { authorizationUrl } = (await res.json()) as { authorizationUrl: string };
-      await openSupabaseOAuthPopup(authorizationUrl, fetchOrgs);
+      await openSupabaseOAuthPopup(authorizationUrl, fetchOrgs, t);
       await fetchOrgs();
     } catch (err) {
       setSignInError(err instanceof Error ? err.message : String(err));
     } finally {
       setSigningIn(false);
     }
-  }, [signingIn, workspaceId, fetchOrgs]);
+  }, [signingIn, workspaceId, fetchOrgs, t]);
 
   const handleConnectExisting = useCallback(
     async (picked: ExistingSupabaseProject) => {
@@ -177,7 +179,7 @@ export function SupabaseProvisionDialog({
         });
         if (!res.ok) {
           const body = (await res.json().catch(() => ({}))) as { error?: string };
-          throw new Error(body.error ?? `Failed to connect (${res.status})`);
+          throw new Error(body.error ?? t("supabaseDialog.errors.failedToConnect", { status: res.status }));
         }
         onClose(true);
       } catch (err) {
@@ -186,7 +188,7 @@ export function SupabaseProvisionDialog({
         setConnectingExistingRef(null);
       }
     },
-    [connectingExistingRef, projectId, onClose],
+    [connectingExistingRef, projectId, onClose, t],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -206,10 +208,10 @@ export function SupabaseProvisionDialog({
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Provisioning failed (${res.status})`);
+        throw new Error(body.error ?? t("supabaseDialog.errors.provisioningFailedWithStatus", { status: res.status }));
       }
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("No response body");
+      if (!reader) throw new Error(t("supabaseDialog.errors.noResponseBody"));
       const decoder = new TextDecoder();
       let buffer = "";
       let finished = false;
@@ -229,8 +231,9 @@ export function SupabaseProvisionDialog({
             if (parsed.type === "provision_progress" && parsed.data?.phase) {
               const phase = parsed.data.phase;
               const message = parsed.data.message ?? "";
-              if (phase === "error") { setError(message || "Provisioning failed"); }
-              else {
+              if (phase === "error") {
+                setError(message || t("supabaseDialog.errors.provisioningFailed"));
+              } else {
                 setProgress((prev) => [...prev, { phase, message }]);
                 if (phase === "done") setTimeout(() => onClose(true), 800);
               }
@@ -243,7 +246,7 @@ export function SupabaseProvisionDialog({
     } finally {
       setSubmitting(false);
     }
-  }, [orgId, region, name, projectId, submitting, onClose]);
+  }, [orgId, region, name, projectId, submitting, onClose, t]);
 
   const disabled = submitting || orgsLoading || !orgId;
   const showCreateNew = mode === "new" || !existingProjects || existingProjects.length === 0;
@@ -258,10 +261,9 @@ export function SupabaseProvisionDialog({
     >
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Connect Supabase</DialogTitle>
+          <DialogTitle>{t("supabaseDialog.title")}</DialogTitle>
           <DialogDescription>
-            {reason ??
-              "Pick an existing Supabase project from your organization, or let Doable create a brand-new one. Either way the API keys are wired up automatically."}
+            {reason ?? t("supabaseDialog.descriptionDefault")}
           </DialogDescription>
         </DialogHeader>
 
@@ -274,7 +276,7 @@ export function SupabaseProvisionDialog({
         ) : orgsLoading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Loading your Supabase organizations...
+            {t("supabaseDialog.loadingOrgs")}
           </div>
         ) : orgsError ? (
           <div className="flex items-start gap-2 py-4 text-sm text-red-600">
@@ -324,17 +326,17 @@ export function SupabaseProvisionDialog({
             onClick={() => onClose(false)}
             disabled={submitting || !!connectingExistingRef}
           >
-            Cancel
+            {t("supabaseDialog.actions.cancel")}
           </Button>
           {showCreateNew ? (
             <Button onClick={handleSubmit} disabled={disabled || oauthRequired}>
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  {t("supabaseDialog.actions.creating")}
                 </>
               ) : (
-                "Create project"
+                t("supabaseDialog.actions.createProject")
               )}
             </Button>
           ) : null}

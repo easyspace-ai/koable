@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Save,
@@ -13,8 +14,6 @@ import {
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
 import type { Workspace } from "@doable/shared";
-
-// ─── Section Card ───────────────────────────────────────────
 
 function SectionCard({
   title,
@@ -41,8 +40,6 @@ function SectionCard({
     </div>
   );
 }
-
-// ─── Info Item ──────────────────────────────────────────────
 
 function InfoItem({
   icon: Icon,
@@ -82,8 +79,6 @@ function InfoItem({
   );
 }
 
-// ─── General Tab ────────────────────────────────────────────
-
 export function GeneralTab({
   workspace,
   onUpdate,
@@ -96,6 +91,8 @@ export function GeneralTab({
   onUpdate: (updated: Workspace) => void;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [name, setName] = useState(workspace.name);
   const [description, setDescription] = useState(
     workspace.description ?? ""
@@ -121,11 +118,11 @@ export function GeneralTab({
         }
       );
       onUpdate(data);
-      addToast("success", "Workspace settings saved");
+      addToast("success", t("workspace.general.savedSuccess"));
     } catch (err) {
       addToast(
         "error",
-        err instanceof Error ? err.message : "Failed to save"
+        err instanceof Error ? err.message : t("workspace.general.saveFailed")
       );
     } finally {
       setSaving(false);
@@ -134,18 +131,18 @@ export function GeneralTab({
 
   return (
     <div className="space-y-6">
-      <SectionCard title="Workspace Details">
+      <SectionCard title={t("workspace.general.detailsTitle")}>
         <div className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="ws-name" className="text-sm font-medium">
-              Name
+              {t("common.name")}
             </label>
             <input
               id="ws-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Workspace"
+              placeholder={t("workspace.general.namePlaceholder")}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
@@ -155,21 +152,21 @@ export function GeneralTab({
               htmlFor="ws-description"
               className="text-sm font-medium"
             >
-              Description
+              {t("common.description")}
             </label>
             <textarea
               id="ws-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              placeholder="A brief description of your workspace"
+              placeholder={t("workspace.general.descriptionPlaceholder")}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
 
           <div className="flex items-center justify-between pt-2">
             <div className="text-sm text-muted-foreground">
-              {hasChanges && "You have unsaved changes"}
+              {hasChanges && t("workspace.general.unsavedChanges")}
             </div>
             <button
               onClick={() => void handleSave()}
@@ -186,56 +183,53 @@ export function GeneralTab({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? t("common.saving") : t("workspace.general.saveChanges")}
             </button>
           </div>
         </div>
       </SectionCard>
 
       <SectionCard
-        title="Workspace Information"
-        description="Read-only metadata about your workspace."
+        title={t("workspace.general.infoTitle")}
+        description={t("workspace.general.infoDescription")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoItem
             icon={Hash}
-            label="Workspace ID"
+            label={t("workspace.general.workspaceId")}
             value={workspace.id}
             mono
           />
           <InfoItem
             icon={Hash}
-            label="Slug"
+            label={t("workspace.general.slug")}
             value={workspace.slug}
             mono
           />
           <InfoItem
             icon={Calendar}
-            label="Created"
-            value={new Date(workspace.createdAt).toLocaleDateString(
-              "en-US",
-              {
+            label={t("workspace.general.created")}
+            value={new Date(workspace.createdAt).toLocaleDateString(locale, {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
-              }
-            )}
+            })}
           />
           <InfoItem
             icon={Crown}
-            label="Plan"
+            label={t("workspace.general.plan")}
             value={workspace.plan}
             badge
           />
           <InfoItem
             icon={Users}
-            label="Members"
+            label={t("workspace.general.members")}
             value={String(workspace.memberCount)}
           />
           <InfoItem
             icon={Shield}
-            label="Your Role"
-            value={workspace.userRole}
+            label={t("workspace.general.yourRole")}
+            value={t(`workspace.members.roles.${workspace.userRole}`)}
             badge
           />
         </div>

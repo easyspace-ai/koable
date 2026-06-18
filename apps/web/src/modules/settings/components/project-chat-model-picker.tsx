@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, RefreshCw } from "lucide-react";
 
 import { apiFetch } from "@/lib/api";
@@ -40,6 +41,7 @@ export function ProjectChatModelPicker({
   defaultModel,
   onChange,
 }: Props) {
+  const t = useTranslations("settings");
   const { accounts, loading: accountsLoading } = useGitHubAccounts(workspaceId);
   const { providers, loading: providersLoading } = useCustomProviders(workspaceId);
 
@@ -158,8 +160,8 @@ export function ProjectChatModelPicker({
   };
 
   const inheritLabel = defaultModel
-    ? `Inherit workspace default (${defaultModel})`
-    : "Inherit workspace default";
+    ? t("chatModelPicker.inheritDefault", { model: defaultModel })
+    : t("chatModelPicker.inheritDefaultNoModel");
 
   const showModelDropdown =
     state.source === "custom" &&
@@ -187,7 +189,7 @@ export function ProjectChatModelPicker({
           />
           <p className="text-sm font-medium">{inheritLabel}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Use the model configured in AI Settings for this workspace.
+            {t("chatModelPicker.inheritDescription")}
           </p>
         </label>
         <label
@@ -205,9 +207,9 @@ export function ProjectChatModelPicker({
             className="sr-only"
             data-testid="chat-model-override-mode"
           />
-          <p className="text-sm font-medium">Override for this project</p>
+          <p className="text-sm font-medium">{t("chatModelPicker.overrideTitle")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Pick a provider and model from your workspace catalog.
+            {t("chatModelPicker.overrideDescription")}
           </p>
         </label>
       </div>
@@ -217,13 +219,13 @@ export function ProjectChatModelPicker({
           {(accountsLoading || providersLoading) && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading providers…
+              {t("chatModelPicker.loadingProviders")}
             </div>
           )}
 
           <div>
             <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Provider source
+              {t("chatModelPicker.providerSource")}
             </label>
             <div className="flex w-fit overflow-hidden rounded-lg border border-border">
               <button
@@ -237,7 +239,7 @@ export function ProjectChatModelPicker({
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                GitHub Copilot
+                {t("chatModelPicker.githubCopilot")}
               </button>
               <button
                 type="button"
@@ -250,7 +252,7 @@ export function ProjectChatModelPicker({
                     : "bg-secondary text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Custom provider
+                {t("chatModelPicker.customProvider")}
               </button>
             </div>
           </div>
@@ -260,7 +262,7 @@ export function ProjectChatModelPicker({
               <>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                    Account
+                    {t("chatModelPicker.account")}
                   </label>
                   <select
                     value={state.copilotAccountId}
@@ -270,7 +272,7 @@ export function ProjectChatModelPicker({
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-brand-500"
                     data-testid="chat-model-copilot-account"
                   >
-                    <option value="">Server default</option>
+                    <option value="">{t("chatModelPicker.serverDefault")}</option>
                     {validAccounts.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.label} (@{a.github_login})
@@ -280,11 +282,11 @@ export function ProjectChatModelPicker({
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                    Model
+                    {t("chatModelPicker.model")}
                   </label>
                   {copilotModelsLoading ? (
                     <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Loading models…
+                      <Loader2 className="h-3 w-3 animate-spin" /> {t("chatModelPicker.loadingModels")}
                     </div>
                   ) : (
                     <select
@@ -293,7 +295,7 @@ export function ProjectChatModelPicker({
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-brand-500"
                       data-testid="chat-model-copilot-model"
                     >
-                      <option value="">Select a model…</option>
+                      <option value="">{t("chatModelPicker.selectModel")}</option>
                       {copilotModels
                         .filter((m) => m.id !== "")
                         .map((m) => (
@@ -309,7 +311,7 @@ export function ProjectChatModelPicker({
               <>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                    Provider
+                    {t("chatModelPicker.provider")}
                   </label>
                   <select
                     value={state.providerId}
@@ -319,7 +321,7 @@ export function ProjectChatModelPicker({
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-brand-500"
                     data-testid="chat-model-provider"
                   >
-                    <option value="">Select a provider…</option>
+                    <option value="">{t("chatModelPicker.selectProvider")}</option>
                     {validProviders.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.label} ({p.provider_type})
@@ -328,9 +330,9 @@ export function ProjectChatModelPicker({
                   </select>
                   {validProviders.length === 0 && (
                     <p className="mt-1 text-[10px] text-muted-foreground">
-                      No workspace providers configured. Add one in{" "}
+                      {t("chatModelPicker.noProviders")}{" "}
                       <a href="/ai-settings" className="text-brand-400 underline">
-                        AI Settings
+                        {t("chatModelPicker.aiSettingsLink")}
                       </a>
                       .
                     </p>
@@ -338,22 +340,22 @@ export function ProjectChatModelPicker({
                 </div>
                 <div>
                   <div className="mb-1.5 flex items-center justify-between">
-                    <label className="text-xs font-medium text-muted-foreground">Model</label>
+                    <label className="text-xs font-medium text-muted-foreground">{t("chatModelPicker.model")}</label>
                     {state.providerId && (
                       <button
                         type="button"
                         onClick={refreshProviderModels}
                         className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
-                        title="Refresh model list"
+                        title={t("chatModelPicker.refreshTitle")}
                       >
                         <RefreshCw className="h-3 w-3" />
-                        Refresh
+                        {t("chatModelPicker.refresh")}
                       </button>
                     )}
                   </div>
                   {providerModelsLoading && state.providerId ? (
                     <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" /> Loading models…
+                      <Loader2 className="h-3 w-3 animate-spin" /> {t("chatModelPicker.loadingModels")}
                     </div>
                   ) : showModelDropdown ? (
                     <>
@@ -363,12 +365,12 @@ export function ProjectChatModelPicker({
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-brand-500"
                         data-testid="chat-model-provider-model"
                       >
-                        <option value="">Select a model…</option>
+                        <option value="">{t("chatModelPicker.selectModel")}</option>
                         {providerModels.map((m) => (
                           <option key={m.id} value={m.id}>
                             {m.name || m.id}
-                            {m.supportsVision ? " [vision]" : ""}
-                            {m.supportsTools ? " [tools]" : ""}
+                            {m.supportsVision ? t("chatModelPicker.visionSuffix") : ""}
+                            {m.supportsTools ? t("chatModelPicker.toolsSuffix") : ""}
                           </option>
                         ))}
                       </select>
@@ -381,8 +383,8 @@ export function ProjectChatModelPicker({
                   ) : (
                     <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
                       {state.providerId
-                        ? "No models discovered yet. Click Refresh or check the provider in AI Settings."
-                        : "Select a provider first."}
+                        ? t("chatModelPicker.noModelsDiscovered")
+                        : t("chatModelPicker.selectProviderFirst")}
                     </p>
                   )}
                 </div>
@@ -392,8 +394,7 @@ export function ProjectChatModelPicker({
 
           {value && !modelFromState(state) && (
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              Current saved override: <span className="font-mono">{value}</span> — pick a model above
-              to update it.
+              {t("chatModelPicker.currentOverride", { model: value })}
             </p>
           )}
         </div>

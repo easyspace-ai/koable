@@ -10,8 +10,7 @@ import {
   Maximize2,
   Minimize2,
 } from "lucide-react";
-
-// ─── Types ──────────────────────────────────────────────────
+import { useTranslation } from "@/lib/i18n";
 
 interface SpacingValues {
   top: string;
@@ -26,8 +25,6 @@ interface SpacingEditorProps {
   onMarginChange: (value: SpacingValues) => void;
   onPaddingChange: (value: SpacingValues) => void;
 }
-
-// ─── Sub-Components ─────────────────────────────────────────
 
 function SpacingInput({
   value,
@@ -59,11 +56,13 @@ function SpacingGroup({
   values,
   onChange,
   expanded,
+  sideLabels,
 }: {
   label: string;
   values: SpacingValues;
   onChange: (values: SpacingValues) => void;
   expanded: boolean;
+  sideLabels: SpacingValues;
 }) {
   const handleSideChange = (side: keyof SpacingValues, val: string) => {
     onChange({ ...values, [side]: val });
@@ -91,36 +90,14 @@ function SpacingGroup({
         {label}
       </span>
       <div className="grid grid-cols-4 gap-1.5">
-        <SpacingInput
-          value={values.top}
-          icon={ArrowUp}
-          label="Top"
-          onChange={(v) => handleSideChange("top", v)}
-        />
-        <SpacingInput
-          value={values.right}
-          icon={ArrowRight}
-          label="Right"
-          onChange={(v) => handleSideChange("right", v)}
-        />
-        <SpacingInput
-          value={values.bottom}
-          icon={ArrowDown}
-          label="Bottom"
-          onChange={(v) => handleSideChange("bottom", v)}
-        />
-        <SpacingInput
-          value={values.left}
-          icon={ArrowLeft}
-          label="Left"
-          onChange={(v) => handleSideChange("left", v)}
-        />
+        <SpacingInput value={values.top} icon={ArrowUp} label={sideLabels.top} onChange={(v) => handleSideChange("top", v)} />
+        <SpacingInput value={values.right} icon={ArrowRight} label={sideLabels.right} onChange={(v) => handleSideChange("right", v)} />
+        <SpacingInput value={values.bottom} icon={ArrowDown} label={sideLabels.bottom} onChange={(v) => handleSideChange("bottom", v)} />
+        <SpacingInput value={values.left} icon={ArrowLeft} label={sideLabels.left} onChange={(v) => handleSideChange("left", v)} />
       </div>
     </div>
   );
 }
-
-// ─── Component ──────────────────────────────────────────────
 
 export function SpacingEditor({
   margin,
@@ -128,18 +105,25 @@ export function SpacingEditor({
   onMarginChange,
   onPaddingChange,
 }: SpacingEditorProps) {
+  const { t } = useTranslation("editor");
   const [expanded, setExpanded] = useState(true);
+
+  const sideLabels = {
+    top: t("visualEdit.spacing.top"),
+    right: t("visualEdit.spacing.right"),
+    bottom: t("visualEdit.spacing.bottom"),
+    left: t("visualEdit.spacing.left"),
+  };
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      {/* Section Header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Move className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="flex-1 text-xs font-medium text-foreground">Spacing</span>
+        <span className="flex-1 text-xs font-medium text-foreground">{t("visualEdit.spacing.title")}</span>
         <button
           onClick={() => setExpanded((prev) => !prev)}
           className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          title={expanded ? "Collapse inputs" : "Expand inputs"}
+          title={expanded ? t("visualEdit.spacing.collapseInputs") : t("visualEdit.spacing.expandInputs")}
         >
           {expanded ? (
             <Minimize2 className="h-3 w-3" />
@@ -149,22 +133,23 @@ export function SpacingEditor({
         </button>
       </div>
 
-      {/* Content */}
       <div className="space-y-3 px-3 pb-3">
         <SpacingGroup
-          label="Margin"
+          label={t("visualEdit.spacing.margin")}
           values={margin}
           onChange={onMarginChange}
           expanded={expanded}
+          sideLabels={sideLabels}
         />
 
         <div className="border-t border-border" />
 
         <SpacingGroup
-          label="Padding"
+          label={t("visualEdit.spacing.padding")}
           values={padding}
           onChange={onPaddingChange}
           expanded={expanded}
+          sideLabels={sideLabels}
         />
       </div>
     </div>

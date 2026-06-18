@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -34,42 +35,48 @@ interface GitHubButtonProps {
 
 // ─── Helpers ────────────────────────────────────────────────
 
-function getStatusIndicator(status: SyncStatus | null): {
+function getStatusIndicator(
+  status: SyncStatus | null,
+  t: (key: string) => string,
+): {
   color: string;
   label: string;
 } {
   if (!status || !status.connected) {
-    return { color: "bg-gray-400", label: "Not connected" };
+    return { color: "bg-gray-400", label: t("github.notConnected") };
   }
 
   switch (status.status) {
     case "synced":
-      return { color: "bg-green-500", label: "Synced" };
+      return { color: "bg-green-500", label: t("github.synced") };
     case "ahead":
-      return { color: "bg-blue-500", label: "Ahead" };
+      return { color: "bg-blue-500", label: t("github.ahead") };
     case "behind":
-      return { color: "bg-amber-500", label: "Behind" };
+      return { color: "bg-amber-500", label: t("github.behind") };
     case "diverged":
     case "conflict":
-      return { color: "bg-red-500", label: "Diverged" };
+      return { color: "bg-red-500", label: t("github.diverged") };
     default:
-      return { color: "bg-gray-400", label: "Disconnected" };
+      return { color: "bg-gray-400", label: t("github.disconnected") };
   }
 }
 
-function formatLastSync(dateStr: string | null): string {
-  if (!dateStr) return "Never";
+function formatLastSync(
+  dateStr: string | null,
+  t: (key: string, values?: Record<string, string | number>) => string,
+): string {
+  if (!dateStr) return t("github.never");
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60_000);
 
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) return t("github.justNow");
+  if (diffMins < 60) return t("github.minutesAgo", { count: diffMins });
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) return t("github.hoursAgo", { count: diffHours });
   const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+  return t("github.daysAgo", { count: diffDays });
 }
 
 // ─── Component ──────────────────────────────────────────────
@@ -87,12 +94,13 @@ export function GitHubButton({
   error,
   onClearError,
 }: GitHubButtonProps) {
+  const { t } = useTranslation("editor");
   const [menuOpen, setMenuOpen] = useState(false);
   const [commitMessage, setCommitMessage] = useState("");
   const [showCommitInput, setShowCommitInput] = useState(false);
   const [showForceOption, setShowForceOption] = useState(false);
 
-  const indicator = getStatusIndicator(status);
+  const indicator = useMemo(() => getStatusIndicator(status, t), [status, t]);
   const isConnected = status?.connected ?? false;
   const isBusy = pushing || pulling;
   const isDiverged = status?.status === "diverged" || status?.status === "conflict";
@@ -139,11 +147,11 @@ export function GitHubButton({
         {/* Status dot */}
         <span className={`h-2 w-2 rounded-full ${indicator.color}`} />
 
-        <span>{isConnected ? indicator.label : "Connect GitHub"}</span>
+        <span>{isConnected ? indicator.label : t("github.connect")}</span>
 
         {isBusy && (
           <span className="ml-1 text-xs text-muted-foreground">
-            {pushing ? "Pushing..." : "Pulling..."}
+            {pushing ? t("github.pushing") : t("github.pulling")}
           </span>
         )}
       </button>
@@ -158,7 +166,7 @@ export function GitHubButton({
                 {status?.branch ?? "main"}
               </span>
               <span className="text-xs text-muted-foreground">
-                {formatLastSync(status?.lastSyncedAt ?? null)}
+                {formatLastSync(status?.lastSyncedAt ?? null, t)}
               </span>
             </div>
             {status?.repoUrl && (
@@ -176,12 +184,12 @@ export function GitHubButton({
               <div className="mt-1.5 flex items-center gap-2 text-xs">
                 {(status?.aheadCount ?? 0) > 0 && (
                   <span className="text-blue-600">
-                    {status?.aheadCount} ahead
+                    {t("github.aheadCount", { count: status?.aheadCount ?? 0 })}
                   </span>
                 )}
                 {(status?.behindCount ?? 0) > 0 && (
                   <span className="text-amber-600">
-                    {status?.behindCount} behind
+                    {t("github.behindCount", { count: status?.behindCount ?? 0 })}
                   </span>
                 )}
               </div>
@@ -199,7 +207,7 @@ export function GitHubButton({
           {isDiverged && (
             <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
               <p className="text-xs text-amber-800">
-                Remote has changes not in your local project. Pull first, or force push to overwrite.
+                {t("github.divergedWarning")}
               </p>
             </div>
           )}
@@ -211,7 +219,7 @@ export function GitHubButton({
                 type="text"
                 value={commitMessage}
                 onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Commit message..."
+                placeholder={t("github.commitPlaceholder")}
                 className="w-full rounded-md border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 autoFocus
                 onKeyDown={(e) => {
@@ -225,23 +233,23 @@ export function GitHubButton({
                   onClick={() => void handlePush()}
                   disabled={!commitMessage.trim() || pushing}
                 >
-                  {pushing ? "Pushing..." : "Push"}
+                  {pushing ? t("github.pushing") : t("github.push")}
                 </button>
                 {isDiverged && (
                   <button
                     className="rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
                     onClick={() => void handlePush(true)}
                     disabled={!commitMessage.trim() || pushing}
-                    title="Force push (overwrites remote)"
+                    title={t("github.forcePushTitle")}
                   >
-                    Force
+                    {t("github.force")}
                   </button>
                 )}
                 <button
                   className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-accent"
                   onClick={() => setShowCommitInput(false)}
                 >
-                  Cancel
+                  {t("github.cancel")}
                 </button>
               </div>
             </div>
@@ -252,14 +260,14 @@ export function GitHubButton({
                 onClick={() => setShowCommitInput(true)}
                 disabled={isBusy}
               >
-                Push to GitHub
+                {t("github.pushToGitHub")}
               </button>
               <button
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
                 onClick={() => void handlePull()}
                 disabled={isBusy}
               >
-                {pulling ? "Pulling..." : "Pull from GitHub"}
+                {pulling ? t("github.pulling") : t("github.pullFromGitHub")}
               </button>
             </>
           )}
@@ -273,7 +281,7 @@ export function GitHubButton({
               setMenuOpen(false);
             }}
           >
-            Disconnect
+            {t("github.disconnect")}
           </button>
         </div>
       )}

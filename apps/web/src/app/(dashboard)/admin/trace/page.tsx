@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Activity, Loader2, ShieldCheck } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "./_components/search-form";
 import { ResultsTable, type TraceRow } from "./_components/results-table";
@@ -19,6 +20,7 @@ import { ResultsTable, type TraceRow } from "./_components/results-table";
 function AdminTracePageInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
   const [traces, setTraces] = useState<TraceRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ function AdminTracePageInner() {
         if (!cancelled) setTraces(res.traces);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load traces");
+          setError(err instanceof Error ? err.message : t("trace.loadFailed"));
           setTraces([]);
         }
       } finally {
@@ -51,7 +53,7 @@ function AdminTracePageInner() {
     return () => {
       cancelled = true;
     };
-  }, [isPlatformAdmin, queryString]);
+  }, [isPlatformAdmin, queryString, t]);
 
   if (adminLoading) {
     return (
@@ -64,9 +66,9 @@ function AdminTracePageInner() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
         <ShieldCheck className="h-12 w-12" />
-        <p className="font-medium text-foreground">Platform admin access required</p>
+        <p className="font-medium text-foreground">{t("trace.accessRequired")}</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> {t("page.backToDashboard")}
         </Button>
       </div>
     );
@@ -80,15 +82,15 @@ function AdminTracePageInner() {
             href="/admin"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Admin
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("trace.adminBreadcrumb")}
           </Link>
         </div>
         <h1 className="mb-1 flex items-center gap-2 text-2xl font-bold text-foreground">
           <Activity className="h-6 w-6 text-brand-400" />
-          Trace search
+          {t("trace.searchTitle")}
         </h1>
         <p className="mb-6 text-sm text-muted-foreground">
-          Search traces across services. Click a row to open the flame graph.
+          {t("trace.searchDescription")}
         </p>
 
         <div className="mb-6">

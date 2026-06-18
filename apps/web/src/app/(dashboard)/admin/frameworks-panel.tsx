@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { Loader2, Globe, Atom } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 interface FrameworkInfo {
   id: string;
@@ -19,6 +20,7 @@ const FRAMEWORK_ICONS: Record<string, typeof Globe> = {
 };
 
 export function FrameworksPanel() {
+  const { t } = useTranslation("admin");
   const [frameworks, setFrameworks] = useState<FrameworkInfo[]>([]);
   const [defaultFramework, setDefaultFramework] = useState<string>("vite-react");
   const [loading, setLoading] = useState(true);
@@ -32,38 +34,16 @@ export function FrameworksPanel() {
       const res = await apiFetch<{ frameworks: FrameworkInfo[]; defaultFramework: string }>("/admin/frameworks");
       setFrameworks(res.frameworks);
       setDefaultFramework(res.defaultFramework);
-    } catch (err) {
-      setError("Failed to load framework settings");
+    } catch {
+      setError(t("frameworks.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
-  const handleToggle = useCallback(async (id: string) => {
-    const updated = frameworks.map((f) =>
-      f.id === id ? { ...f, enabled: !f.enabled } : f
-    );
-    // Must have at least one enabled
-    if (updated.filter((f) => f.enabled).length === 0) {
-      setError("At least one framework must remain enabled");
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-    setFrameworks(updated);
-    await save(updated, defaultFramework);
-  }, [frameworks, defaultFramework]);
-
-  const handleSetDefault = useCallback(async (id: string) => {
-    // Can only set default to an enabled framework
-    const fw = frameworks.find((f) => f.id === id);
-    if (!fw?.enabled) return;
-    setDefaultFramework(id);
-    await save(frameworks, id);
-  }, [frameworks]);
-
-  const save = async (fws: FrameworkInfo[], defFw: string) => {
+  const save = useCallback(async (fws: FrameworkInfo[], defFw: string) => {
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -76,14 +56,34 @@ export function FrameworksPanel() {
           defaultFramework: defFw,
         }),
       });
-      setSuccess("Framework settings saved");
+      setSuccess(t("frameworks.saveSuccess"));
       setTimeout(() => setSuccess(null), 3000);
     } catch {
-      setError("Failed to save framework settings");
+      setError(t("frameworks.saveFailed"));
     } finally {
       setSaving(false);
     }
-  };
+  }, [t]);
+
+  const handleToggle = useCallback(async (id: string) => {
+    const updated = frameworks.map((f) =>
+      f.id === id ? { ...f, enabled: !f.enabled } : f
+    );
+    if (updated.filter((f) => f.enabled).length === 0) {
+      setError(t("frameworks.minOneEnabled"));
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    setFrameworks(updated);
+    await save(updated, defaultFramework);
+  }, [frameworks, defaultFramework, save, t]);
+
+  const handleSetDefault = useCallback(async (id: string) => {
+    const fw = frameworks.find((f) => f.id === id);
+    if (!fw?.enabled) return;
+    setDefaultFramework(id);
+    await save(frameworks, id);
+  }, [frameworks, save]);
 
   if (loading) {
     return (
@@ -97,9 +97,9 @@ export function FrameworksPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-foreground">Project Frameworks</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("frameworks.title")}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Control which project types users can create. Disabled frameworks won&apos;t appear in the project creation dialog.
+            {t("frameworks.description")}
           </p>
         </div>
         {saving && <Loader2 className="h-4 w-4 animate-spin text-brand-400" />}
@@ -136,7 +136,7 @@ export function FrameworksPanel() {
                     <span className="text-xs text-muted-foreground">({fw.category})</span>
                     {fw.isDefault && fw.enabled && (
                       <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-medium text-brand-400">
-                        Default
+                        {t("frameworks.badge.default")}
                       </span>
                     )}
                   </div>
@@ -150,7 +150,7 @@ export function FrameworksPanel() {
                     onClick={() => handleSetDefault(fw.id)}
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Set as default
+                    {t("frameworks.actions.setAsDefault")}
                   </button>
                 )}
                 <button
@@ -158,7 +158,7 @@ export function FrameworksPanel() {
                   className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                     fw.enabled ? "bg-brand-500" : "bg-muted-foreground/30"
                   }`}
-                  aria-label={`${fw.enabled ? "Disable" : "Enable"} ${fw.name}`}
+                  aria-label={fw.enabled ? t("frameworks.aria.disable", { name: fw.name }) : t("frameworks.aria.enable", { name: fw.name })}
                 >
                   <span
                     className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
@@ -173,8 +173,7 @@ export function FrameworksPanel() {
       </div>
 
       <p className="text-xs text-muted-foreground/70 pt-2">
-        Changes take effect immediately. Existing projects using a disabled framework will continue to work,
-        but new projects cannot be created with it.
+        {t("frameworks.footer")}
       </p>
     </div>
   );

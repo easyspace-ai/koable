@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStoredTokens } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Shared Types & Helpers ─────────────────────────────────
 
@@ -21,15 +22,29 @@ export interface ContextFile {
 
 const AUTO_SAVE_DELAY = 2500;
 
-const FILE_DESCRIPTIONS: Record<string, string> = {
-  "knowledge.md": "Tech stack, conventions, domain terms",
-  "instructions.md": "Rules for the AI to follow",
-  "identity.md": "Brand voice and personality",
-  "soul.md": "Core values and mission",
-  "memory.md": "Persistent facts and preferences",
-  "user.md": "User context and background",
-  "plan.md": "Project roadmap and milestones",
-};
+const KNOWN_FILES = [
+  "knowledge.md",
+  "instructions.md",
+  "identity.md",
+  "soul.md",
+  "memory.md",
+  "user.md",
+  "plan.md",
+] as const;
+
+function filenameToDescriptionKey(filename: string): string {
+  return filename.replace(/\./g, "_");
+}
+
+function getFileDescription(
+  filename: string,
+  t: (key: string) => string,
+): string {
+  if ((KNOWN_FILES as readonly string[]).includes(filename)) {
+    return t(`knowledge.fileDescriptions.${filenameToDescriptionKey(filename)}`);
+  }
+  return t("knowledge.customContextFile");
+}
 
 function getAuthHeaders(): Record<string, string> {
   const { accessToken } = getStoredTokens();
@@ -53,6 +68,7 @@ export function AddFileDialog({
   onCancel: () => void;
   existingFiles: string[];
 }) {
+  const { t } = useTranslation("editor");
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -73,18 +89,18 @@ export function AddFileDialog({
   return (
     <form onSubmit={handleSubmit} className="px-4 py-3 border-b border-border bg-muted/30">
       <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-        New Knowledge File
+        {t("knowledge.newKnowledgeFile")}
       </label>
       <input
         ref={inputRef}
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="e.g. style-guide, api-docs"
+        placeholder={t("knowledge.namePlaceholder")}
         className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
         spellCheck={false}
       />
       {isDuplicate && (
-        <p className="mt-1 text-xs text-destructive">File already exists.</p>
+        <p className="mt-1 text-xs text-destructive">{t("knowledge.fileExists")}</p>
       )}
       {filename && !isDuplicate && (
         <p className="mt-1 text-xs text-muted-foreground font-mono">
@@ -97,14 +113,14 @@ export function AddFileDialog({
           disabled={!isValid}
           className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Create
+          {t("knowledge.create")}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="rounded-md px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
         >
-          Cancel
+          {t("pages.cancel")}
         </button>
       </div>
     </form>
@@ -124,6 +140,7 @@ export function FileEditorView({
   apiBaseUrl: string;
   onBack: () => void;
 }) {
+  const { t } = useTranslation("editor");
   const [content, setContent] = useState(file.content);
   const [originalContent, setOriginalContent] = useState(file.content);
   const [saving, setSaving] = useState(false);
@@ -146,16 +163,16 @@ export function FileEditorView({
             body: JSON.stringify({ content: contentToSave }),
           }
         );
-        if (!res.ok) throw new Error("Failed to save");
+        if (!res.ok) throw new Error(t("knowledge.saveFailed"));
         setOriginalContent(contentToSave);
         setLastSaved(new Date().toLocaleTimeString());
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Save failed");
+        setError(err instanceof Error ? err.message : t("knowledge.saveFailed"));
       } finally {
         setSaving(false);
       }
     },
-    [projectId, apiBaseUrl, file.filename]
+    [projectId, apiBaseUrl, file.filename, t]
   );
 
   // Auto-save
@@ -198,7 +215,7 @@ export function FileEditorView({
         <button
           onClick={onBack}
           className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          title="Back to file list"
+          title={t("knowledge.backToList")}
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -207,12 +224,12 @@ export function FileEditorView({
             {file.filename}
           </h3>
           <p className="text-[10px] text-muted-foreground">
-            {FILE_DESCRIPTIONS[file.filename] ?? "Custom context file"}
+            {getFileDescription(file.filename, t)}
           </p>
         </div>
         <div className="flex items-center gap-1">
           {dirty && (
-            <span className="text-[10px] text-amber-500 mr-1">unsaved</span>
+            <span className="text-[10px] text-amber-500 mr-1">{t("knowledge.unsaved")}</span>
           )}
           <button
             onClick={handleReset}
@@ -223,7 +240,7 @@ export function FileEditorView({
                 ? "hover:bg-muted text-foreground"
                 : "text-muted-foreground/30 cursor-not-allowed"
             )}
-            title="Revert changes"
+            title={t("knowledge.revertChanges")}
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -236,7 +253,7 @@ export function FileEditorView({
                 ? "hover:bg-muted text-foreground"
                 : "text-muted-foreground/30 cursor-not-allowed"
             )}
-            title="Save (Ctrl+S)"
+            title={t("knowledge.saveShortcut")}
           >
             <Save className={cn("h-3.5 w-3.5", saving && "animate-pulse")} />
           </button>
@@ -257,20 +274,22 @@ export function FileEditorView({
           value={content}
           onChange={(e) => handleChange(e.target.value)}
           className="w-full h-full p-4 bg-background text-sm font-mono leading-relaxed resize-none focus:outline-none"
-          placeholder={`# ${file.filename.replace(".md", "")}\n\nStart typing...`}
+          placeholder={t("knowledge.editorPlaceholder", {
+            name: file.filename.replace(".md", ""),
+          })}
           spellCheck={false}
         />
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-4 py-1.5 border-t border-border text-[11px] text-muted-foreground">
-        <span>{content.length.toLocaleString()} chars</span>
+        <span>{t("knowledge.chars", { count: content.length })}</span>
         <div className="flex items-center gap-2">
-          {saving && <span className="text-primary">Saving...</span>}
+          {saving && <span className="text-primary">{t("knowledge.saving")}</span>}
           {lastSaved && !saving && (
             <span className="flex items-center gap-1">
               <Check className="h-2.5 w-2.5 text-green-500" />
-              Saved {lastSaved}
+              {t("knowledge.saved", { time: lastSaved })}
             </span>
           )}
         </div>

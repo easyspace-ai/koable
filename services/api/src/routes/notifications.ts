@@ -2,10 +2,10 @@ import { Hono } from "hono";
 import { sql } from "../db/index.js";
 import { workspaceQueries } from "@doable/db";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { isUuid } from "../lib/uuid.js";
+import { tracedQuery } from "../db/traced.js";
 
 const workspaces = workspaceQueries(sql);
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const notificationRoutes = new Hono<AuthEnv>({ strict: false });
 
@@ -17,7 +17,7 @@ async function requireMember(workspaceId: string, userId: string): Promise<strin
 
 function validateWorkspaceId(workspaceId: string | undefined): string | { error: string } {
   if (!workspaceId) return { error: "workspaceId query parameter is required" };
-  if (!UUID_RE.test(workspaceId)) return { error: "workspaceId must be a valid UUID" };
+  if (!isUuid(workspaceId)) return { error: "workspaceId must be a valid UUID" };
   return workspaceId;
 }
 
@@ -35,24 +35,29 @@ notificationRoutes.get("/notifications", authMiddleware, async (c) => {
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 200) : 50;
   const unreadOnly = c.req.query("unreadOnly") === "true" || c.req.query("unreadOnly") === "1";
 
-  const rows = unreadOnly
-    ? await sql`
-        SELECT id, kind, title, body, link, is_read, created_at
-        FROM notifications
-        WHERE user_id = ${userId}
-          AND workspace_id = ${workspaceId}
-          AND is_read = false
-        ORDER BY created_at DESC
-        LIMIT ${limit}
-      `
-    : await sql`
-        SELECT id, kind, title, body, link, is_read, created_at
-        FROM notifications
-        WHERE user_id = ${userId}
-          AND workspace_id = ${workspaceId}
-        ORDER BY created_at DESC
-        LIMIT ${limit}
-      `;
+  const rows = await tracedQuery(
+    unreadOnly ? "notifications.listUnread" : "notifications.list",
+    "notifications for workspace user",
+    () =>
+      unreadOnly
+        ? sql`
+            SELECT id, kind, title, body, link, is_read, created_at
+            FROM notifications
+            WHERE user_id = ${userId}
+              AND workspace_id = ${workspaceId}
+              AND is_read = false
+            ORDER BY created_at DESC
+            LIMIT ${limit}
+          `
+        : sql`
+            SELECT id, kind, title, body, link, is_read, created_at
+            FROM notifications
+            WHERE user_id = ${userId}
+              AND workspace_id = ${workspaceId}
+            ORDER BY created_at DESC
+            LIMIT ${limit}
+          `,
+  );
 
   const data = rows.map((r) => ({
     id: r.id,
@@ -114,7 +119,7 @@ notificationRoutes.post("/notifications/:id/read", authMiddleware, async (c) => 
   const userId = c.get("userId");
   const id = c.req.param("id");
 
-  if (!UUID_RE.test(id)) {
+  if (!isUuid(id)) {
     return c.json({ error: "id must be a valid UUID" }, 400);
   }
 

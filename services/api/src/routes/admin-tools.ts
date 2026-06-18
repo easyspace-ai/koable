@@ -2,15 +2,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
 import { modeToolQueries } from "@doable/db";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 
 const modeTools = modeToolQueries(sql);
 
 export const adminToolsRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminToolsRoutes.use("*", authMiddleware);
-adminToolsRoutes.use("*", platformAdminMiddleware);
 
 // All known tools (Doable + SDK built-in)
 const KNOWN_TOOLS = [

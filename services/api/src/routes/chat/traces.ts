@@ -4,6 +4,7 @@
 import { Hono } from "hono";
 import { sql } from "../../db/index.js";
 import { authMiddleware, type AuthEnv } from "../../middleware/auth.js";
+import { internalServerError } from "../../lib/api-error.js";
 
 export function registerTraceRoutes(app: Hono<AuthEnv>) {
   /** List traces for a project (summary view, no events blob) */
@@ -43,7 +44,7 @@ export function registerTraceRoutes(app: Hono<AuthEnv>) {
           `;
       return c.json({ data: rows });
     } catch (err) {
-      return c.json({ error: String(err) }, 500);
+      return internalServerError(c, "chat/traces/list", err);
     }
   });
 
@@ -59,7 +60,7 @@ export function registerTraceRoutes(app: Hono<AuthEnv>) {
       if (!row) return c.json({ error: "Trace not found" }, 404);
       return c.json({ data: row });
     } catch (err) {
-      return c.json({ error: String(err) }, 500);
+      return internalServerError(c, "chat/traces/get", err);
     }
   });
 
@@ -89,7 +90,7 @@ export function registerTraceRoutes(app: Hono<AuthEnv>) {
       `;
       return c.json({ data: stats });
     } catch (err) {
-      return c.json({ error: String(err) }, 500);
+      return internalServerError(c, "chat/traces/stats", err);
     }
   });
 }

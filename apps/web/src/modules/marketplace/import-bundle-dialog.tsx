@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Upload,
   Link as LinkIcon,
@@ -24,28 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 
-/**
- * Third-party import dialog. Lets a user materialise an external bundle
- * directly into their workspace without going through the Marketplace
- * publish flow. Three sources, all going through the same backend
- * `/marketplace/:workspaceId/environments/import` endpoint:
- *
- *   1. Paste a `doable.json.v1` blob (raw or stringified)
- *   2. Upload a `.zip` matching the Standards Zip v1 layout
- *      (SKILL.md, .mdc rules, mcp.json, plugin.json, knowledge files)
- *   3. Paste a GitHub URL — the API resolves it server-side to a zip
- *
- * Imports skip moderation (private to the importer's workspace) but go
- * through the same permission preview as Marketplace installs.
- */
-
 type Tab = "json" | "zip" | "url";
 
-const TABS: { id: Tab; label: string; Icon: typeof Upload }[] = [
-  { id: "json", label: "JSON", Icon: FileCode },
-  { id: "zip", label: "Zip", Icon: Upload },
-  { id: "url", label: "GitHub URL", Icon: LinkIcon },
-];
+const TAB_IDS: Tab[] = ["json", "zip", "url"];
+const TAB_ICONS = { json: FileCode, zip: Upload, url: LinkIcon } as const;
 
 export interface ImportBundleDialogProps {
   open: boolean;
@@ -60,6 +43,7 @@ export function ImportBundleDialog({
   workspaceId,
   onImported,
 }: ImportBundleDialogProps) {
+  const t = useTranslations("marketplace");
   const [tab, setTab] = useState<Tab>("json");
   const [jsonText, setJsonText] = useState("");
   const [zipFile, setZipFile] = useState<File | null>(null);
@@ -89,7 +73,7 @@ export function ImportBundleDialog({
           body: JSON.stringify(parsed),
         });
       } else if (tab === "zip") {
-        if (!zipFile) throw new Error("Pick a .zip file first");
+        if (!zipFile) throw new Error(t("importDialog.errors.pickZip"));
         const fd = new FormData();
         fd.append("file", zipFile);
         fd.append("format", "standards.zip.v1");
@@ -98,7 +82,7 @@ export function ImportBundleDialog({
           body: fd,
         });
       } else {
-        if (!url.trim()) throw new Error("Paste a GitHub URL first");
+        if (!url.trim()) throw new Error(t("importDialog.errors.pasteUrl"));
         await apiFetch(`/marketplace/${workspaceId}/environments/import-url`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -113,7 +97,7 @@ export function ImportBundleDialog({
         reset();
       }, 800);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(err instanceof Error ? err.message : t("importDialog.errors.importFailed"));
     } finally {
       setBusy(false);
     }
@@ -126,53 +110,57 @@ export function ImportBundleDialog({
       (tab === "zip" && !!zipFile) ||
       (tab === "url" && url.trim().length > 0));
 
+  const tabLabel = (id: Tab) => {
+    if (id === "url") return t("importDialog.tabs.githubUrl");
+    return t(`importDialog.tabs.${id}`);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset(); }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5 text-brand-400" />
-            Import from outside Doable
+            {t("importDialog.title")}
           </DialogTitle>
           <DialogDescription>
-            Bring in an environment from a JSON manifest, Standards Zip, or public GitHub repo.
+            {t("importDialog.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-2">
-          {/* Tabs */}
           <div className="flex gap-1 rounded-md border border-border bg-card p-1">
-            {TABS.map((t) => {
-              const active = tab === t.id;
+            {TAB_IDS.map((id) => {
+              const active = tab === id;
+              const Icon = TAB_ICONS[id];
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
+                  key={id}
+                  onClick={() => setTab(id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                     active
                       ? "bg-secondary text-secondary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  <t.Icon className="h-3.5 w-3.5" />
-                  {t.label}
+                  <Icon className="h-3.5 w-3.5" />
+                  {tabLabel(id)}
                 </button>
               );
             })}
           </div>
 
-          {/* Panels */}
           {tab === "json" && (
             <div className="space-y-1.5">
               <Textarea
                 rows={10}
-                placeholder='{"schemaVersion":"1.0.0","format":"doable.json.v1",...}'
+                placeholder={t("importDialog.jsonPlaceholder")}
                 value={jsonText}
                 onChange={(e) => setJsonText(e.target.value)}
                 className="font-mono text-xs"
               />
               <p className="text-xs text-muted-foreground">
-                Paste a <code className="rounded bg-muted px-1 py-0.5">doable.json.v1</code> manifest. Anything that fails schema validation is rejected.
+                {t("importDialog.jsonHint", { format: t("importDialog.jsonFormatLabel") })}
               </p>
             </div>
           )}
@@ -182,10 +170,10 @@ export function ImportBundleDialog({
               <label className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-card/40 px-4 py-6 text-center transition-colors hover:bg-card cursor-pointer">
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <span className="text-sm text-foreground">
-                  {zipFile ? zipFile.name : "Drop a Standards Zip here, or click to browse"}
+                  {zipFile ? zipFile.name : t("importDialog.zipDropPrompt")}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  Compatible with Anthropic Skills, Cursor Rules, MCP, and Claude Code plugin layouts.
+                  {t("importDialog.zipCompatibility")}
                 </span>
                 <input
                   type="file"
@@ -200,22 +188,19 @@ export function ImportBundleDialog({
           {tab === "url" && (
             <div className="space-y-1.5">
               <Input
-                placeholder="https://github.com/owner/repo or https://github.com/owner/repo/tree/main/skills/foo"
+                placeholder={t("importDialog.urlPlaceholder")}
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Public repos only. The import will tarball the path and decode it as a Standards Zip.
+                {t("importDialog.urlHint")}
               </p>
             </div>
           )}
 
-          {/* Trust caveat */}
           <p className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-            <span>
-              Imports land as a draft environment in your workspace. They never run code or call external services until you authorise each connector individually.
-            </span>
+            <span>{t("importDialog.trustNote")}</span>
           </p>
 
           {error && (
@@ -227,22 +212,22 @@ export function ImportBundleDialog({
           {done && (
             <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-3 text-sm text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Imported.</span>
+              <span>{t("importDialog.success.imported")}</span>
             </div>
           )}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            <X className="mr-1 h-3.5 w-3.5" /> Cancel
+            <X className="mr-1 h-3.5 w-3.5" /> {t("importDialog.cancel")}
           </Button>
           <Button onClick={handleImport} disabled={!canSubmit}>
             {busy ? (
-              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Importing...</>
+              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {t("importDialog.importing")}</>
             ) : done ? (
-              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Imported</>
+              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> {t("importDialog.imported")}</>
             ) : (
-              <><Upload className="mr-1.5 h-3.5 w-3.5" /> Import to workspace</>
+              <><Upload className="mr-1.5 h-3.5 w-3.5" /> {t("importDialog.importToWorkspace")}</>
             )}
           </Button>
         </DialogFooter>

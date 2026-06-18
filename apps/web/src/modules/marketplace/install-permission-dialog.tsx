@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ShieldCheck,
   Sparkles,
@@ -25,17 +26,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { MarketplaceListing } from "./use-marketplace";
-
-/**
- * Permission preview shown BEFORE the install actually runs. We compute the
- * permission summary client-side from the listing's denormalised counts —
- * no extra round-trip — and surface anything that needs informed consent
- * (network/filesystem/shell/credentials).
- *
- * Mirrors `computePermissions()` from `@doable/marketplace-bundle` but
- * operates on the lightweight listing summary so we don't need to fetch
- * the whole bundle for the dialog.
- */
 
 type Severity = "info" | "warn" | "danger";
 
@@ -62,14 +52,17 @@ const SEVERITY_STYLES: Record<Severity, { badge: string; icon: string }> = {
   },
 };
 
-function deriveRows(listing: MarketplaceListing): PermissionRow[] {
+function deriveRows(
+  listing: MarketplaceListing,
+  t: ReturnType<typeof useTranslations<"marketplace">>,
+): PermissionRow[] {
   const rows: PermissionRow[] = [];
 
   if (listing.skill_count > 0) {
     rows.push({
       key: "skills",
-      label: `Add ${listing.skill_count} skill${listing.skill_count !== 1 ? "s" : ""} to your AI`,
-      detail: "Skills are reusable system prompts the AI can invoke automatically.",
+      label: t("installDialog.permissions.skills.label", { count: listing.skill_count }),
+      detail: t("installDialog.permissions.skills.detail"),
       severity: "info",
       Icon: Sparkles,
     });
@@ -77,8 +70,8 @@ function deriveRows(listing: MarketplaceListing): PermissionRow[] {
   if (listing.rule_count > 0) {
     rows.push({
       key: "rules",
-      label: `Add ${listing.rule_count} rule${listing.rule_count !== 1 ? "s" : ""} that auto-attach to matching files`,
-      detail: "Rules are scoped to file globs (e.g. *.tsx). They never run code on their own.",
+      label: t("installDialog.permissions.rules.label", { count: listing.rule_count }),
+      detail: t("installDialog.permissions.rules.detail"),
       severity: "info",
       Icon: Shield,
     });
@@ -86,27 +79,25 @@ function deriveRows(listing: MarketplaceListing): PermissionRow[] {
   if (listing.knowledge_count > 0) {
     rows.push({
       key: "knowledge",
-      label: `Add ${listing.knowledge_count} knowledge file${listing.knowledge_count !== 1 ? "s" : ""} to your context`,
-      detail: "Knowledge files are read by the AI when relevant — they don't execute or fetch anything.",
+      label: t("installDialog.permissions.knowledge.label", { count: listing.knowledge_count }),
+      detail: t("installDialog.permissions.knowledge.detail"),
       severity: "info",
       Icon: BookOpen,
     });
   }
 
   if (listing.connector_count > 0) {
-    // Connectors are reference-only in the bundle; the install dialog will
-    // collect credentials separately. We surface the highest-impact warning.
     rows.push({
       key: "connectors-network",
-      label: `${listing.connector_count} MCP connector${listing.connector_count !== 1 ? "s" : ""} can talk to external services`,
-      detail: "You'll be asked to authorise each connector individually after install.",
+      label: t("installDialog.permissions.connectors.label", { count: listing.connector_count }),
+      detail: t("installDialog.permissions.connectors.detail"),
       severity: "warn",
       Icon: Globe,
     });
     rows.push({
       key: "credentials",
-      label: "You may be asked to provide credentials (API keys, OAuth)",
-      detail: "Credentials are stored in your workspace — never shared with the publisher.",
+      label: t("installDialog.permissions.credentials.label"),
+      detail: t("installDialog.permissions.credentials.detail"),
       severity: "warn",
       Icon: KeyRound,
     });
@@ -128,9 +119,10 @@ export function InstallPermissionDialog({
   listing,
   onConfirm,
 }: InstallPermissionDialogProps) {
+  const t = useTranslations("marketplace");
   const [state, setState] = useState<"idle" | "installing" | "done" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const rows = useMemo(() => deriveRows(listing), [listing]);
+  const rows = useMemo(() => deriveRows(listing, t), [listing, t]);
 
   const dangerCount = rows.filter((r) => r.severity === "danger").length;
   const warnCount = rows.filter((r) => r.severity === "warn").length;
@@ -143,7 +135,7 @@ export function InstallPermissionDialog({
       setState("done");
       setTimeout(() => onOpenChange(false), 800);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Install failed");
+      setError(err instanceof Error ? err.message : t("installDialog.errors.installFailed"));
       setState("error");
     }
   }
@@ -154,10 +146,10 @@ export function InstallPermissionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-brand-400" />
-            Install &ldquo;{listing.title}&rdquo;?
+            {t("installDialog.title", { title: listing.title })}
           </DialogTitle>
           <DialogDescription>
-            Review what this bundle will add to your workspace.
+            {t("installDialog.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -166,8 +158,10 @@ export function InstallPermissionDialog({
             <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs">
               <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" />
               <span className="text-foreground">
-                Includes {dangerCount > 0 ? `${dangerCount} high-impact and ` : ""}
-                {warnCount} item{warnCount !== 1 ? "s" : ""} that need your attention.
+                {t("installDialog.warningBanner", {
+                  dangerPart: dangerCount > 0 ? t("installDialog.warningBannerDangerPart", { count: dangerCount }) : "",
+                  warnCount,
+                })}
               </span>
             </div>
           )}
@@ -175,7 +169,7 @@ export function InstallPermissionDialog({
           <ul className="space-y-2">
             {rows.length === 0 && (
               <li className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground italic text-center">
-                This bundle is empty.
+                {t("installDialog.emptyBundle")}
               </li>
             )}
             {rows.map((row) => {
@@ -199,7 +193,7 @@ export function InstallPermissionDialog({
 
           <p className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             <AlertCircle className="mr-1 inline-block h-3 w-3" />
-            Install creates an isolated copy in your workspace. The original publisher cannot modify it after install.
+            {t("installDialog.isolationNote")}
           </p>
 
           {state === "error" && error && (
@@ -211,22 +205,22 @@ export function InstallPermissionDialog({
           {state === "done" && (
             <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-3 text-sm text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Installed.</span>
+              <span>{t("installDialog.success.installed")}</span>
             </div>
           )}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={state === "installing"}>
-            <X className="mr-1 h-3.5 w-3.5" /> Cancel
+            <X className="mr-1 h-3.5 w-3.5" /> {t("installDialog.cancel")}
           </Button>
           <Button onClick={handleConfirm} disabled={state === "installing" || state === "done"}>
             {state === "installing" ? (
-              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Installing...</>
+              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {t("installDialog.installing")}</>
             ) : state === "done" ? (
-              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Installed</>
+              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> {t("installDialog.installed")}</>
             ) : (
-              <><Plug className="mr-1.5 h-3.5 w-3.5" /> Install to workspace</>
+              <><Plug className="mr-1.5 h-3.5 w-3.5" /> {t("installDialog.installToWorkspace")}</>
             )}
           </Button>
         </DialogFooter>

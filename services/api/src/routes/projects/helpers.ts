@@ -4,6 +4,7 @@ import { workspaceQueries } from "@doable/db";
 import { WORKSPACE_ROLES, type WorkspaceRole } from "@doable/shared";
 import { createMiddleware } from "hono/factory";
 import type { AuthEnv } from "../../middleware/auth.js";
+import { isUuid } from "../../lib/uuid.js";
 
 const projects = projectQueries(sql);
 const workspacesQ = workspaceQueries(sql);
@@ -16,8 +17,6 @@ export { projects, workspacesQ };
 // throwing `invalid input syntax for type uuid` and surfacing as 500
 // (BUG-CORPUS-PROJ-002, BUG-CORPUS-PROJ-003). Mirrors the
 // workspace-role.ts guard.
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Nil UUID — RFC 4122 §4.1.7 reserves all-zeros as the "nil" UUID. Treat it
 // as invalid for project ids so a placeholder/test row keyed on it can't be
@@ -28,7 +27,7 @@ const UUID_REGEX =
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
 export function isProjectIdValid(id: string | undefined): boolean {
-  return !!id && UUID_REGEX.test(id) && id.toLowerCase() !== NIL_UUID;
+  return !!id && isUuid(id) && id.toLowerCase() !== NIL_UUID;
 }
 
 /**
@@ -62,7 +61,7 @@ export function validateProjectIdParam(paramName: string = "id") {
       await next();
       return;
     }
-    if (!id || !UUID_REGEX.test(id)) {
+    if (!id || !isUuid(id)) {
       return c.json({ error: "Invalid project id" }, 400);
     }
     // BUG-API-003: the nil UUID is a syntactically valid UUID. For GET
@@ -90,7 +89,7 @@ export function validateProjectIdParam(paramName: string = "id") {
 export function validateUuidQueryParam(queryName: string, label?: string) {
   return createMiddleware<AuthEnv>(async (c, next) => {
     const v = c.req.query(queryName);
-    if (v !== undefined && v !== "" && !UUID_REGEX.test(v)) {
+    if (v !== undefined && v !== "" && !isUuid(v)) {
       return c.json({ error: `Invalid ${label ?? queryName}` }, 400);
     }
     await next();

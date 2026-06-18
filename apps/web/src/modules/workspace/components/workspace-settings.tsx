@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useCallback, useEffect } from "react";
 import {
   Settings,
@@ -96,10 +97,10 @@ import { DangerTab } from "./workspace-settings-danger";
 
 // ─── Tabs ───────────────────────────────────────────────────
 
-const TABS: { id: Tab; label: string; icon: React.ElementType; minRole: string }[] = [
-  { id: "general", label: "General", icon: Settings, minRole: "admin" },
-  { id: "members", label: "Members", icon: Users, minRole: "member" },
-  { id: "danger", label: "Danger Zone", icon: AlertTriangle, minRole: "owner" },
+const TAB_CONFIG: { id: Tab; labelKey: "general" | "members" | "dangerZone"; icon: React.ElementType; minRole: string }[] = [
+  { id: "general", labelKey: "general", icon: Settings, minRole: "admin" },
+  { id: "members", labelKey: "members", icon: Users, minRole: "member" },
+  { id: "danger", labelKey: "dangerZone", icon: AlertTriangle, minRole: "owner" },
 ];
 
 const ROLE_HIERARCHY: readonly string[] = [...WORKSPACE_ROLES].reverse();
@@ -115,10 +116,11 @@ export function WorkspaceSettings({
   currentUserId,
   onUpdate,
 }: WorkspaceSettingsProps) {
+  const t = useTranslations("dashboard");
   const [activeTab, setActiveTab] = useState<Tab>("general");
   const { toasts, addToast, dismissToast } = useToasts();
 
-  const visibleTabs = TABS.filter((tab) =>
+  const visibleTabs = TAB_CONFIG.filter((tab) =>
     hasRole(workspace.userRole, tab.minRole)
   );
 
@@ -149,7 +151,7 @@ export function WorkspaceSettings({
               )}
             >
               <Icon className="h-4 w-4" />
-              {tab.label}
+              {t(`workspace.tabs.${tab.labelKey}`)}
             </button>
           );
         })}

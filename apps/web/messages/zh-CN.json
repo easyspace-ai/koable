@@ -44,6 +44,10 @@
     "verificationFailed": "验证失败，请重试。",
     "backToSignIn": "返回登录",
     "pendingTitle": "您已加入等待列表",
+    "tagline": "AI 驱动的应用构建平台",
+    "termsOfService": "服务条款",
+    "privacyPolicy": "隐私政策",
+    "footerAgree": "继续即表示您同意我们的<terms>服务条款</terms>和<privacy>隐私政策</privacy>。",
     "oauthErrors": {
       "missing_tokens": "认证失败，请重试。",
       "oauth_failed": "OAuth 认证失败，请重试。",
@@ -51,6 +55,9 @@
       "missing_code": "缺少认证码，请重试。",
       "no_email": "您的账户未关联邮箱，请重试。",
       "ACCOUNT_DENIED": "您的注册申请未获批准。"
-    }
+    },
+    "authErrorTitle": "认证错误",
+    "tryAgain": "重试",
+    "backToLogin": "返回登录"
   }
 }

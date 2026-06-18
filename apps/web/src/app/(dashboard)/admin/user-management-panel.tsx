@@ -57,31 +57,36 @@ import {
 
 // ─── Effective Model Badge ───────────────────────────────
 
-function getSourceDetail(row: UserAiAllocation, source: "enforced" | "user" | "workspace" | "none"): { label: string; via: string } {
-  if (source === "enforced") return { label: "Enforced", via: "workspace enforcement" };
+function getSourceDetail(
+  row: UserAiAllocation,
+  source: "enforced" | "user" | "workspace" | "none",
+  t: ReturnType<typeof useTranslation>["t"],
+): { label: string; via: string } {
+  if (source === "enforced") return { label: t("userManagement.badgeEnforced"), via: t("userManagement.badgeEnforcedVia") };
   if (source === "user") {
     const side = rowActiveSide(row);
-    if (side === "copilot") return { label: "User · Copilot", via: row.copilot_account_label ?? "Copilot" };
-    if (side === "custom") return { label: "User · Custom", via: row.provider_label ?? row.provider_type ?? "Custom provider" };
-    return { label: "User override", via: "user preference" };
+    if (side === "copilot") return { label: t("userManagement.badgeUserCopilot"), via: row.copilot_account_label ?? "Copilot" };
+    if (side === "custom") return { label: t("userManagement.badgeUserCustom"), via: row.provider_label ?? row.provider_type ?? "Custom provider" };
+    return { label: t("userManagement.badgeUserOverride"), via: t("userManagement.badgeUserOverrideVia") };
   }
   if (source === "workspace") {
     const wsSrc = row.default_source;
-    if (wsSrc === "copilot") return { label: "WS default · Copilot", via: "workspace Copilot setting" };
-    if (wsSrc === "custom") return { label: "WS default · Custom", via: "workspace custom provider" };
-    return { label: "Workspace default", via: "workspace setting" };
+    if (wsSrc === "copilot") return { label: t("userManagement.badgeWsCopilot"), via: t("userManagement.badgeWsCopilotVia") };
+    if (wsSrc === "custom") return { label: t("userManagement.badgeWsCustom"), via: t("userManagement.badgeWsCustomVia") };
+    return { label: t("userManagement.badgeWsDefault"), via: t("userManagement.badgeWsDefaultVia") };
   }
-  return { label: "Auto", via: "no model configured" };
+  return { label: t("userManagement.badgeAuto"), via: t("userManagement.badgeAutoVia") };
 }
 
 function EffectiveModelBadge({ row }: { row: UserAiAllocation }) {
+  const { t } = useTranslation("admin");
   const { model, source } = getEffectiveModel(row);
-  const { label } = getSourceDetail(row, source);
+  const { label } = getSourceDetail(row, source, t);
   if (!model) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-secondary text-muted-foreground border-border">
-        <span className="font-medium">Auto-select</span>
-        <span className="opacity-50">· no override</span>
+        <span className="font-medium">{t("userManagement.autoSelect")}</span>
+        <span className="opacity-50">{t("userManagementExtra.noOverrideBadge")}</span>
       </span>
     );
   }
@@ -103,9 +108,10 @@ function EffectiveModelBadge({ row }: { row: UserAiAllocation }) {
 // ─── Credit Mini Bar ─────────────────────────────────────
 
 function CreditMiniBar({ row }: { row: UserAiAllocation }) {
+  const { t } = useTranslation("admin");
   const c = getCreditSummary(row);
   if (c.dailyTotal === 0 && c.monthlyTotal === 0) {
-    return <span className="text-[10px] text-muted-foreground">No credits</span>;
+    return <span className="text-[10px] text-muted-foreground">{t("userManagement.noCredits")}</span>;
   }
   const pct = c.dailyTotal > 0 ? Math.round((c.dailyRemaining / c.dailyTotal) * 100) : 0;
   const color = pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-amber-500" : "bg-red-500";
@@ -124,27 +130,27 @@ function CreditMiniBar({ row }: { row: UserAiAllocation }) {
 // ─── Source Badge ────────────────────────────────────────
 
 function SourceBadge({ row }: { row: UserAiAllocation }) {
+  const { t } = useTranslation("admin");
   const side = rowActiveSide(row);
   if (!rowHasAllocation(row)) {
-    // Show what workspace default is, if any
     if (row.default_source === "copilot") {
-      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">WS default · Copilot</span>;
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{t("userManagement.wsDefaultCopilot")}</span>;
     }
     if (row.default_source === "custom") {
-      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">WS default · Custom</span>;
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{t("userManagement.wsDefaultCustom")}</span>;
     }
-    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">No source set</span>;
+    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{t("userManagement.noSourceSet")}</span>;
   }
   if (side === "copilot") {
     return (
       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600/15 text-emerald-400">
-        Copilot · {row.copilot_account_label ?? "default account"}
+        {t("userManagement.copilotAccount", { account: row.copilot_account_label ?? t("userManagementExtra.defaultAccount") })}
       </span>
     );
   }
   return (
     <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600/15 text-blue-400">
-      Custom · {row.provider_label ?? row.provider_type ?? "provider"}
+      {t("userManagement.customProvider", { provider: row.provider_label ?? row.provider_type ?? "provider" })}
     </span>
   );
 }
@@ -180,6 +186,7 @@ function UserDetailModal({
   onChangeRole: (userId: string, role: string) => void;
   onChangePlan: (userId: string, plan: string) => void;
 }) {
+  const { t } = useTranslation("admin");
   const [tab, setTab] = useState<"model" | "credits">("model");
   const [source, setSource] = useState<"copilot" | "custom">(rowActiveSide(user) ?? "copilot");
   const [copilotAccountId, setCopilotAccountId] = useState(user.copilot_account_id ?? "");
@@ -199,10 +206,10 @@ function UserDetailModal({
   function validateCredits(): CreditFieldErrors {
     const errs: CreditFieldErrors = {};
     const check = (key: "dailyCredits" | "monthlyCredits" | "rolloverCredits", val: number, max: number) => {
-      if (!Number.isFinite(val) || Number.isNaN(val)) errs[key] = "Must be a number";
-      else if (!Number.isInteger(val)) errs[key] = "Must be a whole number";
-      else if (val < 0) errs[key] = "Must be ≥ 0";
-      else if (val > max) errs[key] = `Must be ≤ ${max.toLocaleString()}`;
+      if (!Number.isFinite(val) || Number.isNaN(val)) errs[key] = t("userManagement.validationMustBeNumber");
+      else if (!Number.isInteger(val)) errs[key] = t("userManagement.validationWholeNumber");
+      else if (val < 0) errs[key] = t("userManagement.validationMinZero");
+      else if (val > max) errs[key] = t("userManagement.validationMax", { max: max.toLocaleString() });
     };
     check("dailyCredits", creditDaily, CREDIT_CAPS.daily);
     check("monthlyCredits", creditMonthly, CREDIT_CAPS.monthly);
@@ -263,7 +270,7 @@ function UserDetailModal({
         return;
       }
       // Unknown error — surface as a form-level message instead of crashing the page
-      setCreditFormError(err instanceof Error ? err.message : "Failed to save credits");
+      setCreditFormError(err instanceof Error ? err.message : t("userManagement.failedSaveCredits"));
     } finally { setCreditSaving(false); }
   }
 
@@ -290,7 +297,7 @@ function UserDetailModal({
         {/* Role & Plan row */}
         <div className="flex items-center gap-4 px-6 py-3 border-b border-border bg-card">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Role:</label>
+            <label className="text-xs text-muted-foreground">{t("userManagement.role")}</label>
             <select
               value={user.platform_role ?? "member"}
               onChange={e => onChangeRole(user.user_id, e.target.value)}
@@ -300,7 +307,7 @@ function UserDetailModal({
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Plan:</label>
+            <label className="text-xs text-muted-foreground">{t("userManagement.plan")}</label>
             <select
               value={user.workspace_plan ?? "free"}
               onChange={e => onChangePlan(user.user_id, e.target.value)}
@@ -312,7 +319,7 @@ function UserDetailModal({
           <div className="flex-1" />
           {/* Effective model display */}
           <div className="text-right">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Active Model</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">{t("userManagement.activeModel")}</div>
             <EffectiveModelBadge row={user} />
           </div>
         </div>
@@ -320,10 +327,10 @@ function UserDetailModal({
         {/* Tabs */}
         <div className="flex border-b border-border">
           <button onClick={() => setTab("model")} className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors ${tab === "model" ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"}`}>
-            <Bot className="h-3.5 w-3.5" /> AI Model & Source
+            <Bot className="h-3.5 w-3.5" /> {t("userManagement.tabModelSource")}
           </button>
           <button onClick={() => setTab("credits")} className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors ${tab === "credits" ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"}`}>
-            <Zap className="h-3.5 w-3.5" /> Credits
+            <Zap className="h-3.5 w-3.5" /> {t("userManagement.tabCredits")}
           </button>
         </div>
 
@@ -333,64 +340,66 @@ function UserDetailModal({
             <div className="space-y-4">
               {/* Current active state */}
               <div className="rounded-lg border border-border bg-muted px-4 py-3 space-y-2">
-                <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Currently Active</div>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{t("userManagement.currentlyActive")}</div>
                 <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
-                  <span className="text-muted-foreground">Model:</span>
-                  <span className="text-foreground font-medium">{eff.model ?? "Auto-select (no model set)"}</span>
-                  <span className="text-muted-foreground">Source:</span>
+                  <span className="text-muted-foreground">{t("userManagement.model")}</span>
+                  <span className="text-foreground font-medium">{eff.model ?? t("userManagement.autoSelectNoModel")}</span>
+                  <span className="text-muted-foreground">{t("userManagement.source")}</span>
                   <span className={`${
                     eff.source === "enforced" ? "text-red-400" :
                     eff.source === "user" ? "text-emerald-400" :
                     eff.source === "workspace" ? "text-blue-400" : "text-muted-foreground"
-                  }`}>{getSourceDetail(user, eff.source).via}</span>
-                  <span className="text-muted-foreground">Subscription:</span>
+                  }`}>{getSourceDetail(user, eff.source, t).via}</span>
+                  <span className="text-muted-foreground">{t("userManagement.subscription")}</span>
                   <span className="text-foreground">{(() => {
                     const side = rowActiveSide(user);
-                    if (side === "copilot") return `GitHub Copilot${user.copilot_account_label ? ` (${user.copilot_account_label})` : ""}`;
-                    if (side === "custom") return `Custom provider${user.provider_label ? ` (${user.provider_label})` : ""}`;
-                    if (user.default_source === "copilot") return "GitHub Copilot (workspace default)";
-                    if (user.default_source === "custom") return "Custom provider (workspace default)";
-                    return "None configured";
+                    if (side === "copilot") return user.copilot_account_label
+                      ? t("userManagement.githubCopilotNamed", { account: user.copilot_account_label })
+                      : t("userManagement.githubCopilot");
+                    if (side === "custom") return user.provider_label
+                      ? t("userManagement.customProviderNamed", { provider: user.provider_label })
+                      : t("userManagement.customProviderNamed", { provider: user.provider_type ?? "Custom" });
+                    if (user.default_source === "copilot") return t("userManagement.githubCopilotWsDefault");
+                    if (user.default_source === "custom") return t("userManagement.customProviderWsDefault");
+                    return t("userManagement.noneConfigured");
                   })()}</span>
                 </div>
                 {user.enforce_ai && (
                   <p className="text-[11px] text-red-400 mt-1">
-                    Workspace enforcement is ON — this user cannot choose their own model.
+                    {t("userManagement.enforcementOn")}
                   </p>
                 )}
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  Resolution: Enforcement → User override → Workspace default → Auto-select
+                  {t("userManagement.resolutionOrder")}
                 </p>
               </div>
 
-              {/* Source toggle */}
               <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">Set Override Source</label>
+                <label className="block text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider">{t("userManagement.setOverrideSource")}</label>
                 <div className="flex rounded-lg border border-border overflow-hidden w-fit">
                   <button onClick={() => setSource("copilot")} className={`px-4 py-2 text-sm font-medium transition-colors ${source === "copilot" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
-                    GitHub Copilot
+                    {t("userManagement.githubCopilot")}
                   </button>
                   <button onClick={() => setSource("custom")} className={`px-4 py-2 text-sm font-medium transition-colors ${source === "custom" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
-                    Custom Provider
+                    {t("userManagement.customProviderLabel")}
                   </button>
                 </div>
               </div>
 
-              {/* Fields */}
               <div className="space-y-3">
                 {source === "copilot" ? (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Copilot Account</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.copilotAccountLabel")}</label>
                       <select value={copilotAccountId} onChange={e => setCopilotAccountId(e.target.value)}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                        <option value="">No specific account (auto)</option>
+                        <option value="">{t("userManagement.noSpecificAccount")}</option>
                         {validAccounts.map(a => <option key={a.id} value={a.id}>{a.label} (@{a.github_login})</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Model {loadingCopilot && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
+                        {t("userManagement.model")} {loadingCopilot && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
                       </label>
                       <select
                         value={copilotModel}
@@ -401,7 +410,7 @@ function UserDetailModal({
                           <option key={m.id} value={m.id}>{m.label}</option>
                         ))}
                         {copilotModel && !copilotModels.some(m => m.id === copilotModel) && (
-                          <option value={copilotModel}>{copilotModel} (custom)</option>
+                          <option value={copilotModel}>{copilotModel} {t("userManagementExtra.customSuffix")}</option>
                         )}
                       </select>
                     </div>
@@ -409,16 +418,16 @@ function UserDetailModal({
                 ) : (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Provider</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.provider")}</label>
                       <select value={providerId} onChange={e => setProviderId(e.target.value)}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                        <option value="">Select a provider...</option>
+                        <option value="">{t("userManagement.selectProvider")}</option>
                         {validProviders.map(p => <option key={p.id} value={p.id}>{p.label} ({p.provider_type})</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Model {loadingProviderModels && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
+                        {t("userManagement.model")} {loadingProviderModels && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
                       </label>
                       {providerId && providerModelList.length > 0 ? (
                         <select
@@ -426,12 +435,12 @@ function UserDetailModal({
                           onChange={e => setProviderModel(e.target.value)}
                           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500"
                         >
-                          <option value="">Auto (provider default)</option>
+                          <option value="">{t("userManagement.autoProviderDefault")}</option>
                           {providerModelList.map(m => (
                             <option key={m.id} value={m.id}>{m.name ?? m.id}</option>
                           ))}
                           {providerModel && !providerModelList.some(m => m.id === providerModel) && (
-                            <option value={providerModel}>{providerModel} (custom)</option>
+                            <option value={providerModel}>{providerModel} {t("userManagementExtra.customSuffix")}</option>
                           )}
                         </select>
                       ) : (
@@ -445,12 +454,12 @@ function UserDetailModal({
                             <option key={m.id} value={m.id}>{m.label}</option>
                           ))}
                           {providerModel && !FALLBACK_MODELS.some(m => m.id === providerModel) && (
-                            <option value={providerModel}>{providerModel} (custom)</option>
+                            <option value={providerModel}>{providerModel} {t("userManagementExtra.customSuffix")}</option>
                           )}
                         </select>
                       )}
                       {!providerId && (
-                        <p className="text-[10px] text-muted-foreground mt-1">Select a provider to load its models.</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{t("userManagement.selectProviderHint")}</p>
                       )}
                     </div>
                   </>
@@ -461,15 +470,15 @@ function UserDetailModal({
               <div className="flex items-center gap-2 pt-2">
                 <button onClick={saveModel} disabled={saving}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors">
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} {t("common.save")}
                 </button>
                 {rowHasAllocation(user) && (
                   <button onClick={() => { onReset(user.user_id); onClose(); }}
                     className="flex items-center gap-1.5 rounded-lg bg-amber-100 dark:bg-amber-600/20 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-600/30 transition-colors">
-                    <RotateCcw className="h-3.5 w-3.5" /> Reset to Defaults
+                    <RotateCcw className="h-3.5 w-3.5" /> {t("userManagement.resetToDefaults")}
                   </button>
                 )}
-                <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">Cancel</button>
+                <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">{t("common.cancel")}</button>
               </div>
             </div>
           )}
@@ -479,46 +488,46 @@ function UserDetailModal({
               {/* Current usage summary */}
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-border bg-muted p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Daily</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("userManagement.daily")}</div>
                   <div className="text-lg font-semibold text-foreground tabular-nums">{c.dailyRemaining}<span className="text-muted-foreground text-sm">/{c.dailyTotal}</span></div>
-                  <div className="text-[10px] text-muted-foreground">{c.dailyUsed} used</div>
+                  <div className="text-[10px] text-muted-foreground">{t("userManagement.used", { count: c.dailyUsed })}</div>
                 </div>
                 <div className="rounded-lg border border-border bg-muted p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Monthly</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("userManagement.monthly")}</div>
                   <div className="text-lg font-semibold text-foreground tabular-nums">{c.monthlyRemaining}<span className="text-muted-foreground text-sm">/{c.monthlyTotal}</span></div>
-                  <div className="text-[10px] text-muted-foreground">{c.monthlyUsed} used</div>
+                  <div className="text-[10px] text-muted-foreground">{t("userManagement.used", { count: c.monthlyUsed })}</div>
                 </div>
                 <div className="rounded-lg border border-border bg-muted p-3 text-center">
-                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Rollover</div>
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">{t("userManagement.rollover")}</div>
                   <div className="text-lg font-semibold text-foreground tabular-nums">{c.rollover}</div>
-                  <div className="text-[10px] text-muted-foreground">bonus credits</div>
+                  <div className="text-[10px] text-muted-foreground">{t("userManagement.bonusCredits")}</div>
                 </div>
               </div>
 
               {/* Edit fields */}
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Daily Credits</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.dailyCredits")}</label>
                   <input type="number" min={0} max={CREDIT_CAPS.daily} step={1} value={creditDaily} onChange={e => setCreditDaily(Number(e.target.value))}
                     aria-invalid={!!creditErrors.dailyCredits}
                     className={`w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500 ${creditErrors.dailyCredits ? "border-red-500" : "border-border"}`} />
-                  <p className="text-[10px] text-muted-foreground mt-1">Max {CREDIT_CAPS.daily.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{t("userManagement.max", { count: CREDIT_CAPS.daily.toLocaleString() })}</p>
                   {creditErrors.dailyCredits && <p className="text-[11px] text-red-400 mt-1">{creditErrors.dailyCredits}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Monthly Credits</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.monthlyCredits")}</label>
                   <input type="number" min={0} max={CREDIT_CAPS.monthly} step={1} value={creditMonthly} onChange={e => setCreditMonthly(Number(e.target.value))}
                     aria-invalid={!!creditErrors.monthlyCredits}
                     className={`w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500 ${creditErrors.monthlyCredits ? "border-red-500" : "border-border"}`} />
-                  <p className="text-[10px] text-muted-foreground mt-1">Max {CREDIT_CAPS.monthly.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{t("userManagement.max", { count: CREDIT_CAPS.monthly.toLocaleString() })}</p>
                   {creditErrors.monthlyCredits && <p className="text-[11px] text-red-400 mt-1">{creditErrors.monthlyCredits}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Rollover Credits</label>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.rolloverCredits")}</label>
                   <input type="number" min={0} max={CREDIT_CAPS.rollover} step={1} value={creditRollover} onChange={e => setCreditRollover(Number(e.target.value))}
                     aria-invalid={!!creditErrors.rolloverCredits}
                     className={`w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500 ${creditErrors.rolloverCredits ? "border-red-500" : "border-border"}`} />
-                  <p className="text-[10px] text-muted-foreground mt-1">Max {CREDIT_CAPS.rollover.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{t("userManagement.max", { count: CREDIT_CAPS.rollover.toLocaleString() })}</p>
                   {creditErrors.rolloverCredits && <p className="text-[11px] text-red-400 mt-1">{creditErrors.rolloverCredits}</p>}
                 </div>
               </div>
@@ -533,13 +542,13 @@ function UserDetailModal({
               <div className="flex items-center gap-2 pt-2">
                 <button onClick={() => saveCredits(false)} disabled={creditSaving}
                   className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors">
-                  {creditSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Save Credits
+                  {creditSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} {t("userManagement.saveCredits")}
                 </button>
                 <button onClick={() => saveCredits(true)} disabled={creditSaving}
                   className="flex items-center gap-1.5 rounded-lg bg-amber-600/80 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors">
-                  <RotateCcw className="h-3.5 w-3.5" /> Save & Reset Usage
+                  <RotateCcw className="h-3.5 w-3.5" /> {t("userManagement.saveAndResetUsage")}
                 </button>
-                <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">Cancel</button>
+                <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">{t("common.cancel")}</button>
               </div>
             </div>
           )}
@@ -585,6 +594,7 @@ function BulkAllocateModal({
   onClose: () => void;
   onApply: (userIds: string[], payload: BulkApplyPayload) => Promise<void>;
 }) {
+  const { t } = useTranslation("admin");
   const [applyModel, setApplyModel] = useState(true);
   const [applyQuota, setApplyQuota] = useState(false);
   const [applyRole, setApplyRole] = useState(false);
@@ -673,10 +683,12 @@ function BulkAllocateModal({
             <UsersIcon className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">Bulk Edit Users</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("userManagement.bulkEditUsers")}</h3>
             <p className="text-xs text-muted-foreground truncate">
-              {selectedUsers.length} user{selectedUsers.length !== 1 ? "s" : ""}
-              {previewNames && <>: <span className="text-muted-foreground">{previewNames}{remaining > 0 ? ` +${remaining} more` : ""}</span></>}
+              {selectedUsers.length === 1
+                ? t("userManagement.bulkUserPreview", { count: selectedUsers.length })
+                : t("userManagement.bulkUserPreviewPlural", { count: selectedUsers.length })}
+              {previewNames && <>: <span className="text-muted-foreground">{previewNames}{remaining > 0 ? ` ${t("userManagement.bulkMoreUsers", { count: remaining })}` : ""}</span></>}
             </p>
           </div>
           <button onClick={onClose} className="rounded p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary">
@@ -695,20 +707,20 @@ function BulkAllocateModal({
                 className="h-4 w-4 rounded border-input bg-background text-brand-500 focus:ring-brand-500"
               />
               <Bot className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Set AI Model & Source</span>
-              <span className="text-[11px] text-muted-foreground ml-auto">Replaces user's current override</span>
+              <span className="text-sm font-medium text-foreground">{t("userManagement.setAiModelSource")}</span>
+              <span className="text-[11px] text-muted-foreground ml-auto">{t("userManagement.replacesUserOverride")}</span>
             </label>
             {applyModel && (
               <div className="px-4 py-4 space-y-3">
                 {/* Source toggle */}
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">Source</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1.5 uppercase tracking-wider">{t("userManagement.sourceLabel")}</label>
                   <div className="flex rounded-lg border border-border overflow-hidden w-fit">
                     <button onClick={() => setSource("copilot")} className={`px-4 py-2 text-sm font-medium transition-colors ${source === "copilot" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
-                      GitHub Copilot
+                      {t("userManagement.githubCopilot")}
                     </button>
                     <button onClick={() => setSource("custom")} className={`px-4 py-2 text-sm font-medium transition-colors ${source === "custom" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
-                      Custom Provider
+                      {t("userManagement.customProviderLabel")}
                     </button>
                   </div>
                 </div>
@@ -716,20 +728,20 @@ function BulkAllocateModal({
                 {source === "copilot" ? (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Copilot Account</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.copilotAccountLabel")}</label>
                       <select value={copilotAccountId} onChange={e => setCopilotAccountId(e.target.value)}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                        <option value="">No specific account (auto)</option>
+                        <option value="">{t("userManagement.noSpecificAccount")}</option>
                         {validAccounts.map(a => <option key={a.id} value={a.id}>{a.label} (@{a.github_login})</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Model {loadingCopilot && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
+                        {t("userManagement.model")} {loadingCopilot && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
                       </label>
                       <select value={copilotModel} onChange={e => setCopilotModel(e.target.value)}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                        <option value="">Select a model...</option>
+                        <option value="">{t("userManagement.selectModel")}</option>
                         {copilotModels.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
                       </select>
                     </div>
@@ -737,21 +749,21 @@ function BulkAllocateModal({
                 ) : (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">Provider</label>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.provider")}</label>
                       <select value={providerId} onChange={e => setProviderId(e.target.value)}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                        <option value="">Select a provider...</option>
+                        <option value="">{t("userManagement.selectProvider")}</option>
                         {validProviders.map(p => <option key={p.id} value={p.id}>{p.label} ({p.provider_type})</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Model {loadingProviderModels && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
+                        {t("userManagement.model")} {loadingProviderModels && <Loader2 className="inline h-3 w-3 animate-spin ml-1" />}
                       </label>
                       {providerId && providerModelList.length > 0 ? (
                         <select value={providerModel} onChange={e => setProviderModel(e.target.value)}
                           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500">
-                          <option value="">Auto (provider default)</option>
+                          <option value="">{t("userManagement.autoProviderDefault")}</option>
                           {providerModelList.map(m => <option key={m.id} value={m.id}>{m.name ?? m.id}</option>)}
                         </select>
                       ) : (
@@ -778,30 +790,30 @@ function BulkAllocateModal({
                 className="h-4 w-4 rounded border-input bg-background text-brand-500 focus:ring-brand-500"
               />
               <Zap className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Add Additional Quota</span>
-              <span className="text-[11px] text-muted-foreground ml-auto">Adds to each user's existing credits</span>
+              <span className="text-sm font-medium text-foreground">{t("userManagement.addAdditionalQuota")}</span>
+              <span className="text-[11px] text-muted-foreground ml-auto">{t("userManagement.addsToEachUserCredits")}</span>
             </label>
             {applyQuota && (
               <div className="px-4 py-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">+ Daily</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.addDailyPrefix")}</label>
                     <input type="number" min={0} value={addDaily} onChange={e => setAddDaily(Math.max(0, Number(e.target.value) || 0))}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">+ Monthly</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.addMonthlyPrefix")}</label>
                     <input type="number" min={0} value={addMonthly} onChange={e => setAddMonthly(Math.max(0, Number(e.target.value) || 0))}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">+ Rollover</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("userManagement.addRolloverPrefix")}</label>
                     <input type="number" min={0} value={addRollover} onChange={e => setAddRollover(Math.max(0, Number(e.target.value) || 0))}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand-500" />
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-2">
-                  These amounts are <span className="text-foreground font-medium">added</span> to each selected user's current totals (not replaced).
+                  {t("userManagement.bulkQuotaNote")}
                 </p>
               </div>
             )}
@@ -817,8 +829,8 @@ function BulkAllocateModal({
                 className="h-4 w-4 rounded border-input bg-background text-brand-500 focus:ring-brand-500"
               />
               <Shield className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Set Platform Role</span>
-              <span className="text-[11px] text-muted-foreground ml-auto">Replaces each user's role</span>
+              <span className="text-sm font-medium text-foreground">{t("userManagement.setPlatformRole")}</span>
+              <span className="text-[11px] text-muted-foreground ml-auto">{t("userManagement.replacesEachUserRole")}</span>
             </label>
             {applyRole && (
               <div className="px-4 py-4 space-y-2">
@@ -831,7 +843,7 @@ function BulkAllocateModal({
                 </select>
                 {selfInSelection && (
                   <p className="text-[11px] text-red-400">
-                    You're in the selection. Deselect yourself before changing roles in bulk — you can't change your own platform role.
+                    {t("userManagement.cannotChangeOwnRoleBulk")}
                   </p>
                 )}
               </div>
@@ -848,8 +860,8 @@ function BulkAllocateModal({
                 className="h-4 w-4 rounded border-input bg-background text-brand-500 focus:ring-brand-500"
               />
               <Crown className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Set Workspace Plan</span>
-              <span className="text-[11px] text-muted-foreground ml-auto">Replaces each user's plan</span>
+              <span className="text-sm font-medium text-foreground">{t("userManagement.setWorkspacePlan")}</span>
+              <span className="text-[11px] text-muted-foreground ml-auto">{t("userManagement.replacesEachUserPlan")}</span>
             </label>
             {applyPlan && (
               <div className="px-4 py-4">
@@ -868,7 +880,7 @@ function BulkAllocateModal({
             <div className="rounded-lg border border-border bg-muted px-4 py-3">
               <div className="flex items-center gap-2 text-xs text-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Applying to {progress.done} / {progress.total} users…
+                {t("userManagement.applyingProgress", { done: progress.done, total: progress.total })}
               </div>
             </div>
           )}
@@ -878,12 +890,14 @@ function BulkAllocateModal({
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border">
           <button onClick={onClose} disabled={saving}
             className="rounded-lg px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors disabled:opacity-50">
-            Cancel
+            {t("common.cancel")}
           </button>
           <button onClick={handleApply} disabled={!canApply || saving}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            Apply to {selectedUsers.length} user{selectedUsers.length !== 1 ? "s" : ""}
+            {selectedUsers.length === 1
+              ? t("userManagement.applyToSelected", { count: selectedUsers.length })
+              : t("userManagement.applyToSelectedPlural", { count: selectedUsers.length })}
           </button>
         </div>
       </div>
@@ -1111,7 +1125,7 @@ export function UserManagementPanel({
                     <button
                       onClick={e => { e.stopPropagation(); setSelectedUser(u); }}
                       className="rounded p-1.5 text-muted-foreground hover:text-brand-400 hover:bg-secondary transition-colors"
-                      title="Manage user"
+                      title={t("userManagement.manageUser")}
                     >
                       <ChevronDown className="h-4 w-4 -rotate-90" />
                     </button>
@@ -1122,7 +1136,7 @@ export function UserManagementPanel({
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  {searchQuery ? "No users match your search." : "No users found."}
+                  {searchQuery ? t("userManagement.noUsersMatchSearch") : t("userManagement.noUsersFound")}
                 </td>
               </tr>
             )}
@@ -1132,10 +1146,10 @@ export function UserManagementPanel({
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
-        <span className="flex items-center gap-1"><Shield className="h-3 w-3 text-red-400" /> Enforced = admin-locked model</span>
-        <span className="flex items-center gap-1"><Bot className="h-3 w-3 text-emerald-400" /> User · Copilot/Custom = personal override</span>
-        <span className="flex items-center gap-1"><Sparkles className="h-3 w-3 text-blue-400" /> WS default = inheriting workspace setting</span>
-        <span>Auto-select = no model configured anywhere</span>
+        <span className="flex items-center gap-1"><Shield className="h-3 w-3 text-red-400" /> {t("userManagementExtra.legendEnforced")}</span>
+        <span className="flex items-center gap-1"><Bot className="h-3 w-3 text-emerald-400" /> {t("userManagementExtra.legendUserOverride")}</span>
+        <span className="flex items-center gap-1"><Sparkles className="h-3 w-3 text-blue-400" /> {t("userManagementExtra.legendWsDefault")}</span>
+        <span>{t("userManagementExtra.legendAutoSelect")}</span>
       </div>
 
       {/* Detail Modal */}

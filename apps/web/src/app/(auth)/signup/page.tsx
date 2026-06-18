@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { useState, useEffect, useMemo, useCallback, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,12 @@ import { GitHubIcon, GoogleIcon } from "./oauth-icons";
 export default function SignupPage() {
   const router = useRouter();
   const { register, isAuthenticated, isLoading: authLoading } = useAuth();
+  const tAuth = useTranslations("auth");
+  const t = useTranslations("dashboard");
+  const translateSignup = useCallback(
+    (key: string) => t(`auth.signup.${key}`),
+    [t],
+  );
 
   // Redirect after sign-up (honor returnTo, fall back to dashboard).
   useEffect(() => {
@@ -50,8 +57,14 @@ export default function SignupPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
 
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
-  const criteria = useMemo(() => getPasswordCriteria(password), [password]);
+  const strength = useMemo(
+    () => getPasswordStrength(password, translateSignup),
+    [password, translateSignup],
+  );
+  const criteria = useMemo(
+    () => getPasswordCriteria(password, translateSignup),
+    [password, translateSignup],
+  );
   const emailValid = useMemo(() => isValidEmail(email), [email]);
 
   async function handleSubmit(e: FormEvent) {
@@ -59,24 +72,22 @@ export default function SignupPage() {
     setError(null);
 
     if (!emailValid) {
-      setError("Please enter a valid email address.");
+      setError(t("auth.signup.invalidEmail"));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t("auth.signup.passwordMismatch"));
       return;
     }
 
     if (strength.score < 2) {
-      setError(
-        "Password is too weak. Use at least 8 characters with uppercase, lowercase, and numbers."
-      );
+      setError(t("auth.signup.passwordTooWeak"));
       return;
     }
 
     if (!agreedToTerms) {
-      setError("You must agree to the Terms of Service and Privacy Policy.");
+      setError(t("auth.signup.mustAgreeToTerms"));
       return;
     }
 
@@ -89,8 +100,6 @@ export default function SignupPage() {
         displayName: displayName || undefined,
       });
       if (result.pending) {
-        // Signup approvals are on — render the admin-customized message
-        // instead of redirecting. No tokens were issued.
         setPendingMessage(result.message);
         setIsLoading(false);
         return;
@@ -112,7 +121,7 @@ export default function SignupPage() {
         const apiErr = err as { body: { error: string } };
         setError(apiErr.body.error);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("auth.signup.genericError"));
       }
     } finally {
       setIsLoading(false);
@@ -140,15 +149,15 @@ export default function SignupPage() {
     return (
       <>
         <h2 className="mb-3 text-center text-xl font-semibold text-[hsl(var(--foreground))]">
-          You&apos;re on the list
+          {tAuth("pendingTitle")}
         </h2>
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 text-sm leading-relaxed text-[hsl(var(--foreground))] whitespace-pre-wrap">
           {pendingMessage}
         </div>
         <p className="mt-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          Already approved?{" "}
+          {t("auth.signup.alreadyApproved")}{" "}
           <Link href="/login" className="font-medium text-brand-700 hover:underline">
-            Sign in
+            {t("auth.signup.signIn")}
           </Link>
         </p>
       </>
@@ -158,7 +167,7 @@ export default function SignupPage() {
   return (
     <>
       <h2 className="mb-6 text-center text-xl font-semibold text-[hsl(var(--foreground))]">
-        Create your account
+        {t("auth.signup.title")}
       </h2>
 
       {/* OAuth Buttons */}
@@ -174,7 +183,7 @@ export default function SignupPage() {
           ) : (
             <GitHubIcon className="mr-2 h-4 w-4" />
           )}
-          Continue with GitHub
+          {tAuth("continueWithGitHub")}
         </Button>
         <Button
           variant="outline"
@@ -187,7 +196,7 @@ export default function SignupPage() {
           ) : (
             <GoogleIcon className="mr-2 h-4 w-4" />
           )}
-          Continue with Google
+          {tAuth("continueWithGoogle")}
         </Button>
       </div>
 
@@ -198,7 +207,7 @@ export default function SignupPage() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-[hsl(var(--card))] px-2 text-[hsl(var(--muted-foreground))]">
-            Or sign up with email
+            {t("auth.signup.orSignUpWithEmail")}
           </span>
         </div>
       </div>
@@ -219,11 +228,11 @@ export default function SignupPage() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="displayName">Name (optional)</Label>
+          <Label htmlFor="displayName">{t("auth.signup.displayName")}</Label>
           <Input
             id="displayName"
             type="text"
-            placeholder="Your name"
+            placeholder={t("auth.signup.displayNamePlaceholder")}
             autoComplete="name"
             disabled={isFormDisabled}
             className="rounded-xl"
@@ -233,11 +242,11 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("common.email")}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.login.emailPlaceholder")}
             autoComplete="email"
             required
             disabled={isFormDisabled}
@@ -252,18 +261,18 @@ export default function SignupPage() {
           />
           {emailTouched && email.length > 0 && !emailValid && (
             <p className="text-xs text-red-600 dark:text-red-400">
-              Please enter a valid email address
+              {t("auth.signup.invalidEmailInline")}
             </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("common.password")}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="At least 8 characters"
+              placeholder={t("auth.signup.passwordPlaceholder")}
               autoComplete="new-password"
               required
               minLength={8}
@@ -277,7 +286,7 @@ export default function SignupPage() {
               tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? tAuth("hidePassword") : tAuth("showPassword")}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -303,7 +312,7 @@ export default function SignupPage() {
                   ))}
                 </div>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Password strength: {strength.label}
+                  {t("auth.signup.passwordStrength", { label: strength.label })}
                 </p>
               </div>
               {/* Criteria checklist */}
@@ -335,12 +344,12 @@ export default function SignupPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Label htmlFor="confirmPassword">{t("auth.signup.confirmPassword")}</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              placeholder="Re-enter your password"
+              placeholder={t("auth.signup.confirmPasswordPlaceholder")}
               autoComplete="new-password"
               required
               disabled={isFormDisabled}
@@ -353,9 +362,7 @@ export default function SignupPage() {
               tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              aria-label={
-                showConfirmPassword ? "Hide password" : "Show password"
-              }
+              aria-label={showConfirmPassword ? tAuth("hidePassword") : tAuth("showPassword")}
             >
               {showConfirmPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -366,13 +373,13 @@ export default function SignupPage() {
           </div>
           {confirmPassword.length > 0 && confirmPassword !== password && (
             <p className="text-xs text-red-600 dark:text-red-400">
-              Passwords do not match
+              {t("auth.signup.passwordsDoNotMatch")}
             </p>
           )}
           {confirmPassword.length > 0 && confirmPassword === password && (
             <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
               <Check className="h-3 w-3" />
-              Passwords match
+              {t("auth.signup.passwordsMatch")}
             </p>
           )}
         </div>
@@ -390,22 +397,26 @@ export default function SignupPage() {
             htmlFor="terms"
             className="text-sm text-[hsl(var(--muted-foreground))] select-none cursor-pointer leading-snug"
           >
-            I agree to the{" "}
-            <a
-              href="/terms"
-              className="font-medium text-brand-700 hover:underline"
-              target="_blank"
-            >
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a
-              href="/privacy"
-              className="font-medium text-brand-700 hover:underline"
-              target="_blank"
-            >
-              Privacy Policy
-            </a>
+            {t.rich("auth.signup.agreeToTerms", {
+              terms: (chunks) => (
+                <a
+                  href="/terms"
+                  className="font-medium text-brand-700 hover:underline"
+                  target="_blank"
+                >
+                  {chunks}
+                </a>
+              ),
+              privacy: (chunks) => (
+                <a
+                  href="/privacy"
+                  className="font-medium text-brand-700 hover:underline"
+                  target="_blank"
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
           </label>
         </div>
 
@@ -417,24 +428,23 @@ export default function SignupPage() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
+              {t("auth.signup.creatingAccount")}
             </>
           ) : (
-            "Create account"
+            t("auth.signup.createAccount")
           )}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
-        Already have an account?{" "}
+        {t("auth.signup.alreadyHaveAccount")}{" "}
         <Link
           href="/login"
           className="font-medium text-brand-700 hover:underline"
         >
-          Sign in
+          {t("auth.signup.signIn")}
         </Link>
       </p>
     </>
   );
 }
-

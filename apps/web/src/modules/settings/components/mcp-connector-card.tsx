@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Trash2,
   Loader2,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  TRANSPORT_LABELS,
+  useTransportLabels,
   type McpConnector,
   type McpTool,
 } from "../hooks/use-mcp-connectors";
@@ -44,7 +45,8 @@ export function StatusDot({ status }: { status: string }) {
 // ─── Transport Badge ────────────────────────────────────────
 
 export function TransportBadge({ type }: { type: McpConnector["transport_type"] }) {
-  const label = TRANSPORT_LABELS[type];
+  const transportLabels = useTransportLabels();
+  const label = transportLabels[type];
   const Icon = type === "stdio" ? Terminal : type === "http_sse" ? Radio : Globe;
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -71,6 +73,8 @@ export function ConnectorCard({
   onToggleActive: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("settings");
+  const transportLabels = useTransportLabels();
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string; tools?: McpTool[] } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -88,13 +92,13 @@ export function ConnectorCard({
     try {
       onTest();
       await new Promise((r) => setTimeout(r, 600));
-      setTestResult({ ok: true, message: "Connection test initiated" });
+      setTestResult({ ok: true, message: t("mcp.connectorCard.testInitiated") });
     } catch {
-      setTestResult({ ok: false, message: "Connection failed" });
+      setTestResult({ ok: false, message: t("mcp.connectorCard.testFailed") });
     } finally {
       setTesting(false);
     }
-  }, [onTest]);
+  }, [onTest, t]);
 
   const handleToggleActive = useCallback(async () => {
     setToggling(true);
@@ -169,29 +173,29 @@ export function ConnectorCard({
 
           <div className="px-4 py-3 border-b space-y-2">
             <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
-              <span className="text-muted-foreground font-medium">Transport</span>
-              <span>{TRANSPORT_LABELS[connector.transport_type].label}</span>
+              <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.transport")}</span>
+              <span>{transportLabels[connector.transport_type].label}</span>
               {connector.server_url && (
                 <>
-                  <span className="text-muted-foreground font-medium">URL</span>
+                  <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.url")}</span>
                   <span className="font-mono truncate">{connector.server_url}</span>
                 </>
               )}
               {connector.server_command && (
                 <>
-                  <span className="text-muted-foreground font-medium">Command</span>
+                  <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.command")}</span>
                   <span className="font-mono truncate">{connector.server_command}</span>
                 </>
               )}
               {Array.isArray(connector.server_args) && connector.server_args.length > 0 && (
                 <>
-                  <span className="text-muted-foreground font-medium">Args</span>
+                  <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.args")}</span>
                   <span className="font-mono truncate">{connector.server_args.join(", ")}</span>
                 </>
               )}
-              <span className="text-muted-foreground font-medium">Auth</span>
+              <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.auth")}</span>
               <span className="capitalize">{connector.auth_type.replace("_", " ")}</span>
-              <span className="text-muted-foreground font-medium">Scope</span>
+              <span className="text-muted-foreground font-medium">{t("mcp.connectorCard.fields.scope")}</span>
               <span className="capitalize">{connector.scope}</span>
             </div>
           </div>
@@ -201,7 +205,7 @@ export function ConnectorCard({
               <div className="flex items-center gap-1.5 mb-2">
                 <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">
-                  Tools ({toolCount})
+                  {t("mcp.connectorCard.tools", { count: toolCount })}
                 </span>
               </div>
               <div className="grid gap-1">
@@ -265,7 +269,7 @@ export function ConnectorCard({
                 ) : (
                   <Zap className="h-3.5 w-3.5" />
                 )}
-                Test Connection
+                {t("mcp.connectorCard.testConnection")}
               </button>
               <button
                 onClick={() => void handleToggleActive()}
@@ -275,12 +279,12 @@ export function ConnectorCard({
                 {connector.status === "active" || connector.status === "connecting" ? (
                   <>
                     <PowerOff className="h-3.5 w-3.5" />
-                    Deactivate
+                    {t("mcp.connectorCard.deactivate")}
                   </>
                 ) : (
                   <>
                     <Power className="h-3.5 w-3.5" />
-                    Activate
+                    {t("mcp.connectorCard.activate")}
                   </>
                 )}
               </button>
@@ -298,12 +302,12 @@ export function ConnectorCard({
               {confirmDelete ? (
                 <>
                   <AlertCircle className="h-3.5 w-3.5" />
-                  Confirm Delete
+                  {t("mcp.connectorCard.confirmDelete")}
                 </>
               ) : (
                 <>
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  {t("mcp.connectorCard.delete")}
                 </>
               )}
             </button>

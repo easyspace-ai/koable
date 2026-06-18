@@ -1,0 +1,738 @@
+{
+  "tabs": {
+    "general": "General",
+    "database": "Database",
+    "integrations": "Integrations",
+    "mcp": "MCP Servers",
+    "skills": "Skills & Rules",
+    "context": "Knowledge",
+    "doableAi": "Doable AI",
+    "security": "Security",
+    "domain": "Custom Domain",
+    "environments": "Environments",
+    "danger": "Danger Zone"
+  },
+  "shell": {
+    "errors": {
+      "failedLoadProject": "Failed to load project"
+    },
+    "notFound": {
+      "title": "Project not found",
+      "description": "The project may have been deleted or you don't have access."
+    },
+    "skillsTab": {
+      "title": "Skills & Rules",
+      "description": "Manage reusable skills and rules that shape how the AI works across your workspace."
+    }
+  },
+  "general": {
+    "projectDetails": {
+      "title": "Project Details",
+      "nameLabel": "Project Name",
+      "namePlaceholder": "My Project",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "A brief description of your project",
+      "visibilityLabel": "Visibility",
+      "public": {
+        "label": "Public",
+        "description": "Anyone can view"
+      },
+      "private": {
+        "label": "Private",
+        "description": "Only you can access"
+      },
+      "unsavedChanges": "You have unsaved changes",
+      "saveChanges": "Save Changes",
+      "saving": "Saving..."
+    },
+    "toasts": {
+      "saved": "Project settings saved",
+      "saveFailed": "Failed to save"
+    },
+    "projectInfo": {
+      "title": "Project Information",
+      "description": "Read-only metadata about your project.",
+      "projectId": "Project ID",
+      "created": "Created",
+      "lastUpdated": "Last Updated",
+      "projectUrl": "Project URL",
+      "status": "Status",
+      "visibility": "Visibility"
+    }
+  },
+  "integrationsTab": {
+    "title": "Integrations",
+    "description": "Connect third-party services and AI tools to extend your project.",
+    "githubSync": {
+      "title": "GitHub Sync",
+      "description": "Push and pull code changes to keep your project in sync."
+    }
+  },
+  "github": {
+    "loading": "Loading GitHub settings...",
+    "title": "GitHub Integration",
+    "description": "Connect your project to GitHub for version control and collaboration.",
+    "notConnected": {
+      "title": "Not connected to GitHub",
+      "description": "Connect to push and pull code, track changes, and collaborate.",
+      "hint": "Use the GitHub button in the editor toolbar to connect this project."
+    },
+    "connectedRepo": "Connected Repository",
+    "branch": "Branch: {branch}",
+    "lastSynced": "Last synced: {date}",
+    "push": {
+      "title": "Push to GitHub",
+      "placeholder": "Commit message...",
+      "button": "Push",
+      "pushing": "Pushing..."
+    },
+    "pull": {
+      "title": "Pull from GitHub",
+      "description": "Download the latest changes from the remote repository.",
+      "button": "Pull",
+      "pulling": "Pulling..."
+    },
+    "forcePush": "Force Push (overwrite remote)",
+    "recentHistory": "Recent Sync History",
+    "disconnect": {
+      "title": "Disconnect Repository",
+      "description": "Removes the connection. Your code will not be deleted.",
+      "button": "Disconnect"
+    },
+    "toasts": {
+      "pushed": "Pushed {filesChanged} files ({sha})",
+      "pulled": "Pulled {filesChanged} files",
+      "disconnected": "Disconnected from GitHub"
+    },
+    "errors": {
+      "requestFailed": "Request failed",
+      "pushFailed": "Push failed",
+      "pullFailed": "Pull failed",
+      "disconnectFailed": "Disconnect failed"
+    }
+  },
+  "database": {
+    "navLabel": "Database panes",
+    "overview": "Overview",
+    "schema": "Schema",
+    "rows": "Rows",
+    "queries": "Queries",
+    "migrations": "Migrations",
+    "dangerZone": "Danger Zone",
+    "overviewTitle": "Database Overview",
+    "overviewDescription": "A snapshot of your project database.",
+    "noTablesTitle": "No tables yet",
+    "noTablesDescription": "Ask the AI to add some — it will create your schema automatically.",
+    "statTables": "Tables",
+    "statTotalRows": "Total rows",
+    "statIndexes": "Indexes",
+    "statPolicies": "Policies",
+    "quickActions": "Quick actions",
+    "openSchema": "Open Schema",
+    "browseRows": "Browse Rows",
+    "runQuery": "Run Query",
+    "schemaTitle": "Schema",
+    "schemaDescription": "Tables, columns, indexes, and row-level security.",
+    "schemaEmpty": "No tables found. Ask the AI to create your schema.",
+    "queriesTitle": "Queries",
+    "queriesDescription": "Run SELECT / INSERT / UPDATE / DELETE against your database. Queries respect row-level security.",
+    "run": "Run",
+    "runShortcut": "⌘/Ctrl + Enter",
+    "migrationsTitle": "Migrations",
+    "migrationsDescription": "Applied migration history for your database.",
+    "noMigrationsTitle": "No migrations yet",
+    "noMigrationsDescription": "Migrations appear here once the AI applies schema changes via the built-in database.",
+    "migrationColumn": "Migration",
+    "appliedColumn": "Applied",
+    "hashColumn": "Hash",
+    "dangerTitle": "Danger Zone",
+    "failedLoadSchema": "Failed to load schema",
+    "failedEnableRls": "Failed to enable row-level security",
+    "rlsEnabledAria": "RLS enabled",
+    "rlsOffAria": "RLS off",
+    "rlsEnabledBadge": "RLS enabled",
+    "rlsOffBadge": "RLS off",
+    "enableRls": "Enable RLS",
+    "addIdentityColumnHint": "add a created_by / owner_id column to enable RLS",
+    "columnsSection": "Columns",
+    "columnName": "Name",
+    "columnType": "Type",
+    "columnFlags": "Flags",
+    "notNull": "NOT NULL",
+    "indexesSection": "Indexes ({count})",
+    "unique": "UNIQUE",
+    "policiesSection": "Policies ({count})",
+    "noPoliciesRlsOn": "No policies — RLS is on but no policy grants access (rows are hidden).",
+    "noPoliciesRlsOff": "No policies — this table is not row-level-secured.",
+    "rowsTitle": "Rows",
+    "rowsDescription": "Browse, edit, delete, and export table data.",
+    "refresh": "Refresh",
+    "addRow": "Add row",
+    "tableRowCount": "{name} ({count} rows)",
+    "pageInfo": "Page {page} of {totalPages} · {totalRows} rows total",
+    "noPkHint": "Editing and deleting are disabled — this table has no single-column primary key to target rows by.",
+    "newRowIn": "New row in {table}",
+    "optional": "(optional)",
+    "autoPlaceholder": "auto",
+    "youAutoPlaceholder": "you (auto)",
+    "add": "Add",
+    "cancel": "Cancel",
+    "noData": "No data.",
+    "actions": "Actions",
+    "nullValue": "null",
+    "deleteConfirm": "Delete?",
+    "save": "Save",
+    "confirmDelete": "Confirm delete",
+    "edit": "Edit",
+    "delete": "Delete",
+    "prev": "Prev",
+    "next": "Next",
+    "queryFailed": "Query failed",
+    "updateFailed": "Update failed",
+    "deleteFailed": "Delete failed",
+    "exportFailed": "Export failed",
+    "insertFailed": "Insert failed",
+    "fillOneField": "Fill at least one field before adding the row.",
+    "rowCount": "{count} row",
+    "rowCountPlural": "{count} rows",
+    "queryOkNoRows": "Query OK — no rows returned.",
+    "failedLoadMigrations": "Failed to load migrations",
+    "dropTables": "Drop tables",
+    "dropTablesDescription": "Permanently delete a table and all its data. This cannot be undone.",
+    "noTablesToDrop": "No tables to drop.",
+    "drop": "Drop",
+    "dropTable": "Drop table",
+    "typeToConfirm": "Type {name} to confirm:",
+    "resetDatabase": "Reset database",
+    "resetDatabaseDescription": "Drop ALL tables and start from an empty database. This cannot be undone.",
+    "typeResetToConfirm": "Type reset to drop every table:",
+    "rowsCount": "{count} rows",
+    "failedDropTable": "Failed to drop table",
+    "failedResetDatabase": "Failed to reset database"
+  },
+  "mcp": {
+    "panel": {
+      "title": "MCP Servers",
+      "description": "Connect Model Context Protocol servers to give your AI assistant access to external tools and data.",
+      "refreshTitle": "Refresh",
+      "addServer": "Add MCP Server",
+      "stats": {
+        "configured": "{count, plural, one {# server configured} other {# servers configured}}",
+        "active": "{count} active"
+      },
+      "loading": "Loading MCP servers...",
+      "empty": {
+        "title": "No MCP servers configured",
+        "description": "MCP servers let your AI assistant use external tools like databases, APIs, file systems, and more.",
+        "addFirst": "Add Your First Server"
+      }
+    },
+    "transport": {
+      "streamableHttp": {
+        "label": "HTTP (Streamable)",
+        "description": "Connect to an HTTP-based MCP server with streaming support"
+      },
+      "httpSse": {
+        "label": "Server-Sent Events (SSE)",
+        "description": "Connect via HTTP with Server-Sent Events"
+      },
+      "stdio": {
+        "label": "Built-in App",
+        "description": "Server-managed local process"
+      }
+    },
+    "addForm": {
+      "title": "Add MCP Server",
+      "transportType": "Transport Type",
+      "serverUrl": "Server URL *",
+      "serverUrlPlaceholder": "https://mcp.example.com/v1",
+      "discover": "Discover",
+      "discoverTitle": "Discover server capabilities",
+      "command": "Command *",
+      "commandPlaceholder": "npx -y @modelcontextprotocol/server-filesystem",
+      "arguments": "Arguments (comma-separated)",
+      "argumentsPlaceholder": "/path/to/dir, --verbose",
+      "name": "Name *",
+      "namePlaceholder": "My MCP Server",
+      "autoDetected": "Auto-detected: {name}",
+      "description": "Description",
+      "descriptionPlaceholder": "What does this server provide?",
+      "authentication": "Authentication",
+      "authNone": "None",
+      "authApiKey": "API Key",
+      "authBearerToken": "Bearer Token",
+      "authOAuthToken": "OAuth Token",
+      "serverRequires": "Server requires: {authType}",
+      "bearerToken": "Bearer Token",
+      "bearerTokenPlaceholder": "Token sent as Authorization: Bearer ...",
+      "headerName": "Header Name",
+      "headerNamePlaceholder": "X-API-Key (default)",
+      "apiKey": "API Key",
+      "apiKeyPlaceholder": "Sent as the header value",
+      "oauth": {
+        "available": "OAuth authorization available",
+        "authorizationServer": "Authorization server: {issuer}",
+        "connected": "Connected successfully! You can close this form.",
+        "connect": "Connect with OAuth",
+        "waiting": "Waiting for authorization...",
+        "accessToken": "Access Token",
+        "accessTokenPlaceholder": "OAuth access token (manual entry)",
+        "manualHint": "Enter an access token manually, or enter the server URL above and click Discover to find the OAuth flow.",
+        "clientId": "Client ID (optional)",
+        "clientIdPlaceholder": "Client ID if required by the server",
+        "clientIdHint": "Some OAuth servers require a client ID. Leave empty if the server supports public clients."
+      },
+      "envVars": {
+        "label": "Environment Variables",
+        "add": "Add",
+        "emptyHint": "Optional. Passed to the stdio process via its environment.",
+        "keyPlaceholder": "KEY",
+        "valuePlaceholder": "value"
+      },
+      "cancel": "Cancel",
+      "done": "Done",
+      "addServer": "Add Server",
+      "errors": {
+        "validUrl": "Enter a valid URL to discover",
+        "nameRequired": "Name is required",
+        "urlRequired": "Server URL is required for HTTP transports",
+        "commandRequired": "Command is required for stdio transport",
+        "addFailed": "Failed to add server",
+        "oauthMetadataMissing": "OAuth metadata not available. Enter the server URL and run discovery first.",
+        "popupBlocked": "Popup was blocked. Please allow popups for this site and try again.",
+        "oauthFailed": "OAuth connection failed",
+        "oauthStartFailed": "Failed to start OAuth flow"
+      }
+    },
+    "discovery": {
+      "notDetected": {
+        "title": "Server not auto-detected",
+        "fallback": "You can still add it manually — fill in the details below."
+      },
+      "discovered": {
+        "title": "Server discovered",
+        "viaServerCard": " via Server Card",
+        "viaMcpProbe": " via MCP handshake",
+        "name": "Name:",
+        "homepage": "Homepage",
+        "tools": "Tools",
+        "resources": "Resources",
+        "prompts": "Prompts",
+        "toolsAvailable": "{count} tools available:",
+        "moreTools": "+{count} more",
+        "requiresAuth": "⚠ This server requires {authType} authentication",
+        "oauthEndpointFound": "🔗 OAuth endpoint discovered — use the \"Connect with OAuth\" button below to authorize",
+        "oauthManualFallback": "OAuth metadata could not be auto-discovered. You can enter an access token manually below."
+      }
+    },
+    "connectorCard": {
+      "fields": {
+        "transport": "Transport",
+        "url": "URL",
+        "command": "Command",
+        "args": "Args",
+        "auth": "Auth",
+        "scope": "Scope"
+      },
+      "tools": "Tools ({count})",
+      "testConnection": "Test Connection",
+      "deactivate": "Deactivate",
+      "activate": "Activate",
+      "delete": "Delete",
+      "confirmDelete": "Confirm Delete",
+      "testInitiated": "Connection test initiated",
+      "testFailed": "Connection failed"
+    },
+    "errors": {
+      "loadFailed": "Failed to load MCP servers",
+      "testFailed": "Test failed",
+      "discoveryFailed": "Discovery failed"
+    }
+  },
+  "skillsRules": {
+    "panel": {
+      "retry": "Retry",
+      "loadFailed": "Failed to load skills & rules"
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "Skills teach the AI specific capabilities or knowledge. They are included in the AI's context when working on your projects.",
+      "add": "Add Skill",
+      "empty": "No skills yet. Add one to teach the AI new capabilities."
+    },
+    "rules": {
+      "title": "Rules",
+      "description": "Rules define constraints and conventions the AI must follow. File patterns control which files a rule applies to.",
+      "add": "Add Rule",
+      "empty": "No rules yet. Add one to set constraints for the AI."
+    },
+    "inlineEdit": {
+      "empty": "Empty",
+      "clickToEdit": "Click to edit"
+    },
+    "skillCard": {
+      "contentPlaceholder": "Skill content...",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this skill?",
+      "cancel": "Cancel"
+    },
+    "createSkill": {
+      "title": "New Skill",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. React Best Practices",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Describe what this skill teaches the AI...",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "ruleCard": {
+      "noFilePatterns": "No file patterns",
+      "noFilePatternsAllFiles": "No file patterns — applies to all files",
+      "filePatterns": "File Patterns",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "content": "Content",
+      "contentPlaceholder": "Rule content...",
+      "patternsPlaceholder": "*.tsx, *.ts, src/**/*.js",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this rule?"
+    },
+    "createRule": {
+      "title": "New Rule",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. TypeScript Conventions",
+      "filePatternsLabel": "File Patterns",
+      "filePatternsOptional": "(comma-separated, optional)",
+      "filePatternsPlaceholder": "*.tsx, *.ts, src/**/*.js",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Describe the rule the AI should follow...",
+      "cancel": "Cancel",
+      "create": "Create"
+    }
+  },
+  "context": {
+    "title": "Knowledge (.doable/)",
+    "description": "Knowledge files guide the AI's behavior when editing your project. Each file serves a different purpose.",
+    "budget": {
+      "summary": "{files} files, {tokens} tokens",
+      "used": "{percent}% of budget used"
+    },
+    "fileEmpty": "Empty -- click to edit",
+    "characters": "{count} characters",
+    "refresh": "Refresh",
+    "toasts": {
+      "loadFailed": "Failed to load context files",
+      "saved": "Saved {filename}",
+      "saveFailed": "Failed to save"
+    },
+    "editor": {
+      "unsaved": "Unsaved",
+      "chars": "{count} chars",
+      "save": "Save",
+      "saving": "Saving...",
+      "placeholder": "Start writing...",
+      "lastUpdated": "Last updated: {date}",
+      "shortcut": "Ctrl+S to save"
+    }
+  },
+  "doableAi": {
+    "errors": {
+      "loadFailed": "Failed to load AI settings",
+      "saveFailed": "Save failed.",
+      "eraseConfirm": "Type \"ERASE\" exactly to confirm.",
+      "eraseFailed": "Erase failed."
+    },
+    "toasts": {
+      "saved": "Doable AI settings saved.",
+      "erased": "Erased {deleted} rows across {tables} table(s). Mode: {mode}."
+    },
+    "masterToggle": {
+      "title": "Doable AI for this project",
+      "description": "When disabled, /__doable/ai/* returns 503 AI_DISABLED_FOR_PROJECT. Useful for paused projects or quota lockouts.",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "thinkingVisibility": {
+      "title": "Thinking content visibility",
+      "description": "How reasoning blocks (<think>, <reasoning>, <plan>…) are rendered in the generated chatbot UI.",
+      "auto": {
+        "label": "Auto (collapsed)",
+        "description": "Render inside a 💭 Thinking disclosure, collapsed by default."
+      },
+      "alwaysShow": {
+        "label": "Always show",
+        "description": "Render reasoning inline above the answer."
+      },
+      "hide": {
+        "label": "Hide entirely",
+        "description": "Strip <think> blocks server-side. The app never sees them."
+      }
+    },
+    "systemPrompt": {
+      "title": "System prompt override",
+      "description": "Prepended to every runtime chat call. Visible to the model only — never echoed to the client. Up to 4 KB.",
+      "placeholder": "e.g. You always answer in haiku.",
+      "charCount": "{current} / {max} chars ({percent}%) — extra content beyond the cap is truncated client-side.",
+      "reset": "Reset to default"
+    },
+    "chatModel": {
+      "title": "Chat model override",
+      "description": "Overrides the workspace-resolved chat model for runtime chat in this project's generated app."
+    },
+    "embeddingModel": {
+      "title": "Embedding model override (destructive)",
+      "description": "Changing the embedding model permanently erases all existing embeddings for this project because pgvector column dimensions are fixed per model.",
+      "current": "Current: {model}",
+      "currentDefault": "(workspace/platform default)",
+      "hint": "Click below to walk through the destructive confirmation.",
+      "changeButton": "Change embedding model…"
+    },
+    "usage": {
+      "title": "Runtime token usage",
+      "description": "Aggregates of ai_usage_log rows for this project, grouped by mode.",
+      "periods": {
+        "today": "Today",
+        "7d": "7d",
+        "30d": "30d",
+        "all": "All time"
+      },
+      "refresh": "Refresh",
+      "csv": "CSV",
+      "totalTokens": "Total tokens",
+      "requests": "Requests",
+      "estimatedCost": "Estimated cost",
+      "pricingNotConfigured": "Pricing not configured",
+      "table": {
+        "mode": "Mode",
+        "prompt": "Prompt",
+        "completion": "Completion",
+        "total": "Total",
+        "requests": "Requests"
+      },
+      "noUsageYet": "No usage yet.",
+      "topModels": "Top models",
+      "modelStats": "{requests} req · {tokens} tok",
+      "noData": "No usage data."
+    },
+    "saveBar": {
+      "unsaved": "Unsaved changes",
+      "discard": "Discard",
+      "save": "Save"
+    },
+    "eraseModal": {
+      "title": "Erase embeddings for this project?",
+      "description": "Changing the embedding model will permanently DELETE all existing embedding rows for this project (current model: {model}, {rows} rows across {tables} table(s)).",
+      "tableRows": "{table} — {rows} rows",
+      "newModelLabel": "New embedding model",
+      "newModelPlaceholder": "e.g. text-embedding-3-small or gemini-embedding-001",
+      "confirmLabel": "Type ERASE to confirm",
+      "confirmPlaceholder": "ERASE",
+      "cancel": "Cancel",
+      "confirm": "Erase embeddings & switch model"
+    }
+  },
+  "chatModelPicker": {
+    "inheritDefault": "Inherit workspace default ({model})",
+    "inheritDefaultNoModel": "Inherit workspace default",
+    "inheritDescription": "Use the model configured in AI Settings for this workspace.",
+    "overrideTitle": "Override for this project",
+    "overrideDescription": "Pick a provider and model from your workspace catalog.",
+    "loadingProviders": "Loading providers…",
+    "providerSource": "Provider source",
+    "githubCopilot": "GitHub Copilot",
+    "customProvider": "Custom provider",
+    "account": "Account",
+    "serverDefault": "Server default",
+    "model": "Model",
+    "loadingModels": "Loading models…",
+    "selectModel": "Select a model…",
+    "provider": "Provider",
+    "selectProvider": "Select a provider…",
+    "noProviders": "No workspace providers configured. Add one in AI Settings.",
+    "aiSettingsLink": "AI Settings",
+    "refreshTitle": "Refresh model list",
+    "refresh": "Refresh",
+    "noModelsDiscovered": "No models discovered yet. Click Refresh or check the provider in AI Settings.",
+    "selectProviderFirst": "Select a provider first.",
+    "currentOverride": "Current saved override: {model} — pick a model above to update it.",
+    "visionSuffix": " [vision]",
+    "toolsSuffix": " [tools]"
+  },
+  "security": {
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Manage authentication keys for published apps. Auto-provisioned on first publish with tool-scoping and origin-binding.",
+      "saveKeyWarning": "Save this key — it won't be shown again",
+      "dismiss": "Dismiss",
+      "empty": "No API keys yet. Keys are auto-provisioned on first publish, or you can create one manually below.",
+      "toolsAllowed": "{count, plural, one {# tool allowed} other {# tools allowed}}",
+      "allTools": "All tools",
+      "anyOrigin": "Any origin",
+      "created": "Created {date}",
+      "lastUsed": "Last used {date}",
+      "revokeTitle": "Revoke key",
+      "createClientKey": "Create Client Key",
+      "createServerKey": "Create Server Key",
+      "explanation": {
+        "clientKeys": "Client keys (dpk_c_*): For browser apps. Origin-bound, lower rate limits (600/min).",
+        "serverKeys": "Server keys (dpk_s_*): For backend apps. No origin check, higher rate limits (1200/min).",
+        "autoProvisioned": "Auto-provisioned: When you publish, a client key is automatically created and scoped to exactly the MCP tools your app uses."
+      },
+      "toasts": {
+        "loadFailed": "Failed to load API keys",
+        "created": "API key created — copy it now, it won't be shown again",
+        "createFailed": "Failed to create key",
+        "revoked": "Key revoked",
+        "revokeFailed": "Failed to revoke key"
+      },
+      "manualKeyLabel": "Manual {tier} key"
+    },
+    "rateLimiting": {
+      "title": "Rate Limiting",
+      "description": "Control how many MCP tool calls and integration requests this project can make per minute.",
+      "modeLabel": "Rate Limit Mode",
+      "systemDefault": {
+        "label": "System Default",
+        "description": "600 calls/min for preview, 1200 calls/min for published apps with API keys"
+      },
+      "custom": {
+        "label": "Custom Limit",
+        "description": "Set a specific calls-per-minute limit for this project",
+        "unit": "calls / minute"
+      },
+      "unlimited": {
+        "label": "Unlimited (No Rate Limiting)",
+        "description": "Disable rate limiting entirely. Use with caution — external MCP servers may still apply their own limits."
+      },
+      "saveChanges": "Save Changes",
+      "toasts": {
+        "loadFailed": "Failed to load rate limit settings",
+        "saved": "Rate limiting settings saved",
+        "saveFailed": "Failed to save"
+      }
+    }
+  },
+  "rateLimitingTab": {
+    "title": "MCP & Integration Rate Limiting",
+    "description": "Control how many MCP tool calls and integration requests this project can make per minute. Applies to all modes: preview, standalone, and published.",
+    "howItWorks": {
+      "title": "How it works",
+      "description": "Understanding the rate limiting architecture",
+      "paragraph1": "Rate limiting applies to all MCP tool calls and integration actions made by this project, regardless of how the app is accessed (editor preview, standalone URL, or published site).",
+      "paragraph2": "All requests flow through a single endpoint: /__doable/connector-proxy/mcp/:toolName",
+      "bullets": {
+        "previewAuth": "Preview & standalone: authenticated via short-lived JWT (15 min)",
+        "publishedAuth": "Published apps: authenticated via project API key (dpk_*)",
+        "sharedLimit": "Rate limit is shared across all auth modes for this project"
+      }
+    }
+  },
+  "domain": {
+    "default": {
+      "title": "Default Domain",
+      "description": "Your project is always accessible at its .doable.me subdomain.",
+      "urlLabel": "Default URL",
+      "visit": "Visit"
+    },
+    "custom": {
+      "title": "Custom Domain",
+      "description": "Serve your published site from your own domain name.",
+      "proFeature": {
+        "title": "Pro+ Feature",
+        "description": "Custom domains are available on the Pro plan and above. Upgrade your workspace to connect your own domain.",
+        "upgrade": "Upgrade to Pro"
+      },
+      "placeholder": "app.example.com",
+      "addDomain": "Add Domain",
+      "empty": "No custom domains configured. Add one above to get started.",
+      "visit": "Visit",
+      "verify": "Verify",
+      "copyTargetTitle": "Copy target",
+      "configureDns": {
+        "title": "Configure DNS",
+        "description": "Add this CNAME record in your Cloudflare DNS dashboard with the proxy (orange cloud) enabled.",
+        "type": "Type",
+        "name": "Name",
+        "target": "Target",
+        "hint": "Your domain must be on Cloudflare DNS (free). The CNAME must be proxied (orange cloud ON). After adding the record, click Verify above."
+      },
+      "active": {
+        "title": "Domain Active — SSL and routing configured via Cloudflare",
+        "description": "HTTPS certificate managed by Cloudflare. Auto-renews."
+      }
+    },
+    "status": {
+      "waitingForDns": "Waiting for DNS",
+      "verifying": "Verifying",
+      "sslProvisioning": "SSL Provisioning",
+      "active": "Active",
+      "failed": "Failed",
+      "removing": "Removing"
+    },
+    "toasts": {
+      "added": "Domain {domain} added. Configure your DNS records below.",
+      "addFailed": "Failed to add domain",
+      "active": "{domain} is now active!",
+      "verificationFailed": "Verification failed",
+      "verifyFailed": "Verification check failed",
+      "removed": "Domain removed",
+      "removeFailed": "Failed to remove domain"
+    }
+  },
+  "environmentsTab": {
+    "projectEnvironment": {
+      "title": "Project Environment",
+      "description": "Override the workspace default environment for this project. The AI will use this environment's skills, rules, knowledge, and connectors.",
+      "noEnvironments": "No environments in this workspace yet. Create one from the Environments panel.",
+      "useDefault": "Use workspace default",
+      "overrideActive": "This project uses a custom environment override. The workspace default is bypassed.",
+      "inheritingDefault": "Inheriting from workspace default. Select an environment above to override."
+    },
+    "presets": {
+      "title": "Environment Presets",
+      "description": "Reusable bundles of skills, instructions, MCPs, and integrations applied to this workspace.",
+      "emptyTitle": "No environment presets",
+      "emptyDescription": "Create environment presets from the editor's Environments panel."
+    },
+    "deployment": {
+      "title": "Deployment",
+      "description": "Deployment environments for publishing your project.",
+      "production": {
+        "name": "Production",
+        "description": "Live site accessible to all visitors"
+      },
+      "preview": {
+        "name": "Preview",
+        "description": "Test changes before publishing to production"
+      },
+      "statusActive": "active",
+      "lastDeployed": "Last deployed: {date}",
+      "visit": "Visit"
+    }
+  },
+  "danger": {
+    "transfer": {
+      "title": "Transfer Project",
+      "description": "Transfer this project to another workspace. The project will be moved along with all its files, settings, and deployment history.",
+      "emailLabel": "Destination workspace owner email",
+      "emailPlaceholder": "owner@example.com",
+      "button": "Transfer Project",
+      "toast": "Transfer request sent. The recipient will receive an email to accept."
+    },
+    "delete": {
+      "title": "Delete Project",
+      "description": "Permanently delete this project and all its deployments, files, and data. This action cannot be undone.",
+      "button": "Delete This Project",
+      "confirmTitle": "Are you absolutely sure?",
+      "confirmDescription": "This will permanently delete {projectName} and all associated data. Type the project name below to confirm.",
+      "confirmLabel": "Type {projectName} to confirm",
+      "deleting": "Deleting...",
+      "confirmButton": "I understand, delete this project",
+      "cancel": "Cancel"
+    },
+    "toasts": {
+      "deleted": "Project deleted successfully",
+      "deleteFailed": "Failed to delete project"
+    }
+  }
+}

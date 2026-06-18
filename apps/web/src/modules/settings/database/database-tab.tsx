@@ -9,18 +9,18 @@ import { RowsPane } from "./panes/rows-pane";
 import { QueriesPane } from "./panes/queries-pane";
 import { MigrationsPane } from "./panes/migrations-pane";
 import { DangerPane } from "./panes/danger-pane";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslations } from "next-intl";
 
 type Pane = "overview" | "schema" | "rows" | "queries" | "migrations" | "danger";
 
 const PANE_IDS: Pane[] = ["overview", "schema", "rows", "queries", "migrations", "danger"];
 const PANE_LABEL_KEYS: Record<Pane, string> = {
-  overview: "settings.database.overview",
-  schema: "settings.database.schema",
-  rows: "settings.database.rows",
-  queries: "settings.database.queries",
-  migrations: "settings.database.migrations",
-  danger: "settings.database.dangerZone",
+  overview: "database.overview",
+  schema: "database.schema",
+  rows: "database.rows",
+  queries: "database.queries",
+  migrations: "database.migrations",
+  danger: "database.dangerZone",
 };
 
 interface DatabaseTabProps {
@@ -28,7 +28,7 @@ interface DatabaseTabProps {
 }
 
 export function DatabaseTab({ projectId }: DatabaseTabProps) {
-  const { t } = useTranslation("editor");
+  const t = useTranslations("settings");
   const [activePane, setActivePane] = useState<Pane>(() => {
     if (typeof window === "undefined") return "overview";
     const p = new URLSearchParams(window.location.search).get("pane") as Pane | null;
@@ -52,7 +52,7 @@ export function DatabaseTab({ projectId }: DatabaseTabProps) {
       {/* Sub-pane navigation */}
       <nav
         role="tablist"
-        aria-label={t("settings.database.navLabel")}
+        aria-label={t("database.navLabel")}
         className="flex gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1"
       >
         {PANE_IDS.map((paneId) => (

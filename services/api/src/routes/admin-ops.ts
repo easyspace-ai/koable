@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { sql } from "../db/index.js";
 import { selectMessageContent } from "@doable/db";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { getCopilotManager } from "../ai/providers/copilot-manager.js";
 import { getChatSessionsSnapshot } from "./chat/index.js";
 import { getInstanceMetrics } from "../runtime/metrics.js";
@@ -11,6 +10,7 @@ import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { recordAdminAction } from "../admin/audit-log.js";
+import { isUuid } from "../lib/uuid.js";
 
 // Secret-like patterns to redact from log output before returning to the
 // admin UI. We err on the side of redacting too much rather than too
@@ -46,9 +46,6 @@ function redactSecrets(line: string): string {
 }
 
 export const adminOpsRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminOpsRoutes.use("*", authMiddleware);
-adminOpsRoutes.use("*", platformAdminMiddleware);
 
 // ─── Git Migration ─────────────────────────────────────────
 adminOpsRoutes.post("/migrate-to-git", async (c) => {
@@ -512,8 +509,7 @@ adminOpsRoutes.get("/projects", async (c) => {
 // ─── Project detail (platform admin) ──────────────────────
 adminOpsRoutes.get("/projects/:id", async (c) => {
   const projectId = c.req.param("id");
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!UUID_RE.test(projectId)) return c.json({ error: "Project not found" }, 404);
+  if (!isUuid(projectId)) return c.json({ error: "Project not found" }, 404);
 
   const rows = await sql<{
     project_id: string; project_name: string; project_slug: string;

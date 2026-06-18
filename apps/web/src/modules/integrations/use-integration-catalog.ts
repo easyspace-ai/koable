@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 
 // ─── Types ──────────────────────────────────────────────────
+
+export type IntegrationsTranslateFn = ReturnType<
+  typeof useTranslations<"integrations">
+>;
 
 export interface CustomAuthField {
   name: string;
@@ -55,35 +60,25 @@ export interface NativeConnection {
   updatedAt: string;
 }
 
-// Category labels for display
-export const CATEGORY_LABELS: Record<string, string> = {
-  communication: "Communication",
-  productivity: "Productivity",
-  developer_tools: "Developer Tools",
-  crm_sales: "CRM & Sales",
-  marketing: "Marketing",
-  finance_payments: "Finance & Payments",
-  ai_ml: "AI & ML",
-  data_storage: "Data & Storage",
-  social_media: "Social Media",
-  ecommerce: "E-Commerce",
-  project_management: "Project Management",
-  customer_support: "Customer Support",
-  hr: "HR",
-  analytics: "Analytics",
-  content: "Content",
-  automation: "Automation",
-  other: "Other",
-};
+export function getCategoryLabel(
+  t: IntegrationsTranslateFn,
+  category: string,
+): string {
+  const key = `shared.categories.${category}` as Parameters<
+    IntegrationsTranslateFn
+  >[0];
+  return t.has(key) ? t(key) : category;
+}
 
-// Auth type labels
-export const AUTH_LABELS: Record<string, string> = {
-  oauth2: "Sign in",
-  secret_text: "API Key",
-  custom_auth: "Custom",
-  basic_auth: "Username & Password",
-  none: "No auth needed",
-};
+export function getAuthLabel(
+  t: IntegrationsTranslateFn,
+  authType: string,
+): string {
+  const key = `shared.authTypes.${authType}` as Parameters<
+    IntegrationsTranslateFn
+  >[0];
+  return t.has(key) ? t(key) : authType;
+}
 
 export function useIntegrationCatalog(workspaceId: string) {
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);

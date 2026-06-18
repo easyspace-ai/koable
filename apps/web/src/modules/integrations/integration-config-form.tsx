@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Key,
   Loader2,
@@ -56,6 +57,7 @@ export interface IntegrationConfigFormProps {
 // ─── Test Connection Button ──────────────────────────────────
 
 function TestConnectionButton({ integrationId, disabled }: { integrationId: string; disabled?: boolean }) {
+  const t = useTranslations("integrations");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
 
@@ -67,9 +69,17 @@ function TestConnectionButton({ integrationId, disabled }: { integrationId: stri
         "/integrations/admin/test",
         { method: "POST", body: JSON.stringify({ integrationId }) },
       );
-      setResult({ ok: res.ok, message: res.ok ? (res.message ?? "OK") : (res.error ?? "Failed") });
+      setResult({
+        ok: res.ok,
+        message: res.ok
+          ? (res.message ?? t("configForm.testConnection.ok"))
+          : (res.error ?? t("configForm.testConnection.failed")),
+      });
     } catch (err) {
-      setResult({ ok: false, message: err instanceof Error ? err.message : "Test failed" });
+      setResult({
+        ok: false,
+        message: err instanceof Error ? err.message : t("configForm.testConnection.testFailed"),
+      });
     } finally {
       setBusy(false);
     }
@@ -79,7 +89,7 @@ function TestConnectionButton({ integrationId, disabled }: { integrationId: stri
     <div className="flex items-center gap-2">
       <button onClick={run} disabled={busy || disabled} className={btnSecondaryFilled}>
         {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
-        Test connection
+        {t("configForm.testConnection.button")}
       </button>
       {result && (
         <span className={cn("text-xs", result.ok ? "text-green-600" : "text-red-600")}>
@@ -93,12 +103,13 @@ function TestConnectionButton({ integrationId, disabled }: { integrationId: stri
 // ─── Main Polymorphic Form ──────────────────────────────────
 
 export function IntegrationConfigForm(props: IntegrationConfigFormProps) {
+  const t = useTranslations("integrations");
   const { item } = props;
 
   if (item.authType === "none") {
     return (
       <div className="text-sm text-muted-foreground p-4">
-        {item.displayName} doesn&apos;t need configuration. Just enable it.
+        {t("configForm.noConfigNeeded", { name: item.displayName })}
       </div>
     );
   }
@@ -113,12 +124,16 @@ export function IntegrationConfigForm(props: IntegrationConfigFormProps) {
 // ─── Per-Provider Help Blurb (driven by `setupGuide` prop) ──
 
 function ProviderHelpBlurb({ authType, setupGuide }: { authType: string; setupGuide?: SetupGuide }) {
+  const t = useTranslations("integrations");
+
   if (!setupGuide || (!setupGuide.consoleUrl && (!setupGuide.steps || setupGuide.steps.length === 0))) {
     return (
       <div className="flex items-start gap-2 rounded-md bg-muted/40 border p-3 text-xs text-muted-foreground">
         <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
         <div>
-          Get your {authType === "oauth2" ? "OAuth client_id + client_secret" : "credentials"} from the provider&apos;s developer console, then paste them below.
+          {authType === "oauth2"
+            ? t("configForm.providerHelp.genericOAuth")
+            : t("configForm.providerHelp.genericCredentials")}
         </div>
       </div>
     );
@@ -133,7 +148,7 @@ function ProviderHelpBlurb({ authType, setupGuide }: { authType: string; setupGu
           className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium"
         >
           <ExternalLink className="h-3 w-3" />
-          Open provider console
+          {t("configForm.providerHelp.openConsole")}
         </a>
       )}
       {setupGuide.steps && setupGuide.steps.length > 0 && (
@@ -143,7 +158,7 @@ function ProviderHelpBlurb({ authType, setupGuide }: { authType: string; setupGu
       )}
       {setupGuide.requiredScopes && setupGuide.requiredScopes.length > 0 && (
         <div className="text-muted-foreground">
-          <span className="font-medium text-foreground">Required scopes:</span>{" "}
+          <span className="font-medium text-foreground">{t("configForm.providerHelp.requiredScopes")}</span>{" "}
           <span className="font-mono text-[11px]">{setupGuide.requiredScopes.join(", ")}</span>
         </div>
       )}
@@ -162,9 +177,7 @@ function OAuthAppForm({
   onSaved,
   onCancel,
 }: IntegrationConfigFormProps) {
-  // Per-mount unique form name so each open instance gets a distinct form
-  // boundary — prevents Chrome from grouping multiple configure forms into
-  // one synthetic login form.
+  const t = useTranslations("integrations");
   const [formName] = useState(() => `int-cfg-oauth-${item.id}-${Math.random().toString(36).slice(2, 8)}`);
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
@@ -191,7 +204,7 @@ function OAuthAppForm({
   const submit = async () => {
     setError(null);
     if (!clientId.trim() || !clientSecret.trim()) {
-      setError("Client ID and Client Secret are required.");
+      setError(t("configForm.oauth.clientIdRequired"));
       return;
     }
     setSaving(true);
@@ -213,7 +226,7 @@ function OAuthAppForm({
       ).catch(() => { /* already enabled is fine */ });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save credentials");
+      setError(err instanceof Error ? err.message : t("shared.errors.failedToSaveCredentials"));
     } finally {
       setSaving(false);
     }
@@ -240,7 +253,7 @@ function OAuthAppForm({
       <div className="flex items-start gap-2 rounded-md bg-muted/40 border p-3 text-xs">
         <ExternalLink className="h-3.5 w-3.5 mt-0.5 shrink-0 text-muted-foreground" />
         <div className="flex-1">
-          <div className="text-foreground font-medium mb-1">Set this Redirect URI in the provider console:</div>
+          <div className="text-foreground font-medium mb-1">{t("configForm.oauth.redirectUriHeading")}</div>
           <div className="flex items-center gap-2">
             <code className="flex-1 truncate rounded border bg-background px-2 py-1 font-mono text-[11px]">
               {redirectUri}
@@ -251,9 +264,9 @@ function OAuthAppForm({
               className="rounded-md border px-2 py-1 hover:bg-muted transition-colors flex items-center gap-1"
             >
               {copied ? (
-                <><Check className="h-3 w-3 text-green-600" /> Copied</>
+                <><Check className="h-3 w-3 text-green-600" /> {t("configForm.oauth.copied")}</>
               ) : (
-                <><Copy className="h-3 w-3" /> Copy</>
+                <><Copy className="h-3 w-3" /> {t("configForm.oauth.copy")}</>
               )}
             </button>
           </div>
@@ -263,21 +276,25 @@ function OAuthAppForm({
       {existing && (
         <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-2.5 text-xs text-blue-700 dark:text-blue-400">
           {existing.source === "env" ? (
-            <>Currently configured via <code className="font-mono">{existing.envSource}</code> env var. Saving here will override that with a DB-stored credential.</>
+            t("configForm.oauth.existingEnv", { envSource: existing.envSource ?? "" })
           ) : (
-            <>Currently configured{existing.displayHint ? ` (Client ID: ${existing.displayHint})` : ""}. Submitting will replace the existing credential.</>
+            t("configForm.oauth.existingReplace", {
+              clientIdHint: existing.displayHint
+                ? t("configForm.oauth.existingReplaceClientIdHint", { hint: existing.displayHint })
+                : "",
+            })
           )}
         </div>
       )}
 
-      <FieldLabel>Client ID</FieldLabel>
+      <FieldLabel>{t("configForm.oauth.clientIdLabel")}</FieldLabel>
       <input
         type="text"
         name={`${formName}-client-id`}
         autoFocus
         value={clientId}
         onChange={(e) => setClientId(e.target.value)}
-        placeholder="OAuth Client ID from provider console"
+        placeholder={t("configForm.oauth.clientIdPlaceholder")}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"
@@ -288,14 +305,14 @@ function OAuthAppForm({
         className={inputClass}
       />
 
-      <FieldLabel>Client Secret</FieldLabel>
+      <FieldLabel>{t("configForm.oauth.clientSecretLabel")}</FieldLabel>
       <SecretInput
         name={`${formName}-client-secret`}
         value={clientSecret}
         onChange={setClientSecret}
         show={showSecret}
         setShow={setShowSecret}
-        placeholder="OAuth Client Secret"
+        placeholder={t("configForm.oauth.clientSecretPlaceholder")}
       />
 
       {error && <FormError>{error}</FormError>}
@@ -304,14 +321,18 @@ function OAuthAppForm({
         {existing && <TestConnectionButton integrationId={item.id} disabled={saving} />}
         <div className="flex-1" />
         <button type="button" onClick={onCancel} disabled={saving} className={btnSecondary}>
-          Cancel
+          {t("configForm.actions.cancel")}
         </button>
         <button
           type="submit"
           disabled={saving || !clientId.trim() || !clientSecret.trim()}
           className={btnPrimary}
         >
-          {saving ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving</> : <><Key className="h-3 w-3" /> Save Credentials</>}
+          {saving ? (
+            <><Loader2 className="h-3 w-3 animate-spin" /> {t("configForm.oauth.saving")}</>
+          ) : (
+            <><Key className="h-3 w-3" /> {t("configForm.oauth.saveCredentials")}</>
+          )}
         </button>
       </FormActions>
     </form>
@@ -329,6 +350,7 @@ function NonOAuthCredentialForm({
   onSaved,
   onCancel,
 }: IntegrationConfigFormProps) {
+  const t = useTranslations("integrations");
   const [formName] = useState(() => `int-cfg-cred-${item.id}-${Math.random().toString(36).slice(2, 8)}`);
   const [apiKey, setApiKey] = useState("");
   const [username, setUsername] = useState("");
@@ -371,7 +393,7 @@ function NonOAuthCredentialForm({
         displayHint = firstField ? custom[firstField.name]?.slice(0, 24) : undefined;
       }
       if (!isPlatformMode) {
-        setError("Workspace-scoped non-OAuth credentials are not supported yet from this admin form.");
+        setError(t("configForm.nonOAuth.workspaceScopedUnsupported"));
         setSaving(false);
         return;
       }
@@ -390,7 +412,7 @@ function NonOAuthCredentialForm({
       }).catch(() => { /* already enabled is fine */ });
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save credentials");
+      setError(err instanceof Error ? err.message : t("shared.errors.failedToSaveCredentials"));
     } finally {
       setSaving(false);
     }
@@ -414,20 +436,24 @@ function NonOAuthCredentialForm({
 
       {existing && (
         <div className="rounded-md border border-blue-500/30 bg-blue-500/5 p-2.5 text-xs text-blue-700 dark:text-blue-400">
-          Currently configured{existing.displayHint ? ` (…${existing.displayHint})` : ""}. Submitting will replace the existing credential.
+          {t("configForm.nonOAuth.existingReplace", {
+            displayHint: existing.displayHint
+              ? t("configForm.nonOAuth.existingReplaceHint", { hint: existing.displayHint })
+              : "",
+          })}
         </div>
       )}
 
       {item.authType === "secret_text" && (
         <>
-          <FieldLabel>API Key</FieldLabel>
+          <FieldLabel>{t("configForm.nonOAuth.apiKeyLabel")}</FieldLabel>
           <SecretInput
             name={`${formName}-api-key`}
             value={apiKey}
             onChange={setApiKey}
             show={showSecret}
             setShow={setShowSecret}
-            placeholder={`Paste your ${item.displayName} API key`}
+            placeholder={t("configForm.nonOAuth.apiKeyPlaceholder", { name: item.displayName })}
             autoFocus
           />
         </>
@@ -435,14 +461,14 @@ function NonOAuthCredentialForm({
 
       {item.authType === "basic_auth" && (
         <>
-          <FieldLabel>Username</FieldLabel>
+          <FieldLabel>{t("configForm.nonOAuth.usernameLabel")}</FieldLabel>
           <input
             type="text"
             name={`${formName}-username`}
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
+            placeholder={t("configForm.nonOAuth.usernamePlaceholder")}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -452,14 +478,14 @@ function NonOAuthCredentialForm({
             data-form-type="other"
             className={inputClass}
           />
-          <FieldLabel>Password</FieldLabel>
+          <FieldLabel>{t("configForm.nonOAuth.passwordLabel")}</FieldLabel>
           <SecretInput
             name={`${formName}-password`}
             value={password}
             onChange={setPassword}
             show={showSecret}
             setShow={setShowSecret}
-            placeholder="Password"
+            placeholder={t("configForm.nonOAuth.passwordPlaceholder")}
           />
         </>
       )}
@@ -467,14 +493,14 @@ function NonOAuthCredentialForm({
       {item.authType === "custom_auth" && (
         fields.length === 0 ? (
           <>
-            <FieldLabel>Authentication Token</FieldLabel>
+            <FieldLabel>{t("configForm.nonOAuth.authTokenLabel")}</FieldLabel>
             <SecretInput
               name={`${formName}-token`}
               value={apiKey}
               onChange={setApiKey}
               show={showSecret}
               setShow={setShowSecret}
-              placeholder="Authentication token"
+              placeholder={t("configForm.nonOAuth.authTokenPlaceholder")}
               autoFocus
             />
           </>
@@ -483,7 +509,11 @@ function NonOAuthCredentialForm({
             <div key={field.name} className="space-y-1.5">
               <FieldLabel>
                 {field.displayName}
-                {!field.required && <span className="text-muted-foreground font-normal ml-1">(optional)</span>}
+                {!field.required && (
+                  <span className="text-muted-foreground font-normal ml-1">
+                    {t("configForm.nonOAuth.optionalSuffix")}
+                  </span>
+                )}
               </FieldLabel>
               {field.description && (
                 <p className="text-[11px] text-muted-foreground -mt-1">{field.description}</p>
@@ -495,7 +525,7 @@ function NonOAuthCredentialForm({
                   onChange={(e) => setCustom({ ...custom, [field.name]: e.target.value })}
                   className={inputClass}
                 >
-                  <option value="">Select…</option>
+                  <option value="">{t("configForm.nonOAuth.selectPlaceholder")}</option>
                   {field.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
@@ -507,7 +537,9 @@ function NonOAuthCredentialForm({
                   onChange={(v) => setCustom({ ...custom, [field.name]: v })}
                   show={showSecret}
                   setShow={setShowSecret}
-                  placeholder={`Enter ${field.displayName.toLowerCase()}`}
+                  placeholder={t("configForm.nonOAuth.enterFieldPlaceholder", {
+                    fieldName: field.displayName.toLowerCase(),
+                  })}
                   autoFocus={idx === 0}
                 />
               ) : (
@@ -516,7 +548,9 @@ function NonOAuthCredentialForm({
                   name={`${formName}-${field.name}`}
                   value={custom[field.name] ?? ""}
                   onChange={(e) => setCustom({ ...custom, [field.name]: e.target.value })}
-                  placeholder={`Enter ${field.displayName.toLowerCase()}`}
+                  placeholder={t("configForm.nonOAuth.enterFieldPlaceholder", {
+                    fieldName: field.displayName.toLowerCase(),
+                  })}
                   autoFocus={idx === 0}
                   autoComplete="off"
                   autoCorrect="off"
@@ -537,17 +571,21 @@ function NonOAuthCredentialForm({
 
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
         <ShieldCheck className="h-3 w-3" />
-        Secrets are encrypted at rest. Only platform admins can see configuration status.
+        {t("configForm.nonOAuth.encryptionNote")}
       </div>
 
       <FormActions>
         {existing && <TestConnectionButton integrationId={item.id} disabled={saving} />}
         <div className="flex-1" />
         <button type="button" onClick={onCancel} disabled={saving} className={btnSecondary}>
-          Cancel
+          {t("configForm.actions.cancel")}
         </button>
         <button type="submit" disabled={saving || !isValid} className={btnPrimary}>
-          {saving ? <><Loader2 className="h-3 w-3 animate-spin" /> Saving</> : <><Key className="h-3 w-3" /> Save Credentials</>}
+          {saving ? (
+            <><Loader2 className="h-3 w-3 animate-spin" /> {t("configForm.nonOAuth.saving")}</>
+          ) : (
+            <><Key className="h-3 w-3" /> {t("configForm.nonOAuth.saveCredentials")}</>
+          )}
         </button>
       </FormActions>
     </form>

@@ -329,7 +329,8 @@ export function registerMiscRoutes(app: Hono<AuthEnv>) {
       const models = await pending;
       return c.json({ data: models });
     } catch (err) {
-      return c.json({ data: [], error: err instanceof Error ? err.message : "Failed to list models" });
+      console.error("[ai/models]", err);
+      return c.json({ data: [], error: "Failed to list models" });
     }
   });
 
@@ -373,7 +374,8 @@ export function registerMiscRoutes(app: Hono<AuthEnv>) {
       const status = await engine.getAuthStatus();
       return c.json({ data: status });
     } catch (err) {
-      return c.json({ data: { authenticated: false }, error: err instanceof Error ? err.message : "Auth check failed" });
+      console.error("[ai/auth-status]", err);
+      return c.json({ data: { authenticated: false }, error: "Auth check failed" });
     }
   });
 }

@@ -45,11 +45,27 @@ import { FrameworksPanel } from "./frameworks-panel";
 import { AdminMfaPanel } from "./mfa-panel";
 import { SignupsPanel } from "./signups-panel";
 import { DnsConfigPanel } from "./dns-config-panel";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Admin Page ─────────────────────────────────────────────
 
+const TAB_I18N_KEYS = {
+  features: "page.tabFeatures",
+  dns: "page.tabDns",
+  signups: "page.tabSignups",
+  users: "page.tabUsers",
+  integrations: "page.tabIntegrations",
+  plans: "page.tabPlans",
+  tools: "page.tabTools",
+  mfa: "page.tabMfa",
+  thumbnails: "page.tabThumbnails",
+  copilot: "page.tabCopilot",
+  email: "page.tabEmail",
+} as const;
+
 export default function AdminPage() {
   const router = useRouter();
+  const { t } = useTranslation("admin");
   const { user } = useAuth();
   const {
     isPlatformAdmin,
@@ -122,16 +138,16 @@ export default function AdminPage() {
     try {
       await apiFetch(`/admin/users/${userId}/ai-allocation`, { method: "PUT", body: JSON.stringify(data) });
       await loadAllocations();
-      addToast("success", "AI settings saved");
-    } catch { addToast("error", "Failed to save AI settings"); }
+      addToast("success", t("page.toastAiSaved"));
+    } catch { addToast("error", t("page.toastAiSaveFailed")); }
   }
 
   async function handleReset(userId: string) {
     try {
       await apiFetch(`/admin/users/${userId}/ai-allocation`, { method: "DELETE" });
       await loadAllocations();
-      addToast("success", "AI settings reset");
-    } catch { addToast("error", "Failed to reset AI settings"); }
+      addToast("success", t("page.toastAiReset"));
+    } catch { addToast("error", t("page.toastAiResetFailed")); }
   }
 
   async function handleBulkApply(userIds: string[], payload: BulkApplyPayload) {
@@ -182,15 +198,23 @@ export default function AdminPage() {
     await loadAllocations();
 
     const parts: string[] = [];
-    if (payload.model) parts.push(`model: ${modelOk} ok${modelFail ? `, ${modelFail} failed` : ""}`);
-    if (payload.addQuota) parts.push(`quota: ${quotaOk} ok${quotaFail ? `, ${quotaFail} failed` : ""}`);
-    if (payload.role) parts.push(rolePlanFailed ? `role: failed` : `role: ${roleUpdated} updated`);
-    if (payload.plan) parts.push(rolePlanFailed ? `plan: failed` : `plan: ${planUpdated} updated`);
+    if (payload.model) {
+      let modelPart = t("page.toastBulkModelOk", { ok: modelOk });
+      if (modelFail) modelPart += t("page.toastBulkModelFail", { fail: modelFail });
+      parts.push(modelPart);
+    }
+    if (payload.addQuota) {
+      let quotaPart = t("page.toastBulkQuotaOk", { ok: quotaOk });
+      if (quotaFail) quotaPart += t("page.toastBulkModelFail", { fail: quotaFail });
+      parts.push(quotaPart);
+    }
+    if (payload.role) parts.push(rolePlanFailed ? t("page.toastBulkRoleFailed") : t("page.toastBulkRoleUpdated", { count: roleUpdated }));
+    if (payload.plan) parts.push(rolePlanFailed ? t("page.toastBulkPlanFailed") : t("page.toastBulkPlanUpdated", { count: planUpdated }));
     const allFailed =
       (payload.model && modelOk === 0 && modelFail > 0) ||
       (payload.addQuota && quotaOk === 0 && quotaFail > 0) ||
       ((payload.role || payload.plan) && rolePlanFailed && !payload.model && !payload.addQuota);
-    addToast(allFailed ? "error" : "success", `Bulk applied to ${userIds.length} users — ${parts.join(" · ")}`);
+    addToast(allFailed ? "error" : "success", t("page.toastBulkApplied", { count: userIds.length, details: parts.join(" · ") }));
   }
 
   async function handleChangeRole(userId: string, role: string) {
@@ -200,9 +224,9 @@ export default function AdminPage() {
     ));
     try {
       await setUserRole(userId, role);
-      const name = prev.find((u) => u.user_id === userId)?.display_name ?? "User";
-      addToast("success", `${name} → ${ROLE_LABELS[role]}`);
-    } catch { setAllocations(prev); addToast("error", "Failed to update role"); }
+      const name = prev.find((u) => u.user_id === userId)?.display_name ?? t("page.fallbackUser");
+      addToast("success", t("page.toastRoleChanged", { name, role: ROLE_LABELS[role] ?? role }));
+    } catch { setAllocations(prev); addToast("error", t("page.toastRoleFailed")); }
   }
 
   async function handleChangePlan(userId: string, plan: string) {
@@ -212,9 +236,9 @@ export default function AdminPage() {
     ));
     try {
       await setUserPlan(userId, plan);
-      const name = prev.find((u) => u.user_id === userId)?.display_name ?? "User";
-      addToast("success", `${name} → ${PLAN_LABELS[plan]} plan`);
-    } catch { setAllocations(prev); addToast("error", "Failed to update plan"); }
+      const name = prev.find((u) => u.user_id === userId)?.display_name ?? t("page.fallbackUser");
+      addToast("success", t("page.toastPlanChanged", { name, plan: PLAN_LABELS[plan] ?? plan }));
+    } catch { setAllocations(prev); addToast("error", t("page.toastPlanFailed")); }
   }
 
   // Redirect non-admins
@@ -222,9 +246,9 @@ export default function AdminPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <Shield className="h-12 w-12 text-muted-foreground" />
-        <h2 className="text-lg font-semibold text-foreground">Access Denied</h2>
-        <p className="text-sm text-muted-foreground">Platform admin access required.</p>
-        <Button onClick={() => router.push("/dashboard")} className="bg-brand-600 text-white hover:bg-brand-500">Back to Dashboard</Button>
+        <h2 className="text-lg font-semibold text-foreground">{t("page.accessDenied")}</h2>
+        <p className="text-sm text-muted-foreground">{t("page.accessRequired")}</p>
+        <Button onClick={() => router.push("/dashboard")} className="bg-brand-600 text-white hover:bg-brand-500">{t("page.backToDashboard")}</Button>
       </div>
     );
   }
@@ -256,55 +280,55 @@ export default function AdminPage() {
       {/* Header */}
       <div className="mb-8">
         <button onClick={() => router.push("/dashboard")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
-          <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+          <ArrowLeft className="h-4 w-4" /> {t("page.backToDashboard")}
         </button>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600/20">
             <Shield className="h-5 w-5 text-brand-400" />
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold text-foreground">System Administration</h1>
-            <p className="text-sm text-muted-foreground">Manage platform features, users, AI tools, and access controls</p>
+            <h1 className="text-xl font-semibold text-foreground">{t("page.title")}</h1>
+            <p className="text-sm text-muted-foreground">{t("page.subtitle")}</p>
           </div>
           <Link
             href="/admin/projects"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="All projects (drafts + published) with framework, owner, chat activity"
+            title={t("page.linkProjectsTitle")}
           >
             <Activity className="h-3.5 w-3.5 text-brand-400" />
-            Projects
+            {t("page.linkProjects")}
           </Link>
           <Link
             href="/admin/runtime"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="Published apps + live dev servers — CPU, memory, uptime, controls"
+            title={t("page.linkRuntimeTitle")}
           >
             <Activity className="h-3.5 w-3.5 text-brand-400" />
-            Runtime
+            {t("page.linkRuntime")}
           </Link>
           <Link
             href="/admin/chat"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="All AI chat sessions (redacted, audit-logged) — for training & abuse review"
+            title={t("page.linkChatTitle")}
           >
             <Activity className="h-3.5 w-3.5 text-brand-400" />
-            Chat
+            {t("page.linkChat")}
           </Link>
           <Link
             href="/admin/audit"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="Prompt & conversation audit (enterprise)"
+            title={t("page.linkAuditTitle")}
           >
             <Activity className="h-3.5 w-3.5 text-brand-400" />
-            Audit
+            {t("page.linkAudit")}
           </Link>
           <Link
             href="/admin/moderation"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="Marketplace moderation queue & reports"
+            title={t("page.linkModerationTitle")}
           >
             <ShieldCheck className="h-3.5 w-3.5 text-brand-400" />
-            Moderation
+            {t("page.linkModeration")}
           </Link>
         </div>
       </div>
@@ -312,17 +336,17 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 border-b border-border pb-px overflow-x-auto">
         {([
-          { key: "features" as const, label: "Feature Flags", icon: Settings2 },
-          { key: "dns" as const, label: "DNS", icon: Globe },
-          { key: "signups" as const, label: "Signups", icon: UserCheck },
-          { key: "users" as const, label: "Users & AI", icon: Users },
-          { key: "integrations" as const, label: "Integrations", icon: Plug },
-          { key: "plans" as const, label: "Plans", icon: CreditCard },
-          { key: "tools" as const, label: "AI Tools", icon: Wrench },
-          { key: "mfa" as const, label: "MFA", icon: ShieldCheck },
-          { key: "thumbnails" as const, label: "Thumbnails", icon: ImageIcon },
-          { key: "copilot" as const, label: "Sessions", icon: Activity },
-          { key: "email" as const, label: "Email", icon: Mail },
+          { key: "features" as const, icon: Settings2 },
+          { key: "dns" as const, icon: Globe },
+          { key: "signups" as const, icon: UserCheck },
+          { key: "users" as const, icon: Users },
+          { key: "integrations" as const, icon: Plug },
+          { key: "plans" as const, icon: CreditCard },
+          { key: "tools" as const, icon: Wrench },
+          { key: "mfa" as const, icon: ShieldCheck },
+          { key: "thumbnails" as const, icon: ImageIcon },
+          { key: "copilot" as const, icon: Activity },
+          { key: "email" as const, icon: Mail },
         ]).map((tab) => (
           <button
             key={tab.key}
@@ -331,7 +355,7 @@ export default function AdminPage() {
               activeTab === tab.key ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <tab.icon className="h-4 w-4" /> {tab.label}
+            <tab.icon className="h-4 w-4" /> {t(TAB_I18N_KEYS[tab.key])}
           </button>
         ))}
       </div>
@@ -348,12 +372,12 @@ export default function AdminPage() {
 
           {/* Feature Flags */}
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground mb-4">Toggle features on/off globally. Set minimum plan or workspace role requirements.</p>
+            <p className="text-xs text-muted-foreground mb-4">{t("page.featuresHint")}</p>
             {features.map((f) => (
               <FeatureRow key={f.feature_key} feature={f} onToggle={toggleFeature} onUpdate={updateFeature} />
             ))}
             {features.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No feature flags configured.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("page.noFeatureFlags")}</p>
             )}
           </div>
         </div>
@@ -379,8 +403,8 @@ export default function AdminPage() {
           onReset={handleReset}
           onSetCredits={async (userId, data) => {
             await setUserCredits(userId, data);
-            const name = allocations.find((a) => a.user_id === userId)?.display_name ?? "User";
-            addToast("success", `Credits updated for ${name}`);
+            const name = allocations.find((a) => a.user_id === userId)?.display_name ?? t("page.fallbackUser");
+            addToast("success", t("page.toastCreditsUpdated", { name }));
             await loadAllocations();
           }}
           onChangeRole={handleChangeRole}
@@ -399,7 +423,7 @@ export default function AdminPage() {
                 plansSubTab === "limits" ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Plan Limits
+              {t("page.planLimitsSubTab")}
             </button>
             <button
               onClick={() => setPlansSubTab("defaults")}
@@ -407,7 +431,7 @@ export default function AdminPage() {
                 plansSubTab === "defaults" ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Plan Defaults
+              {t("page.planDefaultsSubTab")}
             </button>
             <button
               onClick={() => setPlansSubTab("embedding")}
@@ -415,7 +439,7 @@ export default function AdminPage() {
                 plansSubTab === "embedding" ? "text-foreground border-b-2 border-brand-500" : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Embedding Model
+              {t("page.embeddingSubTab")}
             </button>
           </div>
           {plansSubTab === "limits" && <PlanLimitsPanel />}

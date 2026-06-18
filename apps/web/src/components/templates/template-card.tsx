@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Shield } from "lucide-react";
 import { CategoryPreview } from "./template-previews";
@@ -16,7 +17,6 @@ interface TemplateCardProps {
   };
   onClick: () => void;
 }
-// --- Category colors for the badge ---
 
 function getCategoryBadgeClasses(category: string): string {
   const key = category.toLowerCase();
@@ -35,46 +35,44 @@ function getCategoryBadgeClasses(category: string): string {
   return "bg-blue-500/15 text-blue-700 border-blue-500/20 dark:text-blue-400";
 }
 
-// --- Main component ---
-
 export function TemplateCard({ template, onClick }: TemplateCardProps) {
+  const t = useTranslations("dashboard.templates");
+
   return (
     <button
       type="button"
       onClick={onClick}
       className="group relative flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card text-left transition-all duration-200 hover:border-muted-foreground hover:-translate-y-0.5 hover:shadow-lg hover:shadow-foreground/10 cursor-pointer"
     >
-      {/* Preview thumbnail area */}
       <div className="relative h-48 w-full overflow-hidden">
         {template.previewImageUrl ? (
           <img
             src={template.previewImageUrl}
-            alt={`${template.name} preview`}
+            alt={t("previewAlt", { name: template.name })}
             className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
           />
         ) : (
           <CategoryPreview category={template.category} />
         )}
 
-        {/* Official badge */}
         {template.isOfficial && (
           <div className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-foreground/45 backdrop-blur-sm border border-brand-500/30 px-2 py-0.5">
             <Shield className="h-3 w-3 text-brand-400" />
             <span className="text-[10px] font-medium text-brand-300">
-              Official
+              {t("official")}
             </span>
           </div>
         )}
       </div>
 
-      {/* Info section */}
       <div className="flex flex-1 flex-col gap-1.5 p-3.5">
         <div className="flex items-start justify-between gap-2">
           <h3 className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-foreground transition-colors">
             {template.name}
           </h3>
           <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-            {template.fileCount} {template.fileCount === 1 ? "file" : "files"}
+            {template.fileCount}{" "}
+            {template.fileCount === 1 ? t("file") : t("files")}
           </span>
         </div>
 

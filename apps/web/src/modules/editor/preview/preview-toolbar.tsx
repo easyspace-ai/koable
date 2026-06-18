@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   RefreshCw,
   Maximize2,
@@ -14,6 +14,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import type { DeviceMode } from "@/modules/editor/visual-edit/types";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -39,14 +40,6 @@ interface PreviewToolbarProps {
   onNavigate?: (path: string) => void;
 }
 
-// ─── Device Definitions ─────────────────────────────────────
-
-const devices: { mode: DeviceMode; icon: typeof Monitor; label: string }[] = [
-  { mode: "desktop", icon: Monitor, label: "Desktop" },
-  { mode: "tablet", icon: Tablet, label: "Tablet (768px)" },
-  { mode: "mobile", icon: Smartphone, label: "Mobile (375px)" },
-];
-
 // ─── Component ──────────────────────────────────────────────
 
 export function PreviewToolbar({
@@ -63,8 +56,18 @@ export function PreviewToolbar({
   routes = [],
   onNavigate,
 }: PreviewToolbarProps) {
+  const { t } = useTranslation("editor");
   const [showRouteDropdown, setShowRouteDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const devices = useMemo(
+    () => [
+      { mode: "desktop" as DeviceMode, icon: Monitor, label: t("chrome.desktop") },
+      { mode: "tablet" as DeviceMode, icon: Tablet, label: t("chrome.tablet") },
+      { mode: "mobile" as DeviceMode, icon: Smartphone, label: t("chrome.mobile") },
+    ],
+    [t],
+  );
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -105,7 +108,7 @@ export function PreviewToolbar({
       <button
         onClick={onRefresh}
         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-        title="Refresh preview"
+        title={t("chrome.refreshPreview")}
       >
         <RefreshCw
           className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
@@ -123,7 +126,7 @@ export function PreviewToolbar({
         >
           <Globe className="h-3 w-3 flex-none text-muted-foreground" />
           <span className="truncate text-[11px] text-muted-foreground font-mono flex-1 text-left">
-            {displayPath || url || "No preview available"}
+            {displayPath || url || t("preview.noPreviewAvailable")}
           </span>
           {routes.length > 0 && (
             <ChevronDown className="h-3 w-3 flex-none text-muted-foreground" />
@@ -175,7 +178,7 @@ export function PreviewToolbar({
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent hover:text-foreground"
           }`}
-          title={visualEditActive ? "Disable visual editing" : "Enable visual editing"}
+          title={visualEditActive ? t("preview.disableVisualEdit") : t("preview.enableVisualEdit")}
         >
           <MousePointer2 className="h-3.5 w-3.5" />
         </button>
@@ -185,7 +188,7 @@ export function PreviewToolbar({
       <button
         onClick={onToggleFullscreen}
         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-        title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+        title={isFullscreen ? t("chrome.exitFullscreen") : t("chrome.fullscreen")}
       >
         {isFullscreen ? (
           <Minimize2 className="h-3.5 w-3.5" />
@@ -198,7 +201,7 @@ export function PreviewToolbar({
       <button
         onClick={onOpenExternal}
         className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-        title="Open in new tab"
+        title={t("chrome.openNewTab")}
       >
         <ExternalLink className="h-3.5 w-3.5" />
       </button>

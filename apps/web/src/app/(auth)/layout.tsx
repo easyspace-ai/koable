@@ -1,12 +1,16 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AuthProvider } from "@/providers/auth-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("auth");
+
   return (
     <AuthProvider>
       <div className="relative flex min-h-screen items-center justify-center bg-[hsl(var(--background))]">
@@ -14,6 +18,10 @@ export default function AuthLayout({
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="animate-float-slow absolute -left-40 -top-40 h-80 w-80 rounded-full bg-brand-400/10 blur-3xl" />
           <div className="animate-float-medium absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-brand-400/5 blur-3xl" />
+        </div>
+
+        <div className="absolute right-4 top-4 z-20">
+          <LanguageSwitcher />
         </div>
 
         <div className="relative z-10 w-full max-w-md px-4 py-12">
@@ -26,7 +34,7 @@ export default function AuthLayout({
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-brand-700" />
             </a>
             <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-              AI-powered application builder
+              {t("tagline")}
             </p>
           </div>
 
@@ -37,21 +45,24 @@ export default function AuthLayout({
 
           {/* Footer */}
           <p className="mt-6 text-center text-xs text-[hsl(var(--muted-foreground))]">
-            By continuing, you agree to our{" "}
-            <a
-              href="/terms"
-              className="underline hover:text-[hsl(var(--foreground))]"
-            >
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a
-              href="/privacy"
-              className="underline hover:text-[hsl(var(--foreground))]"
-            >
-              Privacy Policy
-            </a>
-            .
+            {t.rich("footerAgree", {
+              terms: (chunks) => (
+                <a
+                  href="/terms"
+                  className="underline hover:text-[hsl(var(--foreground))]"
+                >
+                  {chunks}
+                </a>
+              ),
+              privacy: (chunks) => (
+                <a
+                  href="/privacy"
+                  className="underline hover:text-[hsl(var(--foreground))]"
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         </div>
       </div>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronDown, ChevronRight, Loader2, Star, Copy, Trash2,
-  Pencil, FileText, Sparkles, BookOpen, Brain, Plug, X,
+  Pencil, FileText, Sparkles, BookOpen, Brain, Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ import { EditMetaForm, InstructionsSection } from "./env-forms";
 // ─── Default Environment Card ───────────────────────────────
 
 export function DefaultEnvironmentCard({ workspaceId }: { workspaceId: string }) {
+  const t = useTranslations("environments");
   const [expanded, setExpanded] = useState(false);
   const [items, setItems] = useState<DefaultItems | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,12 +50,12 @@ export function DefaultEnvironmentCard({ workspaceId }: { workspaceId: string })
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-lg">🌐</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">Workspace Defaults</span>
-            <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30">Auto</Badge>
+            <span className="text-sm font-semibold">{t("cards.default.title")}</span>
+            <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30">{t("cards.default.badgeAuto")}</Badge>
           </div>
-          <p className="text-xs text-muted-foreground">Items available to all environments</p>
+          <p className="text-xs text-muted-foreground">{t("cards.default.subtitle")}</p>
         </div>
-        {totalCount !== null && <span className="text-xs text-muted-foreground whitespace-nowrap">{totalCount} items</span>}
+        {totalCount !== null && <span className="text-xs text-muted-foreground whitespace-nowrap">{t("cards.default.itemCount", { count: totalCount })}</span>}
       </button>
       {expanded && (
         <div className="border-t px-3 pb-3 pt-2">
@@ -61,11 +63,11 @@ export function DefaultEnvironmentCard({ workspaceId }: { workspaceId: string })
             <div className="flex items-center justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
           ) : items ? (
             <div className="space-y-3">
-              <p className="text-[11px] text-muted-foreground">Workspace-level items automatically included in all projects unless overridden by a project environment.</p>
-              <ItemList title="Skills" icon={<Sparkles className="h-3.5 w-3.5" />} items={items.skills.map((s) => ({ name: s.skill_name, sub: s.skill_content.slice(0, 50) }))} />
-              <ItemList title="Rules" icon={<BookOpen className="h-3.5 w-3.5" />} items={items.rules.map((r) => ({ name: r.rule_name, sub: r.content.slice(0, 50) }))} />
-              <ItemList title="Knowledge" icon={<Brain className="h-3.5 w-3.5" />} items={items.knowledge.map((k) => ({ name: k.filename, sub: k.content.slice(0, 50) }))} emptyMessage="None — add workspace knowledge in Workspace Settings" />
-              <ItemList title="Connectors" icon={<Plug className="h-3.5 w-3.5" />} items={items.connectors.map((c) => ({ name: c.name, sub: c.transport_type }))} />
+              <p className="text-[11px] text-muted-foreground">{t("cards.default.description")}</p>
+              <ItemList title={t("cards.default.skillsTitle")} icon={<Sparkles className="h-3.5 w-3.5" />} items={items.skills.map((s) => ({ name: s.skill_name, sub: s.skill_content.slice(0, 50) }))} />
+              <ItemList title={t("cards.default.rulesTitle")} icon={<BookOpen className="h-3.5 w-3.5" />} items={items.rules.map((r) => ({ name: r.rule_name, sub: r.content.slice(0, 50) }))} />
+              <ItemList title={t("cards.default.knowledgeTitle")} icon={<Brain className="h-3.5 w-3.5" />} items={items.knowledge.map((k) => ({ name: k.filename, sub: k.content.slice(0, 50) }))} emptyMessage={t("cards.default.knowledgeEmpty")} />
+              <ItemList title={t("cards.default.connectorsTitle")} icon={<Plug className="h-3.5 w-3.5" />} items={items.connectors.map((c) => ({ name: c.name, sub: c.transport_type }))} />
             </div>
           ) : null}
         </div>
@@ -83,6 +85,7 @@ export function EnvironmentCard({
   onDelete: () => void; onClone: () => void; onSetDefault: () => void;
   hooks: ReturnType<typeof useEnvironments>;
 }) {
+  const t = useTranslations("environments");
   const [expanded, setExpanded] = useState(false);
   const [detail, setDetail] = useState<EnvironmentWithItems | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -118,12 +121,12 @@ export function EnvironmentCard({
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold truncate">{env.name}</span>
             <ScopeBadge scope={env.scope} />
-            {isDefault && <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30">Default</Badge>}
-            {env.is_template && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Template</Badge>}
+            {isDefault && <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-primary/20 text-primary border-primary/30">{t("cards.environment.badgeDefault")}</Badge>}
+            {env.is_template && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{t("cards.environment.badgeTemplate")}</Badge>}
           </div>
           {env.description && <p className="text-xs text-muted-foreground truncate">{env.description}</p>}
         </div>
-        {itemCount !== null && <span className="text-xs text-muted-foreground whitespace-nowrap">{itemCount} items</span>}
+        {itemCount !== null && <span className="text-xs text-muted-foreground whitespace-nowrap">{t("cards.environment.itemCount", { count: itemCount })}</span>}
       </button>
       {expanded && (
         <div className="border-t px-3 pb-3">
@@ -135,21 +138,21 @@ export function EnvironmentCard({
                 <EditMetaForm env={env} onSave={async (data) => { await hooks.updateEnvironment(env.id, data); setEditingMeta(false); }} onCancel={() => setEditingMeta(false)} />
               ) : (
                 <button onClick={() => setEditingMeta(true)} className="flex items-center gap-1.5 text-[10px] text-muted-foreground hover:text-foreground">
-                  <Pencil className="h-3 w-3" /> Edit name, icon & color
+                  <Pencil className="h-3 w-3" /> {t("cards.environment.editMeta")}
                 </button>
               )}
-              <RefPicker<ContextSkill> title="Skills" icon={<Sparkles className="h-3.5 w-3.5" />}
+              <RefPicker<ContextSkill> title={t("cards.environment.skillsTitle")} icon={<Sparkles className="h-3.5 w-3.5" />}
                 available={availableSkills} included={detail.skills} getLabel={(s) => s.skill_name} getSubLabel={(s) => s.skill_content.slice(0, 40)}
                 onAdd={async (id) => { await hooks.addSkillRef(env.id, id); await reloadDetail(); }}
                 onRemove={async (id) => { await hooks.removeSkillRef(env.id, id); await reloadDetail(); }} />
-              <RefPicker<ContextRule> title="Rules" icon={<BookOpen className="h-3.5 w-3.5" />}
+              <RefPicker<ContextRule> title={t("cards.environment.rulesTitle")} icon={<BookOpen className="h-3.5 w-3.5" />}
                 available={availableRules} included={detail.rules} getLabel={(r) => r.rule_name} getSubLabel={(r) => r.content.slice(0, 40)}
                 onAdd={async (id) => { await hooks.addRuleRef(env.id, id); await reloadDetail(); }}
                 onRemove={async (id) => { await hooks.removeRuleRef(env.id, id); await reloadDetail(); }} />
-              <ItemList title="Knowledge" icon={<Brain className="h-3.5 w-3.5" />}
-                items={detail.knowledge.map((k) => ({ name: k.filename, sub: `${k.content.length} chars` }))} emptyMessage="No knowledge files"
+              <ItemList title={t("cards.environment.knowledgeTitle")} icon={<Brain className="h-3.5 w-3.5" />}
+                items={detail.knowledge.map((k) => ({ name: k.filename, sub: t("cards.environment.knowledgeChars", { count: k.content.length }) }))} emptyMessage={t("cards.environment.knowledgeEmpty")}
                 onRemove={async (i) => { const k = detail.knowledge[i]; if (k) { await hooks.removeKnowledge(env.id, k.filename); await reloadDetail(); } }} />
-              <RefPicker<Connector> title="Connectors" icon={<Plug className="h-3.5 w-3.5" />}
+              <RefPicker<Connector> title={t("cards.environment.connectorsTitle")} icon={<Plug className="h-3.5 w-3.5" />}
                 available={availableConnectors} included={detail.connectors} getLabel={(c) => c.name} getSubLabel={(c) => c.transport_type}
                 onAdd={async (id) => { await hooks.addConnectorRef(env.id, id); await reloadDetail(); }}
                 onRemove={async (id) => { await hooks.removeConnectorRef(env.id, id); await reloadDetail(); }} />
@@ -157,11 +160,11 @@ export function EnvironmentCard({
               <div className="flex flex-wrap items-center gap-2 border-t pt-3">
                 {!isDefault && (
                   <button onClick={onSetDefault} className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-primary/10 hover:border-primary/30">
-                    <Star className="h-3 w-3" /> Set as Default
+                    <Star className="h-3 w-3" /> {t("cards.environment.setAsDefault")}
                   </button>
                 )}
                 <button onClick={onClone} className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted">
-                  <Copy className="h-3 w-3" /> Clone
+                  <Copy className="h-3 w-3" /> {t("cards.environment.clone")}
                 </button>
                 <button
                   onClick={async () => {
@@ -176,17 +179,17 @@ export function EnvironmentCard({
                   }}
                   className="flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-muted"
                 >
-                  <FileText className="h-3 w-3" /> Export
+                  <FileText className="h-3 w-3" /> {t("cards.environment.export")}
                 </button>
                 {!confirmDelete ? (
                   <button onClick={() => setConfirmDelete(true)} className="flex items-center gap-1.5 rounded-md border border-destructive/30 px-2.5 py-1.5 text-xs text-destructive hover:bg-destructive/10">
-                    <Trash2 className="h-3 w-3" /> Delete
+                    <Trash2 className="h-3 w-3" /> {t("cards.environment.delete")}
                   </button>
                 ) : (
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-destructive">Sure?</span>
-                    <button onClick={onDelete} className="rounded bg-destructive px-2 py-1 text-xs text-destructive-foreground">Yes</button>
-                    <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-1 text-xs">No</button>
+                    <span className="text-xs text-destructive">{t("cards.environment.confirmDelete")}</span>
+                    <button onClick={onDelete} className="rounded bg-destructive px-2 py-1 text-xs text-destructive-foreground">{t("cards.environment.confirmYes")}</button>
+                    <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-1 text-xs">{t("cards.environment.confirmNo")}</button>
                   </div>
                 )}
               </div>

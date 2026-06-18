@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Trash2,
   RefreshCw,
@@ -15,7 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  TRANSPORT_LABELS,
+  getTransportLabel,
   type CustomIntegration,
 } from "./use-integrations";
 
@@ -34,14 +35,10 @@ export function StatusDot({ status }: { status: "active" | "error" | "inactive" 
   );
 }
 
-// ─── Transport Icon ─────────────────────────────────────────
-
 export function TransportIcon({ type }: { type: CustomIntegration["transport_type"] }) {
   if (type === "stdio") return <Terminal className="h-4 w-4" />;
   return <Globe className="h-4 w-4" />;
 }
-
-// ─── Built-in Integration Card ──────────────────────────────
 
 export function BuiltInCard({
   icon: Icon,
@@ -62,6 +59,7 @@ export function BuiltInCard({
   onDisconnect?: () => void;
   children?: React.ReactNode;
 }) {
+  const t = useTranslations("integrations");
   const [expanded, setExpanded] = useState(false);
   const hasDetails = connected && children;
 
@@ -108,7 +106,9 @@ export function BuiltInCard({
                 : "bg-primary text-primary-foreground hover:bg-primary/90"
             )}
           >
-            {connected ? "Disconnect" : "Connect"}
+            {connected
+              ? t("panelCards.builtInCard.disconnect")
+              : t("panelCards.builtInCard.connect")}
           </button>
         </div>
       </div>
@@ -118,8 +118,6 @@ export function BuiltInCard({
     </div>
   );
 }
-
-// ─── Custom Integration Card ────────────────────────────────
 
 export function CustomCard({
   integration,
@@ -136,6 +134,7 @@ export function CustomCard({
   onDelete: () => void;
   readOnly?: boolean;
 }) {
+  const t = useTranslations("integrations");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     ok: boolean;
@@ -143,7 +142,7 @@ export function CustomCard({
   } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const transport = TRANSPORT_LABELS[integration.transport_type];
+  const transport = getTransportLabel(t, integration.transport_type);
   const toolCount = (integration.tools ?? []).length;
 
   const handleTest = useCallback(async () => {
@@ -152,13 +151,19 @@ export function CustomCard({
     try {
       onTest();
       await new Promise((r) => setTimeout(r, 1500));
-      setTestResult({ ok: true, message: "Connection successful" });
+      setTestResult({
+        ok: true,
+        message: t("panelCards.customCard.testResults.success"),
+      });
     } catch {
-      setTestResult({ ok: false, message: "Connection failed" });
+      setTestResult({
+        ok: false,
+        message: t("panelCards.customCard.testResults.failed"),
+      });
     } finally {
       setTesting(false);
     }
-  }, [onTest]);
+  }, [onTest, t]);
 
   const handleDelete = useCallback(() => {
     if (!confirmDelete) {
@@ -171,7 +176,6 @@ export function CustomCard({
 
   return (
     <div className="rounded-xl border transition-colors">
-      {/* Header */}
       <button
         onClick={onToggle}
         className="flex items-start gap-3 w-full p-4 text-left hover:bg-muted/30 transition-colors"
@@ -190,7 +194,7 @@ export function CustomCard({
             {toolCount > 0 && (
               <>
                 <span className="text-muted-foreground/40 mx-1.5">&middot;</span>
-                {toolCount} {toolCount === 1 ? "capability" : "capabilities"}
+                {t("panelCards.customCard.capability", { count: toolCount })}
               </>
             )}
           </p>
@@ -204,14 +208,12 @@ export function CustomCard({
         </div>
       </button>
 
-      {/* Expanded */}
       {expanded && (
         <div className="border-t">
-          {/* Capabilities list */}
           {toolCount > 0 && (
             <div className="px-4 py-3 border-b">
               <p className="text-xs font-medium text-muted-foreground mb-2">
-                Available Capabilities
+                {t("panelCards.customCard.availableCapabilities")}
               </p>
               <div className="space-y-1.5">
                 {(integration.tools ?? []).map((tool) => (
@@ -237,12 +239,11 @@ export function CustomCard({
           {toolCount === 0 && (
             <div className="px-4 py-3 border-b">
               <p className="text-xs text-muted-foreground">
-                No capabilities discovered yet. Test the connection to discover what&apos;s available.
+                {t("panelCards.customCard.noCapabilities")}
               </p>
             </div>
           )}
 
-          {/* Error */}
           {integration.error_message && (
             <div
               className={cn(
@@ -259,7 +260,6 @@ export function CustomCard({
             </div>
           )}
 
-          {/* Test result */}
           {testResult && (
             <div
               className={cn(
@@ -278,7 +278,6 @@ export function CustomCard({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex items-center justify-between px-4 py-2.5">
             <button
               onClick={() => void handleTest()}
@@ -290,38 +289,38 @@ export function CustomCard({
               ) : (
                 <RefreshCw className="h-3.5 w-3.5" />
               )}
-              Test Connection
+              {t("panelCards.customCard.testConnection")}
             </button>
-            {!readOnly && <button
-              onClick={handleDelete}
-              onBlur={() => setConfirmDelete(false)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                confirmDelete
-                  ? "bg-red-600 text-white hover:bg-red-700"
-                  : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
-              )}
-            >
-              {confirmDelete ? (
-                <>
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  Confirm Remove
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Remove
-                </>
-              )}
-            </button>}
+            {!readOnly && (
+              <button
+                onClick={handleDelete}
+                onBlur={() => setConfirmDelete(false)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                  confirmDelete
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : "text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
+                )}
+              >
+                {confirmDelete ? (
+                  <>
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {t("panelCards.customCard.confirmRemove")}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {t("panelCards.customCard.remove")}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       )}
     </div>
   );
 }
-
-// ─── Scope Section ──────────────────────────────────────────
 
 export function ScopeSection({
   label,

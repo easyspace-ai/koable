@@ -10,6 +10,7 @@
 
 import { Hono } from "hono";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { isUuid } from "../lib/uuid.js";
 import { sql } from "../db/index.js";
 import { scaffoldRoutes } from "./project-files/scaffold.js";
 import { fileCrudRoutes } from "./project-files/file-crud.js";
@@ -18,8 +19,7 @@ import { devServerFileRoutes } from "./project-files/dev-server-routes.js";
 export const projectFileRoutes = new Hono<AuthEnv>({ strict: false });
 
 // Require authentication for all project file operations
-// UUID regex — skip middleware for non-UUID :id values (e.g. "recently-viewed", "starred")
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Skip middleware for non-UUID :id values (e.g. "recently-viewed", "starred")
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
 // Hono's `/projects/:id/*` pattern matches `/projects/starred` (with `*`
@@ -49,7 +49,7 @@ projectFileRoutes.use("/projects/:id/*", async (c, next) => {
     await next();
     return;
   }
-  if (!projectId || !UUID_RE.test(projectId) || projectId.toLowerCase() === NIL_UUID) {
+  if (!projectId || !isUuid(projectId) || projectId.toLowerCase() === NIL_UUID) {
     return c.json({ error: "Invalid project id" }, 400);
   }
   await next();
@@ -63,7 +63,7 @@ projectFileRoutes.use("/projects/:id/*", async (c, next) => {
     return;
   }
   // UUID guard already applied at the top mount; defense-in-depth.
-  if (!UUID_RE.test(projectId)) { return c.json({ error: "Invalid project id" }, 400); }
+  if (!isUuid(projectId)) { return c.json({ error: "Invalid project id" }, 400); }
   const userId = c.get("userId");
   if (projectId && userId) {
     try {
@@ -117,7 +117,7 @@ projectFileRoutes.use("/projects/:id/*", async (c, next) => {
     return;
   }
   // UUID guard already applied at the top mount; defense-in-depth.
-  if (!UUID_RE.test(projectId)) { return c.json({ error: "Invalid project id" }, 400); }
+  if (!isUuid(projectId)) { return c.json({ error: "Invalid project id" }, 400); }
   const userId = c.get("userId");
 
   // Look up the project and verify access

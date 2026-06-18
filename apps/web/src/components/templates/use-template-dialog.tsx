@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, X } from "lucide-react";
 import {
   Dialog,
@@ -30,20 +31,20 @@ export function UseTemplateDialog({
   onClose,
   onCreated,
 }: UseTemplateDialogProps) {
+  const t = useTranslations("dashboard.templates");
+  const tCommon = useTranslations("common");
   const [projectName, setProjectName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Reset state when template changes (dialog opens/closes)
   useEffect(() => {
     if (template) {
-      setProjectName(`Remix of ${template.name}`);
+      setProjectName(t("remixDefaultName", { name: template.name }));
       setIsCreating(false);
       setError(null);
     }
-  }, [template]);
+  }, [template, t]);
 
-  // Handle ESC key
   useEffect(() => {
     if (!template) return;
     function handleKeyDown(e: KeyboardEvent) {
@@ -67,7 +68,7 @@ export function UseTemplateDialog({
     } catch (err) {
       console.error("Failed to remix project:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to create project. Please try again."
+        err instanceof Error ? err.message : t("createFailed"),
       );
       setIsCreating(false);
     }
@@ -76,18 +77,16 @@ export function UseTemplateDialog({
   return (
     <Dialog open={!!template} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-[450px] p-0 gap-0">
-        {/* Close button */}
         <button
           onClick={onClose}
           disabled={isCreating}
           className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none text-muted-foreground"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{tCommon("close")}</span>
         </button>
 
         <div className="px-6 pt-6 pb-0">
-          {/* Logo/icon */}
           <div className="mb-4">
             <div className="h-8 w-8 rounded-lg bg-foreground/10 flex items-center justify-center">
               <svg
@@ -109,17 +108,16 @@ export function UseTemplateDialog({
 
           <DialogHeader className="space-y-2 text-left">
             <DialogTitle className="text-xl font-semibold text-foreground">
-              Remix project
+              {t("remixTitle")}
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              By remixing a project, you will create a copy that you own.
+              {t("remixDescription")}
             </DialogDescription>
           </DialogHeader>
 
-          {/* Form */}
           <div className="mt-6 space-y-2">
             <Label htmlFor="project-name" className="text-sm font-medium text-foreground">
-              Project name
+              {t("projectName")}
             </Label>
             <Input
               id="project-name"
@@ -146,7 +144,7 @@ export function UseTemplateDialog({
             disabled={isCreating}
             className="text-muted-foreground hover:text-foreground hover:bg-secondary"
           >
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button
             onClick={handleRemix}
@@ -156,10 +154,10 @@ export function UseTemplateDialog({
             {isCreating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Remixing...
+                {t("remixing")}
               </>
             ) : (
-              "Remix"
+              t("remix")
             )}
           </Button>
         </DialogFooter>

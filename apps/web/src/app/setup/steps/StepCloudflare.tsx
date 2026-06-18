@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, ExternalLink, Loader2, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface CloudflareStatus {
 type SaveStatus = "idle" | "saving" | "success" | "error";
 
 export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
+  const t = useTranslations("dashboard");
   const [status, setStatus] = useState<CloudflareStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -71,17 +73,13 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl font-semibold text-foreground tracking-tight">
-          Cloudflare Tunnel
+          {t("setup.cloudflare.title")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          We strongly recommend running Doable behind a Cloudflare Tunnel.
-          Your server never exposes ports 80 or 443 to the public internet — all
-          traffic enters through Cloudflare's edge, with built-in DDoS
-          protection and TLS.
+          {t("setup.cloudflare.description")}
         </p>
       </div>
 
-      {/* Current status panel */}
       <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
         <div className="flex items-center gap-2">
           {configured ? (
@@ -90,36 +88,42 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             <ShieldAlert className="h-5 w-5 text-amber-400" />
           )}
           <span className="text-sm font-medium text-foreground">
-            {configured ? "Cloudflare Tunnel active" : "Cloudflare Tunnel not yet configured"}
+            {configured ? t("setup.cloudflare.active") : t("setup.cloudflare.notConfigured")}
           </span>
         </div>
 
         <ul className="text-xs text-muted-foreground space-y-1.5 pl-7 list-disc">
           <li className={status?.binaryInstalled ? "text-foreground" : ""}>
-            cloudflared binary: {status?.binaryInstalled ? "installed" : "not installed"}
+            {status?.binaryInstalled
+              ? t("setup.cloudflare.binaryInstalled")
+              : t("setup.cloudflare.binaryNotInstalled")}
           </li>
           <li className={status?.tunnelConfigured ? "text-foreground" : ""}>
-            tunnel config: {status?.tunnelConfigured ? `present${status.tunnelId ? ` (${status.tunnelId.slice(0, 8)}…)` : ""}` : "missing"}
+            {status?.tunnelConfigured
+              ? `${t("setup.cloudflare.tunnelPresent")}${status.tunnelId ? ` (${status.tunnelId.slice(0, 8)}…)` : ""}`
+              : t("setup.cloudflare.tunnelMissing")}
           </li>
           <li className={status?.serviceActive ? "text-foreground" : ""}>
-            cloudflared service: {status?.serviceActive ? "running" : "stopped"}
+            {status?.serviceActive
+              ? t("setup.cloudflare.serviceRunning")
+              : t("setup.cloudflare.serviceStopped")}
           </li>
           {status?.tunnelHostname && (
             <li className="text-foreground">
-              public hostname: <code className="font-mono">{status.tunnelHostname}</code>
+              {t("setup.cloudflare.publicHostname")}{" "}
+              <code className="font-mono">{status.tunnelHostname}</code>
             </li>
           )}
         </ul>
       </div>
 
-      {/* Action panel */}
       {!configured && (
         <div className="rounded-lg border border-border bg-muted/30 p-4 flex flex-col gap-3">
-          <p className="text-sm font-medium text-foreground">Next steps</p>
+          <p className="text-sm font-medium text-foreground">{t("setup.cloudflare.nextSteps")}</p>
           <ol className="text-xs text-muted-foreground space-y-2 list-decimal pl-5">
             {!status?.binaryInstalled && (
               <li>
-                Install cloudflared on the server:
+                {t("setup.cloudflare.installStep")}
                 <code className="block mt-1 rounded bg-background px-2 py-1.5 font-mono text-foreground">
                   curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cf.deb && sudo dpkg -i cf.deb
                 </code>
@@ -127,11 +131,11 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             )}
             {!status?.tunnelConfigured && (
               <li>
-                Log in to Cloudflare and create a tunnel:
+                {t("setup.cloudflare.loginStep")}
                 <code className="block mt-1 rounded bg-background px-2 py-1.5 font-mono text-foreground">
                   sudo cloudflared tunnel login
                 </code>
-                Then create + route the tunnel:
+                {t("setup.cloudflare.loginStepThen")}
                 <code className="block mt-1 rounded bg-background px-2 py-1.5 font-mono text-foreground">
                   sudo cloudflared tunnel create doable && sudo cloudflared tunnel route dns doable yourdomain.com
                 </code>
@@ -139,7 +143,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             )}
             {!status?.serviceActive && status?.tunnelConfigured && (
               <li>
-                Start the cloudflared service:
+                {t("setup.cloudflare.startServiceStep")}
                 <code className="block mt-1 rounded bg-background px-2 py-1.5 font-mono text-foreground">
                   sudo cloudflared service install && sudo systemctl enable --now cloudflared
                 </code>
@@ -153,7 +157,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 self-start text-xs text-brand-400 hover:text-brand-300 underline-offset-2 hover:underline"
           >
-            Open Cloudflare dashboard <ExternalLink className="h-3 w-3" />
+            {t("setup.cloudflare.openDashboard")} <ExternalLink className="h-3 w-3" />
           </a>
 
           <Button
@@ -162,7 +166,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             size="sm"
             className="self-start gap-2 text-muted-foreground"
           >
-            Re-check status
+            {t("setup.cloudflare.recheckStatus")}
           </Button>
         </div>
       )}
@@ -171,24 +175,19 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
         <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4 flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
           <span className="text-sm text-foreground">
-            All set — your install is reachable through Cloudflare without exposing
-            any ports.
+            {t("setup.cloudflare.allSetMessage")}
           </span>
         </div>
       )}
 
-      {/* Skip-with-warning panel */}
       {!configured && showSkipConfirm && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-amber-400">
             <ShieldAlert className="h-4 w-4" />
-            <span className="text-sm font-medium">Skip and use direct ports?</span>
+            <span className="text-sm font-medium">{t("setup.cloudflare.skipDirectPorts")}</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Without Cloudflare your server will need ports 80 and 443 open to the
-            public. You become directly responsible for DDoS handling, TLS cert
-            renewal, and origin IP exposure. You can add Cloudflare later in{" "}
-            <span className="font-medium text-foreground">/admin</span>.
+            {t("setup.cloudflare.skipConfirmDescription")}
           </p>
           <div className="flex gap-2">
             <Button
@@ -196,7 +195,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
               size="sm"
               onClick={() => setShowSkipConfirm(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               size="sm"
@@ -205,16 +204,15 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
               className="bg-amber-600 text-white hover:bg-amber-500"
             >
               {saveStatus === "saving" && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
-              Skip Cloudflare anyway
+              {t("setup.cloudflare.skipCloudflareAnyway")}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Nav */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack} className="gap-2 text-muted-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {t("common.back")}
         </Button>
         <div className="flex items-center gap-3">
           {!configured && !showSkipConfirm && (
@@ -223,7 +221,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
               onClick={() => setShowSkipConfirm(true)}
               className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
             >
-              Skip Cloudflare
+              {t("setup.cloudflare.skipCloudflare")}
             </button>
           )}
           <Button
@@ -232,7 +230,7 @@ export function StepCloudflare({ onNext, onBack, onSkip }: StepProps) {
             className="bg-brand-600 text-white hover:bg-brand-500 gap-2 disabled:opacity-50"
           >
             {saveStatus === "saving" && <Loader2 className="h-3 w-3 animate-spin" />}
-            {configured ? "Continue" : "Waiting for tunnel…"}
+            {configured ? t("common.continue") : t("setup.cloudflare.waitingForTunnel")}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>

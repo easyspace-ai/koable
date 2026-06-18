@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Plug,
   Plus,
@@ -33,6 +34,7 @@ interface IntegrationsPanelProps {
 // ─── Main Panel ─────────────────────────────────────────────
 
 export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", onGitHubConnect }: IntegrationsPanelProps) {
+  const t = useTranslations("integrations");
   const {
     workspaceIntegrations,
     projectIntegrations,
@@ -75,13 +77,13 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <Plug className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Integrations</h3>
+          <h3 className="text-sm font-semibold">{t("panel.title")}</h3>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => void refresh()}
             className="p-1.5 rounded-md hover:bg-muted transition-colors"
-            title="Refresh"
+            title={t("panel.refreshTitle")}
           >
             <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </button>
@@ -90,7 +92,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
             className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
-            Add
+            {t("panel.add")}
           </button>
         </div>
       </div>
@@ -108,7 +110,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
         {/* Custom MCP Connectors heading */}
         <div className="px-4 pb-2">
           <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Custom MCP Connectors
+            {t("panel.customMcpHeading")}
           </h4>
         </div>
 
@@ -125,7 +127,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
             <div className="flex items-center justify-center h-32">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading integrations...
+                {t("panel.loading")}
               </div>
             </div>
           )}
@@ -135,10 +137,10 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <Plug className="h-8 w-8 text-muted-foreground/40 mb-3" />
               <p className="text-sm text-muted-foreground mb-1">
-                No integrations yet
+                {t("panel.empty.title")}
               </p>
               <p className="text-xs text-muted-foreground/70 mb-4 max-w-[240px]">
-                Connect third-party services and AI tools to extend your project.
+                {t("panel.empty.description")}
               </p>
               <button
                 onClick={() => setShowForm(true)}
@@ -148,7 +150,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add Integration
+                {t("panel.empty.cta")}
               </button>
             </div>
           )}
@@ -158,7 +160,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
             <>
               {/* Shared with all projects (workspace scope) */}
               {workspaceCount > 0 && (
-                <ScopeSection label="Everyone in this workspace" count={workspaceCount}>
+                <ScopeSection label={t("panel.scopeSections.workspace")} count={workspaceCount}>
                   {workspaceIntegrations.map((integration) => (
                     <CustomCard
                       key={integration.id}
@@ -179,7 +181,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
 
               {/* This project only (project scope) */}
               {projectId && projectIntegrations.length > 0 && (
-                <ScopeSection label="Everyone on this project" count={projectCount}>
+                <ScopeSection label={t("panel.scopeSections.project")} count={projectCount}>
                   {/* Custom project-scoped integrations */}
                   {projectIntegrations.map((integration) => (
                     <CustomCard
@@ -200,7 +202,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
 
               {/* Just for me (user scope) */}
               {userCount > 0 && (
-                <ScopeSection label="Only me (personal)" count={userCount}>
+                <ScopeSection label={t("panel.scopeSections.user")} count={userCount}>
                   {userIntegrations.map((integration) => (
                     <CustomCard
                       key={integration.id}
@@ -227,7 +229,7 @@ export function IntegrationsPanel({ workspaceId, projectId, variant = "panel", o
         <div className="px-4 py-2 border-t">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
-              {totalCustom + (hasGithub ? 1 : 0)} integration{(totalCustom + (hasGithub ? 1 : 0)) !== 1 ? "s" : ""} connected
+              {t("panel.footer.connectedCount", { count: totalCustom + (hasGithub ? 1 : 0) })}
             </span>
           </div>
         </div>

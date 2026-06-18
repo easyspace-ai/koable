@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { apiListTemplates, type ApiTemplate } from "@/lib/api";
 import { TemplateCard } from "@/components/templates/template-card";
 import { TemplatePreviewModal } from "@/components/templates/template-preview-modal";
@@ -9,30 +10,38 @@ import { UseTemplateDialog } from "@/components/templates/use-template-dialog";
 import { Loader2, Search, Sparkles, FileCode, BarChart3, Layout, ShoppingBag, BookOpen, User, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof FileCode }> = {
-  all: { label: "All Templates", icon: Sparkles },
-  starter: { label: "Starters", icon: FileCode },
-  dashboard: { label: "Dashboards", icon: BarChart3 },
-  marketing: { label: "Marketing", icon: Layout },
-  ecommerce: { label: "E-commerce", icon: ShoppingBag },
-  content: { label: "Content", icon: BookOpen },
-  personal: { label: "Personal", icon: User },
-  productivity: { label: "Productivity", icon: CheckSquare },
+const CATEGORY_ICONS: Record<string, typeof FileCode> = {
+  all: Sparkles,
+  starter: FileCode,
+  dashboard: BarChart3,
+  marketing: Layout,
+  ecommerce: ShoppingBag,
+  content: BookOpen,
+  personal: User,
+  productivity: CheckSquare,
 };
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const t = useTranslations("dashboard.templatesPage");
   const [templates, setTemplates] = useState<ApiTemplate[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Preview modal state
   const [previewTemplate, setPreviewTemplate] = useState<ApiTemplate | null>(null);
-
-  // Use template dialog state
   const [remixTemplate, setRemixTemplate] = useState<ApiTemplate | null>(null);
+
+  const categoryLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        (["all", "starter", "dashboard", "marketing", "ecommerce", "content", "personal", "productivity"] as const).map(
+          (key) => [key, t(`categories.${key}`)],
+        ),
+      ) as Record<string, string>,
+    [t],
+  );
 
   const fetchTemplates = useCallback(async () => {
     setIsLoading(true);
@@ -40,7 +49,7 @@ export default function TemplatesPage() {
       const res = await apiListTemplates({
         search: searchQuery || undefined,
       });
-      setTemplates(res.data.templates.filter((t) => t.id !== "blank"));
+      setTemplates(res.data.templates.filter((tpl) => tpl.id !== "blank"));
       setCategories(res.data.categories);
     } catch (err) {
       console.error("Failed to fetch templates:", err);
@@ -56,25 +65,23 @@ export default function TemplatesPage() {
   const filteredTemplates =
     activeCategory === "all"
       ? templates
-      : templates.filter((t) => t.category === activeCategory);
+      : templates.filter((tpl) => tpl.category === activeCategory);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-10">
-        {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Templates</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t("title")}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Start from a template to build your next project
+              {t("subtitle")}
             </p>
           </div>
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search templates..."
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 w-64 rounded-lg border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -82,14 +89,12 @@ export default function TemplatesPage() {
           </div>
         </div>
 
-        {/* Category Filter Tabs */}
         <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-border pb-px">
           {["all", ...categories].map((cat) => {
-            const config = CATEGORY_CONFIG[cat] ?? {
-              label: cat.charAt(0).toUpperCase() + cat.slice(1),
-              icon: FileCode,
-            };
-            const Icon = config.icon;
+            const label =
+              categoryLabels[cat] ??
+              cat.charAt(0).toUpperCase() + cat.slice(1);
+            const Icon = CATEGORY_ICONS[cat] ?? FileCode;
 
             return (
               <button
@@ -103,24 +108,23 @@ export default function TemplatesPage() {
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
-                {config.label}
+                {label}
               </button>
             );
           })}
         </div>
 
-        {/* Templates Grid */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">Loading templates...</p>
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
           </div>
         ) : filteredTemplates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <p className="text-sm text-muted-foreground">
               {searchQuery
-                ? `No templates matching "${searchQuery}"`
-                : "No templates in this category yet."}
+                ? t("noResultsSearch", { query: searchQuery })
+                : t("noResultsCategory")}
             </p>
           </div>
         ) : (
@@ -136,7 +140,6 @@ export default function TemplatesPage() {
         )}
       </div>
 
-      {/* Preview Modal */}
       <TemplatePreviewModal
         template={previewTemplate}
         onClose={() => setPreviewTemplate(null)}
@@ -146,7 +149,6 @@ export default function TemplatesPage() {
         }}
       />
 
-      {/* Use Template / Remix Dialog */}
       <UseTemplateDialog
         template={remixTemplate}
         onClose={() => setRemixTemplate(null)}

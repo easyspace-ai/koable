@@ -10,7 +10,6 @@ import { z } from "zod";
 import { sql } from "../db/index.js";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
 
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
 import { setCachedEnabledFrameworks } from "../frameworks/init.js";
 
 // All available frameworks (superset — can never be expanded without code changes)
@@ -62,9 +61,6 @@ async function getDefaultFrameworkFromDb(): Promise<string> {
 // ─── Admin Routes ───────────────────────────────────────
 
 export const adminFrameworkRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminFrameworkRoutes.use("*", authMiddleware);
-adminFrameworkRoutes.use("*", platformAdminMiddleware);
 
 // List all frameworks with their enabled state
 adminFrameworkRoutes.get("/frameworks", async (c) => {

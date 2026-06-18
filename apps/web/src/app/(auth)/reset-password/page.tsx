@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, type FormEvent, Suspense } from "react";
+import { useState, useMemo, useCallback, type FormEvent, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,40 +17,20 @@ import {
   X,
   CheckCircle,
 } from "lucide-react";
+import { getPasswordStrength, getPasswordCriteria } from "../signup/signup-utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-function getPasswordStrength(password: string): {
-  score: number;
-  label: string;
-  color: string;
-} {
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
-  if (/\d/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
-
-  if (score <= 1) return { score, label: "Weak", color: "bg-red-500" };
-  if (score <= 2) return { score, label: "Fair", color: "bg-orange-500" };
-  if (score <= 3) return { score, label: "Good", color: "bg-yellow-500" };
-  return { score, label: "Strong", color: "bg-green-500" };
-}
-
-function getPasswordCriteria(password: string) {
-  return [
-    { label: "At least 8 characters", met: password.length >= 8 },
-    { label: "Uppercase letter", met: /[A-Z]/.test(password) },
-    { label: "Lowercase letter", met: /[a-z]/.test(password) },
-    { label: "Number", met: /\d/.test(password) },
-  ];
-}
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const tAuth = useTranslations("auth");
+  const t = useTranslations("dashboard");
+  const translateReset = useCallback(
+    (key: string) => t(`auth.resetPassword.${key}`),
+    [t],
+  );
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,8 +40,14 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const strength = useMemo(() => getPasswordStrength(password), [password]);
-  const criteria = useMemo(() => getPasswordCriteria(password), [password]);
+  const strength = useMemo(
+    () => getPasswordStrength(password, translateReset),
+    [password, translateReset],
+  );
+  const criteria = useMemo(
+    () => getPasswordCriteria(password, translateReset),
+    [password, translateReset],
+  );
 
   if (!token) {
     return (
@@ -69,16 +56,16 @@ function ResetPasswordForm() {
           <X className="h-6 w-6 text-red-600 dark:text-red-400" />
         </div>
         <h2 className="mb-2 text-xl font-semibold text-[hsl(var(--foreground))]">
-          Invalid reset link
+          {translateReset("invalidLinkTitle")}
         </h2>
         <p className="mb-6 text-sm text-[hsl(var(--muted-foreground))]">
-          This password reset link is invalid or has expired. Please request a new one.
+          {translateReset("invalidLinkDescription")}
         </p>
         <Link
           href="/forgot-password"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
-          Request new reset link
+          {translateReset("requestNewLink")}
         </Link>
       </div>
     );
@@ -91,16 +78,16 @@ function ResetPasswordForm() {
           <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
         </div>
         <h2 className="mb-2 text-xl font-semibold text-[hsl(var(--foreground))]">
-          Password reset successful
+          {translateReset("successTitle")}
         </h2>
         <p className="mb-6 text-sm text-[hsl(var(--muted-foreground))]">
-          Your password has been updated. You can now sign in with your new password.
+          {translateReset("successDescription")}
         </p>
         <Button
           className="w-full rounded-xl bg-brand-700 text-white hover:bg-brand-800"
           onClick={() => router.push("/login")}
         >
-          Sign in
+          {tAuth("signIn")}
         </Button>
       </div>
     );
@@ -111,14 +98,12 @@ function ResetPasswordForm() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(translateReset("passwordMismatch"));
       return;
     }
 
     if (strength.score < 2) {
-      setError(
-        "Password is too weak. Use at least 8 characters with uppercase, lowercase, and numbers."
-      );
+      setError(translateReset("passwordTooWeak"));
       return;
     }
 
@@ -132,8 +117,8 @@ function ResetPasswordForm() {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({ error: "Request failed" }));
-        throw new Error(body.error ?? "Request failed");
+        const body = await res.json().catch(() => ({ error: translateReset("genericError") }));
+        throw new Error(body.error ?? translateReset("genericError"));
       }
 
       setIsSuccess(true);
@@ -141,7 +126,7 @@ function ResetPasswordForm() {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(translateReset("genericError"));
       }
     } finally {
       setIsLoading(false);
@@ -155,10 +140,10 @@ function ResetPasswordForm() {
           <Lock className="h-6 w-6 text-brand-700" />
         </div>
         <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-          Set new password
+          {translateReset("title")}
         </h2>
         <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-          Your new password must be different from your previous password.
+          {translateReset("description")}
         </p>
       </div>
 
@@ -177,12 +162,12 @@ function ResetPasswordForm() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="password">New password</Label>
+          <Label htmlFor="password">{translateReset("newPassword")}</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="At least 8 characters"
+              placeholder={t("auth.signup.passwordPlaceholder")}
               autoComplete="new-password"
               required
               minLength={8}
@@ -196,7 +181,7 @@ function ResetPasswordForm() {
               tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? tAuth("hidePassword") : tAuth("showPassword")}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -221,7 +206,7 @@ function ResetPasswordForm() {
                   ))}
                 </div>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  Password strength: {strength.label}
+                  {t("auth.resetPassword.passwordStrength", { label: strength.label })}
                 </p>
               </div>
               <div className="space-y-1">
@@ -252,12 +237,12 @@ function ResetPasswordForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm new password</Label>
+          <Label htmlFor="confirmPassword">{translateReset("confirmNewPassword")}</Label>
           <div className="relative">
             <Input
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              placeholder="Re-enter your password"
+              placeholder={translateReset("confirmPlaceholder")}
               autoComplete="new-password"
               required
               disabled={isLoading}
@@ -271,7 +256,7 @@ function ResetPasswordForm() {
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               aria-label={
-                showConfirmPassword ? "Hide password" : "Show password"
+                showConfirmPassword ? tAuth("hidePassword") : tAuth("showPassword")
               }
             >
               {showConfirmPassword ? (
@@ -283,13 +268,13 @@ function ResetPasswordForm() {
           </div>
           {confirmPassword.length > 0 && confirmPassword !== password && (
             <p className="text-xs text-red-600 dark:text-red-400">
-              Passwords do not match
+              {translateReset("passwordsDoNotMatch")}
             </p>
           )}
           {confirmPassword.length > 0 && confirmPassword === password && (
             <p className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
               <Check className="h-3 w-3" />
-              Passwords match
+              {translateReset("passwordsMatch")}
             </p>
           )}
         </div>
@@ -302,10 +287,10 @@ function ResetPasswordForm() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Resetting password...
+              {translateReset("resetting")}
             </>
           ) : (
-            "Reset password"
+            translateReset("resetButton")
           )}
         </Button>
       </form>
@@ -316,30 +301,33 @@ function ResetPasswordForm() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to sign in
+          {tAuth("backToSignIn")}
         </Link>
       </p>
     </>
   );
 }
 
+function ResetPasswordFallback() {
+  const t = useTranslations("dashboard");
+  return (
+    <div className="text-center">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-700/10">
+        <Lock className="h-6 w-6 text-brand-700" />
+      </div>
+      <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">
+        {t("auth.resetPassword.title")}
+      </h2>
+      <div className="mt-6 flex justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
+      </div>
+    </div>
+  );
+}
+
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-700/10">
-            <Lock className="h-6 w-6 text-brand-700" />
-          </div>
-          <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-            Set new password
-          </h2>
-          <div className="mt-6 flex justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--muted-foreground))]" />
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<ResetPasswordFallback />}>
       <ResetPasswordForm />
     </Suspense>
   );

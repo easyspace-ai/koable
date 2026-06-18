@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Brain } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { apiGetProject, type ApiProject } from "@/lib/api";
 import { McpPanel } from "@/modules/settings/components/mcp-panel";
@@ -10,7 +11,7 @@ import { ToastContainer } from "@/components/ui/toast-container";
 import { useToasts } from "@/hooks/use-toasts";
 import {
   type Tab,
-  TABS,
+  useSettingsTabLabels,
   SectionCard,
   SettingsLoadingSkeleton,
 } from "./project-settings-shared";
@@ -30,6 +31,8 @@ interface ProjectSettingsProps {
 }
 
 export function ProjectSettings({ projectId }: ProjectSettingsProps) {
+  const t = useTranslations("settings");
+  const tabs = useSettingsTabLabels();
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     if (typeof window === "undefined") return "general";
     const params = new URLSearchParams(window.location.search);
@@ -53,7 +56,7 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
       })
       .catch((err) => {
         if (!cancelled) {
-          addToast("error", err instanceof Error ? err.message : "Failed to load project");
+          addToast("error", err instanceof Error ? err.message : t("shell.errors.failedLoadProject"));
         }
       })
       .finally(() => {
@@ -73,9 +76,9 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <AlertTriangle className="mb-3 h-10 w-10 text-muted-foreground" />
-        <p className="text-lg font-medium">Project not found</p>
+        <p className="text-lg font-medium">{t("shell.notFound.title")}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          The project may have been deleted or you don't have access.
+          {t("shell.notFound.description")}
         </p>
       </div>
     );
@@ -87,7 +90,7 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
 
       {/* Tab Navigation */}
       <nav className="flex gap-1 overflow-x-auto rounded-lg border bg-muted/50 p-1">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -124,7 +127,7 @@ export function ProjectSettings({ projectId }: ProjectSettingsProps) {
         />
       )}
       {activeTab === "skills" && project.workspace_id && (
-        <SectionCard title="Skills & Rules" description="Manage reusable skills and rules that shape how the AI works across your workspace.">
+        <SectionCard title={t("shell.skillsTab.title")} description={t("shell.skillsTab.description")}>
           <SkillsRulesPanel workspaceId={project.workspace_id} />
         </SectionCard>
       )}

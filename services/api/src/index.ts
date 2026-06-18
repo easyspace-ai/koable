@@ -243,6 +243,13 @@ function resolveAllowedCorsOrigin(c: { req: { path: string; header(name: string)
 
   if (origin && allowed.includes(origin)) return origin;
 
+  // In dev, always accept loopback origins even when CORS_ORIGINS is set —
+  // Next dev binds to 127.0.0.1 while .env often lists only localhost:3000.
+  if (process.env.NODE_ENV !== "production" && origin) {
+    if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return origin;
+    if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return origin;
+  }
+
   if (allowed.length === 0 && process.env.NODE_ENV !== "production") {
     if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return origin;
     if (/^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) return origin;

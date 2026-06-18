@@ -13,6 +13,8 @@ import {
   exchangeCodeForToken,
 } from "../mcp/oauth.js";
 import type { McpConnectorConfig } from "../mcp/types.js";
+import { isUuid } from "../lib/uuid.js";
+import { operationFailed } from "../lib/api-error.js";
 
 const connectors = connectorQueries(sql);
 const workspaces = workspaceQueries(sql);
@@ -31,14 +33,13 @@ connectorRoutes.use("*", authMiddleware);
 // Helper used inline in every handler that takes a `:id` (connector id) or
 // `:workspaceId` path param. Returns a JSON 400 response when the value is
 // not a UUID, otherwise null.
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function ensureUuidParam(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   c: any,
   paramName: string,
 ): Response | null {
   const value = c.req.param(paramName);
-  if (typeof value !== "string" || !UUID_RE.test(value)) {
+  if (typeof value !== "string" || !isUuid(value)) {
     return c.json({ error: `Invalid ${paramName}: must be a UUID` }, 400);
   }
   return null;
@@ -106,11 +107,12 @@ connectorRoutes.post(
       const result = await discoverMcpServer(url);
       return c.json({ data: result });
     } catch (err) {
+      console.error("[connectors/discover]", err);
       return c.json({
         data: {
           success: false,
           method: "none" as const,
-          error: err instanceof Error ? err.message : "Discovery failed",
+          error: "Discovery failed",
         },
       });
     }
@@ -485,14 +487,11 @@ connectorRoutes.get("/:workspaceId/connectors/:id/tools", async (c) => {
     const tools = await manager.getTools(config);
     return c.json({ data: tools });
   } catch (err) {
-    // BUG-MCP-008: even for "active" connectors, a runtime fetch failure
-    // must be reported as a structured 503 ("connector unreachable"), not 500.
-    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[connectors/tools]", err);
     return c.json(
       {
         data: [],
         error: "Connector unreachable",
-        message: msg,
       },
       503,
     );
@@ -559,9 +558,7 @@ connectorRoutes.post(
 
       return c.json({ data: { authorizationUrl } });
     } catch (err) {
-      return c.json({
-        error: `Failed to build OAuth URL: ${err instanceof Error ? err.message : String(err)}`,
-      }, 500);
+      return operationFailed(c, "connectors/mcp-oauth/authorize", err, "Failed to build OAuth URL");
     }
   },
 );
@@ -663,7 +660,7 @@ mcpOAuthCallbackRoute.get("/connectors/mcp-oauth/callback", async (c) => {
     console.error("[MCP OAuth] Callback error:", err);
     return c.html(renderMcpOAuthResult({
       success: false,
-      error: err instanceof Error ? err.message : "OAuth callback failed",
+      error: "OAuth callback failed",
       frontendUrl,
     }));
   }

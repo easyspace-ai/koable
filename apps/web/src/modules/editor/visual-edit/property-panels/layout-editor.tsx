@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   LayoutGrid,
   ArrowRight,
@@ -10,8 +11,7 @@ import {
   Rows3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// ─── Types ──────────────────────────────────────────────────
+import { useTranslation } from "@/lib/i18n";
 
 interface LayoutEditorProps {
   display: string;
@@ -25,34 +25,37 @@ interface LayoutEditorProps {
   onGapChange: (value: string) => void;
 }
 
-// ─── Constants ──────────────────────────────────────────────
-
-const DIRECTION_OPTIONS = [
-  { value: "row", icon: ArrowRight, label: "Row" },
-  { value: "column", icon: ArrowDown, label: "Column" },
-] as const;
-
-const ALIGN_OPTIONS = [
-  { value: "flex-start", icon: AlignStartVertical, label: "Start" },
-  { value: "center", icon: AlignCenterVertical, label: "Center" },
-  { value: "flex-end", icon: AlignEndVertical, label: "End" },
-  { value: "stretch", icon: Rows3, label: "Stretch" },
-] as const;
-
-// ─── Component ──────────────────────────────────────────────
-
 export function LayoutEditor({
   display,
   flexDirection,
   alignItems,
-  justifyContent,
   gap,
   onFlexDirectionChange,
   onAlignItemsChange,
-  onJustifyContentChange,
   onGapChange,
 }: LayoutEditorProps) {
-  // Only show full controls for flex/grid display modes
+  const { t } = useTranslation("editor");
+
+  const directionOptions = useMemo(
+    () =>
+      [
+        { value: "row", icon: ArrowRight, label: t("visualEdit.layout.row") },
+        { value: "column", icon: ArrowDown, label: t("visualEdit.layout.column") },
+      ] as const,
+    [t],
+  );
+
+  const alignOptions = useMemo(
+    () =>
+      [
+        { value: "flex-start", icon: AlignStartVertical, label: t("visualEdit.layout.start") },
+        { value: "center", icon: AlignCenterVertical, label: t("visualEdit.layout.center") },
+        { value: "flex-end", icon: AlignEndVertical, label: t("visualEdit.layout.end") },
+        { value: "stretch", icon: Rows3, label: t("visualEdit.layout.stretch") },
+      ] as const,
+    [t],
+  );
+
   const isFlexOrGrid =
     display === "flex" ||
     display === "inline-flex" ||
@@ -62,18 +65,17 @@ export function LayoutEditor({
   if (!isFlexOrGrid) {
     return (
       <div className="rounded-lg border border-border bg-card">
-        {/* Section Header */}
         <div className="flex items-center gap-2 px-3 py-2">
           <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium text-foreground">Layout</span>
+          <span className="text-xs font-medium text-foreground">{t("visualEdit.layout.title")}</span>
         </div>
 
         <div className="px-3 pb-3">
           <p className="text-[11px] text-muted-foreground">
-            Display: <span className="font-mono text-muted-foreground">{display}</span>
+            {t("visualEdit.layout.display")}: <span className="font-mono text-muted-foreground">{display}</span>
           </p>
           <p className="mt-1 text-[10px] text-muted-foreground">
-            Layout controls are available for flex and grid elements.
+            {t("visualEdit.layout.flexGridOnly")}
           </p>
         </div>
       </div>
@@ -82,22 +84,19 @@ export function LayoutEditor({
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      {/* Section Header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="flex-1 text-xs font-medium text-foreground">Layout</span>
+        <span className="flex-1 text-xs font-medium text-foreground">{t("visualEdit.layout.title")}</span>
         <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
           {display}
         </span>
       </div>
 
-      {/* Content */}
       <div className="space-y-2.5 px-3 pb-3">
-        {/* Direction */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Direction</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.layout.direction")}</label>
           <div className="flex gap-0.5 rounded-md border border-input bg-background p-0.5">
-            {DIRECTION_OPTIONS.map(({ value, icon: Icon, label }) => (
+            {directionOptions.map(({ value, icon: Icon, label }) => (
               <button
                 key={value}
                 onClick={() => onFlexDirectionChange(value)}
@@ -116,11 +115,10 @@ export function LayoutEditor({
           </div>
         </div>
 
-        {/* Align Items */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Align</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.layout.align")}</label>
           <div className="flex gap-0.5 rounded-md border border-input bg-background p-0.5">
-            {ALIGN_OPTIONS.map(({ value, icon: Icon, label }) => (
+            {alignOptions.map(({ value, icon: Icon, label }) => (
               <button
                 key={value}
                 onClick={() => onAlignItemsChange(value)}
@@ -138,9 +136,8 @@ export function LayoutEditor({
           </div>
         </div>
 
-        {/* Gap */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Gap</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.layout.gap")}</label>
           <input
             type="text"
             value={gap}

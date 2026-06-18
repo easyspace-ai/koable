@@ -1,0 +1,67 @@
+{
+  "inlineCreate": {
+    "title": "New {label}",
+    "nameLabel": "Name",
+    "namePlaceholder": "My {label}",
+    "scopeLabel": "Scope",
+    "scope": {
+      "workspace": "Workspace",
+      "project": "Project",
+      "user": "User"
+    },
+    "descriptionLabel": "Description",
+    "descriptionHint": "(when to use this skill)",
+    "descriptionPlaceholder": "Use when building React components with accessibility...",
+    "autoInvoke": "Auto-invoke when prompt matches",
+    "contentLabel": "Content",
+    "cancel": "Cancel",
+    "create": "Create",
+    "labels": {
+      "skill": "Skill",
+      "rule": "Rule"
+    },
+    "placeholders": {
+      "skill": "---\nname: my-skill\ntrigger: auto\n---\n\nSkill content in markdown...",
+      "rule": "Always respond in a friendly tone.\nNever include raw SQL in responses."
+    }
+  },
+  "skillCard": {
+    "chars": "{count} chars",
+    "emptyClickToEdit": "Empty -- click to edit",
+    "badgeManual": "manual",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "When to use this skill...",
+    "autoInvoke": "Auto-invoke when prompt matches",
+    "contentPlaceholderSkill": "---\nname: my-skill\ntrigger: auto\n---\n\nSkill content in markdown...",
+    "contentPlaceholderRule": "Rule content...",
+    "save": "Save",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
+  "sectionHeader": {
+    "count": "({count})",
+    "addItemTitle": "Add {itemType}"
+  },
+  "panel": {
+    "title": "Skills & Rules",
+    "refreshTitle": "Refresh",
+    "loading": "Loading...",
+    "sectionSkills": "Skills",
+    "sectionRules": "Rules",
+    "createPlaceholderSkill": "---\nname: my-skill\ntrigger: auto\n---\n\nSkill content here...",
+    "createPlaceholderRule": "Always respond in a friendly tone.\nNever include raw SQL in responses.",
+    "emptySkills": "No skills yet. Skills give your AI reusable capabilities.",
+    "emptyRules": "No rules yet. Rules guide how your AI behaves."
+  },
+  "picker": {
+    "title": "Skills",
+    "header": "Skills",
+    "searchPlaceholder": "Search skills...",
+    "emptyNoMatch": "No matching skills",
+    "emptyNoneConfigured": "No skills configured",
+    "badgeManual": "manual"
+  },
+  "errors": {
+    "failedToLoad": "Failed to load skills"
+  }
+}

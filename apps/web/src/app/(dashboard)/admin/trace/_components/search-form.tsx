@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Controlled search inputs that submit by pushing query params onto the URL.
@@ -13,6 +14,7 @@ import { Search, X } from "lucide-react";
 export function SearchForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation("admin");
 
   const [userId, setUserId] = useState(params.get("user_id") ?? "");
   const [workspaceId, setWorkspaceId] = useState(params.get("workspace_id") ?? "");
@@ -46,41 +48,53 @@ export function SearchForm() {
   return (
     <form onSubmit={submit} className="rounded-lg border border-border bg-card p-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="User ID">
-          <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="uuid" />
+        <Field label={t("trace.userId")}>
+          <Input
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder={t("trace.placeholderUuid")}
+          />
         </Field>
-        <Field label="Workspace ID">
-          <Input value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} placeholder="uuid" />
+        <Field label={t("trace.workspaceId")}>
+          <Input
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            placeholder={t("trace.placeholderUuid")}
+          />
         </Field>
-        <Field label="Status">
+        <Field label={t("trace.status")}>
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm"
           >
-            <option value="">Any</option>
-            <option value="running">running</option>
-            <option value="ok">ok</option>
-            <option value="error">error</option>
-            <option value="timeout">timeout</option>
+            <option value="">{t("trace.statusAny")}</option>
+            <option value="running">{t("trace.statusRunning")}</option>
+            <option value="ok">{t("trace.statusOk")}</option>
+            <option value="error">{t("trace.statusError")}</option>
+            <option value="timeout">{t("trace.statusTimeout")}</option>
           </select>
         </Field>
-        <Field label="From">
+        <Field label={t("trace.from")}>
           <Input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
         </Field>
-        <Field label="To">
+        <Field label={t("trace.to")}>
           <Input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
-        <Field label="Root span name contains">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="e.g. POST /chat" />
+        <Field label={t("trace.rootSpanContains")}>
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("trace.rootSpanPlaceholder")}
+          />
         </Field>
       </div>
       <div className="mt-3 flex items-center gap-2">
         <Button type="submit" size="sm">
-          <Search className="mr-1.5 h-3.5 w-3.5" /> Search
+          <Search className="mr-1.5 h-3.5 w-3.5" /> {t("trace.search")}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={clear}>
-          <X className="mr-1.5 h-3.5 w-3.5" /> Reset
+          <X className="mr-1.5 h-3.5 w-3.5" /> {t("trace.reset")}
         </Button>
       </div>
     </form>

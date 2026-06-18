@@ -19,8 +19,7 @@ import {
   useProviderModels,
   CUSTOM_MODEL_SENTINEL,
 } from "@/modules/ai-settings/components/model-config-hooks";
-
-// ─── Types ──────────────────────────────────────────────────
+import { useTranslation } from "@/lib/i18n";
 
 interface PlatformAiDefault {
   plan: string;
@@ -32,7 +31,6 @@ interface PlatformAiDefault {
   updated_by: string | null;
   created_at: string;
   updated_at: string;
-  // Joined fields from listAll()
   copilot_account_label?: string | null;
   copilot_github_login?: string | null;
   provider_label?: string | null;
@@ -55,8 +53,6 @@ const PLAN_ICONS: Record<string, string> = {
   enterprise: "🏛️",
 };
 
-// ─── Edit Form Sub-Component (uses hooks for dynamic model loading) ─────
-
 function PlanEditForm({
   plan,
   editState,
@@ -78,6 +74,7 @@ function PlanEditForm({
   onCancel: () => void;
   saving: boolean;
 }) {
+  const { t } = useTranslation("admin");
   const { models: copilotModels, loadingModels: loadingCopilotModels } = useCopilotModels(
     editState.source === "copilot" && editState.copilotAccountId ? editState.copilotAccountId : undefined,
   );
@@ -89,17 +86,17 @@ function PlanEditForm({
   const [customCopilotModel, setCustomCopilotModel] = useState("");
   const [customProviderModel, setCustomProviderModel] = useState("");
 
-  // Check if current model value is in the list or needs custom input
   const copilotModelInList = copilotModels.some((m) => m.id === editState.copilotModel);
   const showCopilotCustomInput = editState.copilotModel === CUSTOM_MODEL_SENTINEL || (!copilotModelInList && editState.copilotModel !== "");
   const providerModelInList = providerModels.some((m) => m.id === editState.providerModel);
   const showProviderCustomInput = editState.providerModel === CUSTOM_MODEL_SENTINEL || (!providerModelInList && editState.providerModel !== "" && providerModels.length > 0);
 
+  const planLabel = PLAN_LABELS[plan] ?? plan;
+
   return (
     <div className="px-4 py-4 space-y-4">
-      {/* Source selector */}
       <div>
-        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Source</label>
+        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("planDefaults.form.source")}</label>
         <div className="flex gap-2">
           {(["none", "copilot", "custom"] as const).map((src) => (
             <button
@@ -111,18 +108,21 @@ function PlanEditForm({
                   : "border-border bg-secondary text-muted-foreground hover:text-foreground"
               }`}
             >
-              {src === "none" ? "None" : src === "copilot" ? "GitHub Copilot" : "Custom Provider"}
+              {src === "none"
+                ? t("planDefaults.form.sourceNone")
+                : src === "copilot"
+                  ? t("planDefaults.form.sourceCopilot")
+                  : t("planDefaults.form.sourceCustom")}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Copilot fields */}
       {editState.source === "copilot" && (
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Copilot Account
+              {t("planDefaults.form.copilotAccount")}
             </label>
             <select
               value={editState.copilotAccountId ?? ""}
@@ -131,7 +131,7 @@ function PlanEditForm({
               }
               className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="">Select account…</option>
+              <option value="">{t("planDefaults.form.selectAccount")}</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.label} (@{a.github_login})
@@ -140,13 +140,13 @@ function PlanEditForm({
             </select>
             {accounts.length === 0 && (
               <p className="mt-1 text-xs text-amber-400">
-                No Copilot accounts found. Add one in AI Settings first.
+                {t("planDefaults.form.noCopilotAccounts")}
               </p>
             )}
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Default Model
+              {t("planDefaults.form.defaultModel")}
               {loadingCopilotModels && <Loader2 className="inline h-3 w-3 ml-1 animate-spin text-muted-foreground" />}
             </label>
             <select
@@ -166,7 +166,7 @@ function PlanEditForm({
                   {m.label}
                 </option>
               ))}
-              <option value={CUSTOM_MODEL_SENTINEL}>— Type custom model ID —</option>
+              <option value={CUSTOM_MODEL_SENTINEL}>{t("planDefaults.form.customModelOption")}</option>
             </select>
             {showCopilotCustomInput && (
               <input
@@ -176,7 +176,7 @@ function PlanEditForm({
                   setCustomCopilotModel(e.target.value);
                   setEditState({ ...editState, copilotModel: e.target.value });
                 }}
-                placeholder="e.g. gpt-4o, claude-sonnet-4"
+                placeholder={t("planDefaults.form.customModelPlaceholder")}
                 className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
             )}
@@ -184,12 +184,11 @@ function PlanEditForm({
         </div>
       )}
 
-      {/* Custom provider fields */}
       {editState.source === "custom" && (
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Provider
+              {t("planDefaults.form.provider")}
             </label>
             <select
               value={editState.providerId ?? ""}
@@ -198,7 +197,7 @@ function PlanEditForm({
               }
               className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="">Select provider…</option>
+              <option value="">{t("planDefaults.form.selectProvider")}</option>
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label} ({p.provider_type})
@@ -207,13 +206,13 @@ function PlanEditForm({
             </select>
             {providers.length === 0 && (
               <p className="mt-1 text-xs text-amber-400">
-                No custom providers found. Add one in AI Settings first.
+                {t("planDefaults.form.noCustomProviders")}
               </p>
             )}
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-              Default Model
+              {t("planDefaults.form.defaultModel")}
               {loadingProviderModels && <Loader2 className="inline h-3 w-3 ml-1 animate-spin text-muted-foreground" />}
             </label>
             {providerModels.length > 0 ? (
@@ -230,13 +229,13 @@ function PlanEditForm({
                   }}
                   className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
                 >
-                  <option value="">Select model…</option>
+                  <option value="">{t("planDefaults.form.selectModel")}</option>
                   {providerModels.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name ?? m.id}
                     </option>
                   ))}
-                  <option value={CUSTOM_MODEL_SENTINEL}>— Type custom model ID —</option>
+                  <option value={CUSTOM_MODEL_SENTINEL}>{t("planDefaults.form.customModelOption")}</option>
                 </select>
                 {showProviderCustomInput && (
                   <input
@@ -246,7 +245,7 @@ function PlanEditForm({
                       setCustomProviderModel(e.target.value);
                       setEditState({ ...editState, providerModel: e.target.value });
                     }}
-                    placeholder="e.g. gpt-4o, claude-sonnet-4"
+                    placeholder={t("planDefaults.form.customModelPlaceholder")}
                     className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-500"
                   />
                 )}
@@ -256,7 +255,13 @@ function PlanEditForm({
                 type="text"
                 value={editState.providerModel}
                 onChange={(e) => setEditState({ ...editState, providerModel: e.target.value })}
-                placeholder={editState.providerId ? (loadingProviderModels ? "Discovering models…" : "Type model ID") : "Select a provider first"}
+                placeholder={
+                  editState.providerId
+                    ? loadingProviderModels
+                      ? t("planDefaults.form.discoveringModels")
+                      : t("planDefaults.form.typeModelId")
+                    : t("planDefaults.form.selectProviderFirst")
+                }
                 disabled={!editState.providerId}
                 className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-50"
               />
@@ -265,15 +270,12 @@ function PlanEditForm({
         </div>
       )}
 
-      {/* None explanation */}
       {editState.source === "none" && (
         <p className="text-xs text-muted-foreground bg-secondary/50 rounded-md px-3 py-2">
-          No default AI model will be configured for new <strong>{PLAN_LABELS[plan]}</strong> workspaces.
-          Users will need to set up their own AI connection.
+          {t("planDefaults.form.noneExplanation", { plan: planLabel })}
         </p>
       )}
 
-      {/* Actions */}
       <div className="flex items-center gap-2 pt-1">
         <button
           onClick={onSave}
@@ -281,22 +283,21 @@ function PlanEditForm({
           className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-brand-500 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-          Save
+          {t("common.save")}
         </button>
         <button
           onClick={onCancel}
           className="rounded-md border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
       </div>
     </div>
   );
 }
 
-// ─── Component ──────────────────────────────────────────────
-
 export function PlanDefaultsPanel() {
+  const { t } = useTranslation("admin");
   const [defaults, setDefaults] = useState<PlatformAiDefault[]>([]);
   const [accounts, setAccounts] = useState<ApiGitHubCopilotAccount[]>([]);
   const [providers, setProviders] = useState<ApiAiProvider[]>([]);
@@ -314,7 +315,6 @@ export function PlanDefaultsPanel() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // Load plan defaults + available accounts/providers in parallel
       const [defaultsRes, allocRes] = await Promise.all([
         apiFetch<{ data: PlatformAiDefault[] }>("/admin/platform-ai-defaults"),
         apiFetch<{
@@ -329,11 +329,11 @@ export function PlanDefaultsPanel() {
       setAdminWorkspaceId(allocRes.workspaceId ?? null);
     } catch (err) {
       console.error("Failed to load plan defaults:", err);
-      setErrorMsg("Failed to load plan defaults");
+      setErrorMsg(t("planDefaults.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -373,14 +373,15 @@ export function PlanDefaultsPanel() {
         body: JSON.stringify(body),
       });
 
-      setSuccessMsg(`Saved defaults for ${PLAN_LABELS[editingPlan] ?? editingPlan} plan`);
+      const planLabel = PLAN_LABELS[editingPlan] ?? editingPlan;
+      setSuccessMsg(t("planDefaults.saveSuccess", { plan: planLabel }));
       setTimeout(() => setSuccessMsg(null), 3000);
       setEditingPlan(null);
       setEditState(null);
       await load();
     } catch (err) {
       console.error("Failed to save defaults:", err);
-      setErrorMsg("Failed to save defaults");
+      setErrorMsg(t("planDefaults.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -399,17 +400,19 @@ export function PlanDefaultsPanel() {
         },
       );
       setApplyResult(res.data);
-      setSuccessMsg(`Applied ${plan} defaults to ${res.data.updated}/${res.data.total} workspaces`);
+      setSuccessMsg(t("planDefaults.applySuccess", {
+        plan: res.data.plan,
+        updated: res.data.updated,
+        total: res.data.total,
+      }));
       setTimeout(() => setSuccessMsg(null), 4000);
     } catch (err) {
       console.error("Failed to apply defaults:", err);
-      setErrorMsg("Failed to apply defaults to existing workspaces");
+      setErrorMsg(t("planDefaults.applyFailed"));
     } finally {
       setApplyingPlan(null);
     }
   }
-
-  // ─── Helpers ────────────────────────────────────────────
 
   function getDisplayModel(row: PlatformAiDefault): string {
     if (row.source === "custom" && row.provider_model) return row.provider_model;
@@ -428,13 +431,11 @@ export function PlanDefaultsPanel() {
     return !!(row.copilot_account_id || row.provider_id);
   }
 
-  // ─── Render ─────────────────────────────────────────────
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
-        <span className="ml-2 text-sm text-muted-foreground">Loading plan defaults…</span>
+        <span className="ml-2 text-sm text-muted-foreground">{t("planDefaults.loading")}</span>
       </div>
     );
   }
@@ -444,7 +445,7 @@ export function PlanDefaultsPanel() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs text-muted-foreground">
-            Set the default AI model and provider for each plan tier. New workspaces will automatically inherit these settings.
+            {t("planDefaults.description")}
           </p>
         </div>
       </div>
@@ -460,20 +461,19 @@ export function PlanDefaultsPanel() {
         </div>
       )}
 
-      {/* Plan cards */}
       <div className="grid gap-3">
         {PLAN_ORDER.map((plan) => {
           const row = defaults.find((d) => d.plan === plan);
           if (!row) return null;
           const isEditing = editingPlan === plan;
           const configured = isConfigured(row);
+          const sourceLabel = row.source === "copilot" ? t("planDefaults.sourceCopilot") : t("planDefaults.sourceCustom");
 
           return (
             <div
               key={plan}
               className="rounded-lg border border-border bg-card overflow-hidden"
             >
-              {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{PLAN_ICONS[plan]}</span>
@@ -483,8 +483,8 @@ export function PlanDefaultsPanel() {
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       {configured
-                        ? `${row.source === "copilot" ? "Copilot" : "Custom"} • ${getDisplayModel(row)}`
-                        : "No default configured"}
+                        ? t("planDefaults.summaryLine", { source: sourceLabel, model: getDisplayModel(row) })
+                        : t("planDefaults.noDefaultConfigured")}
                     </p>
                   </div>
                 </div>
@@ -495,19 +495,19 @@ export function PlanDefaultsPanel() {
                         onClick={() => startEdit(row)}
                         className="rounded-md border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
                       >
-                        Configure
+                        {t("planDefaults.actions.configure")}
                       </button>
                       {configured && (
                         <button
                           onClick={() => applyToExisting(plan)}
                           disabled={!!applyingPlan}
                           className="rounded-md border border-brand-600/50 bg-brand-600/10 px-3 py-1.5 text-xs font-medium text-brand-400 hover:bg-brand-600/20 transition-colors disabled:opacity-50"
-                          title="Apply this default to all existing workspaces on this plan"
+                          title={t("planDefaults.actions.applyToExistingTitle")}
                         >
                           {applyingPlan === plan ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            "Apply to Existing"
+                            t("planDefaults.actions.applyToExisting")
                           )}
                         </button>
                       )}
@@ -516,31 +516,29 @@ export function PlanDefaultsPanel() {
                 </div>
               </div>
 
-              {/* Current config display (when not editing) */}
               {!isEditing && configured && (
                 <div className="px-4 py-3 grid grid-cols-3 gap-4 text-xs">
                   <div>
-                    <span className="text-muted-foreground">Source</span>
+                    <span className="text-muted-foreground">{t("planDefaults.display.source")}</span>
                     <div className="mt-0.5 flex items-center gap-1.5 text-foreground font-medium">
                       {row.source === "copilot" ? (
-                        <><Cpu className="h-3 w-3 text-brand-400" /> Copilot</>
+                        <><Cpu className="h-3 w-3 text-brand-400" /> {t("planDefaults.display.copilot")}</>
                       ) : (
-                        <><Globe className="h-3 w-3 text-purple-400" /> Custom Provider</>
+                        <><Globe className="h-3 w-3 text-purple-400" /> {t("planDefaults.display.customProvider")}</>
                       )}
                     </div>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Provider / Account</span>
+                    <span className="text-muted-foreground">{t("planDefaults.display.providerAccount")}</span>
                     <div className="mt-0.5 text-foreground font-medium">{getDisplayProvider(row)}</div>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Model</span>
+                    <span className="text-muted-foreground">{t("planDefaults.display.model")}</span>
                     <div className="mt-0.5 text-foreground font-medium">{getDisplayModel(row)}</div>
                   </div>
                 </div>
               )}
 
-              {/* Edit form */}
               {isEditing && editState && (
                 <PlanEditForm
                   plan={plan}
@@ -559,25 +557,26 @@ export function PlanDefaultsPanel() {
         })}
       </div>
 
-      {/* Apply to Existing section */}
       {applyResult && (
         <div className="rounded-lg border border-border bg-card px-4 py-3 text-xs">
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-400" />
             <span className="text-foreground font-medium">
-              Applied {PLAN_LABELS[applyResult.plan]} defaults to {applyResult.updated} of {applyResult.total} workspaces
+              {t("planDefaults.applyResult", {
+                plan: PLAN_LABELS[applyResult.plan] ?? applyResult.plan,
+                updated: applyResult.updated,
+                total: applyResult.total,
+              })}
             </span>
           </div>
           {applyResult.total > applyResult.updated && (
             <p className="mt-1 text-muted-foreground ml-6">
-              {applyResult.total - applyResult.updated} workspace(s) skipped — already had AI configured.
-              Use &ldquo;overwrite&rdquo; to force-apply.
+              {t("planDefaults.applySkipped", { count: applyResult.total - applyResult.updated })}
             </p>
           )}
         </div>
       )}
 
-      {/* Overwrite toggle for apply-to-existing */}
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <label className="flex items-center gap-1.5 cursor-pointer">
           <input
@@ -586,21 +585,20 @@ export function PlanDefaultsPanel() {
             onChange={(e) => setApplyOverwrite(e.target.checked)}
             className="rounded border-border accent-brand-500"
           />
-          <span>Overwrite existing workspace AI settings when applying to existing</span>
+          <span>{t("planDefaults.overwriteLabel")}</span>
         </label>
       </div>
 
-      {/* Info box */}
       <div className="rounded-lg border border-border/50 bg-secondary/30 px-4 py-3 text-xs text-muted-foreground space-y-1">
         <div className="flex items-center gap-1.5 font-medium text-foreground">
           <Layers className="h-3.5 w-3.5 text-brand-400" />
-          How Plan Defaults Work
+          {t("planDefaults.howItWorks.title")}
         </div>
         <ul className="list-disc list-inside space-y-0.5 ml-5">
-          <li>When a new user signs up, their workspace inherits the default for their plan tier.</li>
-          <li>The Copilot account or provider is cloned into the user&apos;s workspace automatically.</li>
-          <li>Users can override the default in their own AI Settings.</li>
-          <li>Use &ldquo;Apply to Existing&rdquo; to retroactively push defaults to workspaces that don&apos;t have AI configured yet.</li>
+          <li>{t("planDefaults.howItWorks.item1")}</li>
+          <li>{t("planDefaults.howItWorks.item2")}</li>
+          <li>{t("planDefaults.howItWorks.item3")}</li>
+          <li>{t("planDefaults.howItWorks.item4")}</li>
         </ul>
       </div>
     </div>

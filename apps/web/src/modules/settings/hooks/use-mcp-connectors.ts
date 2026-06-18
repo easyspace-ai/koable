@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 
 // ─── Types ──────────────────────────────────────────────────
@@ -108,16 +109,29 @@ export interface TestResult {
   error?: string;
 }
 
-export const TRANSPORT_LABELS: Record<
+export function useTransportLabels(): Record<
   McpConnector["transport_type"],
   { label: string; description: string }
-> = {
-  streamable_http: { label: "HTTP (Streamable)", description: "Connect to an HTTP-based MCP server with streaming support" },
-  http_sse: { label: "Server-Sent Events (SSE)", description: "Connect via HTTP with Server-Sent Events" },
-  // stdio kept for display of existing builtin connectors but hidden from the
-  // "add" form — user-created stdio connectors are blocked server-side.
-  stdio: { label: "Built-in App", description: "Server-managed local process" },
-};
+> {
+  const t = useTranslations("settings");
+  return useMemo(
+    () => ({
+      streamable_http: {
+        label: t("mcp.transport.streamableHttp.label"),
+        description: t("mcp.transport.streamableHttp.description"),
+      },
+      http_sse: {
+        label: t("mcp.transport.httpSse.label"),
+        description: t("mcp.transport.httpSse.description"),
+      },
+      stdio: {
+        label: t("mcp.transport.stdio.label"),
+        description: t("mcp.transport.stdio.description"),
+      },
+    }),
+    [t],
+  );
+}
 
 /** Transport types available for user-created connectors (excludes stdio). */
 export const USER_TRANSPORT_TYPES = ["streamable_http", "http_sse"] as const;
@@ -125,6 +139,7 @@ export const USER_TRANSPORT_TYPES = ["streamable_http", "http_sse"] as const;
 // ─── Hook ───────────────────────────────────────────────────
 
 export function useMcpConnectors(workspaceId: string) {
+  const t = useTranslations("settings");
   const [connectors, setConnectors] = useState<McpConnector[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,11 +154,11 @@ export function useMcpConnectors(workspaceId: string) {
       );
       setConnectors(json.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load MCP servers");
+      setError(err instanceof Error ? err.message : t("mcp.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId]);
+  }, [workspaceId, t]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 
@@ -189,10 +204,10 @@ export function useMcpConnectors(workspaceId: string) {
         await refresh();
         return json.data;
       } catch (err) {
-        return { success: false, toolCount: 0, error: err instanceof Error ? err.message : "Test failed" };
+        return { success: false, toolCount: 0, error: err instanceof Error ? err.message : t("mcp.errors.testFailed") };
       }
     },
-    [workspaceId, refresh],
+    [workspaceId, refresh, t],
   );
 
   const discoverServer = useCallback(
@@ -204,10 +219,10 @@ export function useMcpConnectors(workspaceId: string) {
         );
         return json.data;
       } catch (err) {
-        return { success: false, method: "none", error: err instanceof Error ? err.message : "Discovery failed" };
+        return { success: false, method: "none", error: err instanceof Error ? err.message : t("mcp.errors.discoveryFailed") };
       }
     },
-    [workspaceId],
+    [workspaceId, t],
   );
 
   /** Start MCP OAuth flow — returns authorization URL for popup */

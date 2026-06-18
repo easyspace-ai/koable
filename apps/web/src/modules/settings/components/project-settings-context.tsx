@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   FileText,
   ChevronRight,
@@ -24,6 +25,7 @@ export function ContextFilesTab({
   projectId: string;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("settings");
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [stats, setStats] = useState<ContextStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,11 +40,11 @@ export function ContextFilesTab({
       setFiles(res.data.files);
       setStats(res.data.stats);
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to load context files");
+      addToast("error", err instanceof Error ? err.message : t("context.toasts.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [projectId, addToast]);
+  }, [projectId, addToast, t]);
 
   useEffect(() => {
     void fetchFiles();
@@ -61,9 +63,9 @@ export function ContextFilesTab({
             : f
         )
       );
-      addToast("success", `Saved ${filename}`);
+      addToast("success", t("context.toasts.saved", { filename }));
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to save");
+      addToast("error", err instanceof Error ? err.message : t("context.toasts.saveFailed"));
       throw err;
     }
   };
@@ -83,7 +85,7 @@ export function ContextFilesTab({
 
   if (loading) {
     return (
-      <SectionCard title="Knowledge (.doable/)">
+      <SectionCard title={t("context.title")}>
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
@@ -102,15 +104,18 @@ export function ContextFilesTab({
   return (
     <div className="space-y-4">
       <SectionCard
-        title="Knowledge (.doable/)"
-        description="Knowledge files guide the AI's behavior when editing your project. Each file serves a different purpose."
+        title={t("context.title")}
+        description={t("context.description")}
       >
         {/* Token budget */}
         {stats && (
           <div className="mb-5 rounded-lg bg-muted/30 p-3">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {stats.totalFiles} files, {stats.estimatedTokens.toLocaleString()} tokens
+                {t("context.budget.summary", {
+                  files: stats.totalFiles,
+                  tokens: stats.estimatedTokens.toLocaleString(),
+                })}
               </span>
               <span
                 className={cn(
@@ -120,7 +125,7 @@ export function ContextFilesTab({
                     : "text-muted-foreground"
                 )}
               >
-                {stats.budgetUsedPercent}% of budget used
+                {t("context.budget.used", { percent: stats.budgetUsedPercent })}
               </span>
             </div>
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
@@ -170,8 +175,8 @@ export function ContextFilesTab({
                   <p className="text-sm font-medium">{file.filename}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {hasContent
-                      ? `${file.content.length} characters`
-                      : "Empty -- click to edit"}
+                      ? t("context.characters", { count: file.content.length })
+                      : t("context.fileEmpty")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -195,7 +200,7 @@ export function ContextFilesTab({
             className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
-            Refresh
+            {t("context.refresh")}
           </button>
         </div>
       </SectionCard>
@@ -216,6 +221,7 @@ function ContextFileEditor({
   onBack: () => void;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("settings");
   const [content, setContent] = useState(file.content);
   const [saving, setSaving] = useState(false);
   const dirty = content !== file.content;
@@ -265,14 +271,14 @@ function ContextFileEditor({
           <span className="text-sm font-semibold">{file.filename}</span>
           {dirty && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-              Unsaved
+              {t("context.editor.unsaved")}
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {content.length} chars
+            {t("context.editor.chars", { count: content.length })}
           </span>
           <button
             onClick={() => void handleSave()}
@@ -289,7 +295,7 @@ function ContextFileEditor({
             ) : (
               <Save className="h-3.5 w-3.5" />
             )}
-            {saving ? "Saving..." : "Save"}
+            {saving ? t("context.editor.saving") : t("context.editor.save")}
           </button>
         </div>
       </div>
@@ -301,23 +307,24 @@ function ContextFileEditor({
         onChange={(e) => setContent(e.target.value)}
         className="w-full bg-background p-4 text-sm font-mono leading-relaxed focus:outline-none resize-none"
         rows={20}
-        placeholder="Start writing..."
+        placeholder={t("context.editor.placeholder")}
         spellCheck={false}
       />
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
         <span>
-          Last updated:{" "}
-          {new Date(file.updatedAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
+          {t("context.editor.lastUpdated", {
+            date: new Date(file.updatedAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           })}
         </span>
-        <span className="text-muted-foreground">Ctrl+S to save</span>
+        <span className="text-muted-foreground">{t("context.editor.shortcut")}</span>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { ArrowUp, CornerRightUp, Code2, Trash2 } from "lucide-react";
 import type { ElementRect } from "./types";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ export function VisualEditToolbar({
   onDelete,
   hasPendingChanges = false,
 }: VisualEditToolbarProps) {
+  const { t } = useTranslation("editor");
   const [prompt, setPrompt] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,7 +74,6 @@ export function VisualEditToolbar({
     const absTop = iframeRect.top + elementRect.top;
     const absBottom = iframeRect.top + elementRect.bottom;
     const absLeft = iframeRect.left + elementRect.left;
-    const absRight = iframeRect.left + elementRect.right;
     const elementCenterX = absLeft + elementRect.width / 2;
 
     // Preferred: center toolbar horizontally on element
@@ -123,7 +124,7 @@ export function VisualEditToolbar({
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={hasPendingChanges ? "Save first" : "Ask Doable..."}
+          placeholder={hasPendingChanges ? t("visualEdit.saveFirst") : t("visualEdit.askDoable")}
           disabled={hasPendingChanges}
           className="h-7 w-full rounded-lg bg-secondary px-2.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         />
@@ -135,7 +136,7 @@ export function VisualEditToolbar({
         onClick={handleSubmit}
         disabled={!prompt.trim()}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-brand-400 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
-        title="Send prompt"
+        title={t("visualEdit.sendPrompt")}
       >
         <ArrowUp className="h-3.5 w-3.5" />
       </button>
@@ -148,7 +149,7 @@ export function VisualEditToolbar({
         type="button"
         onClick={onSelectParent}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        title="Select parent element"
+        title={t("visualEdit.selectParent")}
       >
         <CornerRightUp className="h-3.5 w-3.5" />
       </button>
@@ -158,7 +159,7 @@ export function VisualEditToolbar({
         type="button"
         onClick={onViewCode}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        title="View source code"
+        title={t("visualEdit.viewSource")}
       >
         <Code2 className="h-3.5 w-3.5" />
       </button>
@@ -168,7 +169,7 @@ export function VisualEditToolbar({
         type="button"
         onClick={onDelete}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-red-400"
-        title="Delete element"
+        title={t("visualEdit.deleteElement")}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>

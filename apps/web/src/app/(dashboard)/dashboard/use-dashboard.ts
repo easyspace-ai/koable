@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useAttachments } from "@/hooks/use-attachments";
@@ -26,6 +27,7 @@ const WS_KEY = "doable_active_workspace_id";
 export function useDashboard() {
   const router = useRouter();
   const { user } = useAuth();
+  const t = useTranslations("dashboard");
   const { toasts, addToast, dismissToast } = useToasts();
   const speechRecognition = useSpeechRecognition((transcript: string) => {
     setPrompt((prev) => (prev ? prev + " " + transcript : transcript));
@@ -132,9 +134,9 @@ export function useDashboard() {
       setProjects((prev) => (append ? [...prev, ...res.data] : res.data));
       setCurrentPage(page);
       setTotalProjects(res.pagination.total);
-    } catch { if (!append) { setError("Failed to load projects"); setProjects([]); }
+    } catch { if (!append) { setError(t("dashboard.loadProjectsFailed")); setProjects([]); }
     } finally { setIsLoading(false); setIsLoadingMore(false); }
-  }, [statusFilter, debouncedSearch, activeFolderId]);
+  }, [statusFilter, debouncedSearch, activeFolderId, t]);
 
   const fetchRecentlyViewed = useCallback(async (page = 1, append = false) => {
     try {
@@ -245,7 +247,7 @@ export function useDashboard() {
     const inputText = typeof textOverride === "string" ? textOverride : prompt;
     const hasContent = inputText.trim() || imageAttachments.attachments.length > 0;
     if (!hasContent || isCreating) return;
-    setIsCreating(true); setCreatingStatus("Creating project…");
+    setIsCreating(true); setCreatingStatus(t("dashboard.creatingProject"));
     try {
       const text = inputText.trim() || "See attached file(s)";
       const activeWsId = typeof window !== "undefined" ? localStorage.getItem("doable_active_workspace_id") ?? undefined : undefined;
@@ -260,7 +262,7 @@ export function useDashboard() {
       });
       const projectId = res.data.id;
       sessionStorage.setItem(`doable_initial_prompt_${projectId}`, JSON.stringify({ prompt: text, attachments: imageAttachments.attachments }));
-      setCreatingStatus("Connecting to AI…");
+      setCreatingStatus(t("dashboard.connectingToAi"));
       const mode = startMode === "plan" ? "plan" : "agent";
       const { accessToken } = getStoredTokens();
       const bridgeAttachments = imageAttachments.attachments.map((a) => ({ type: a.mimeType, data: a.data, name: a.name }));
@@ -276,8 +278,8 @@ export function useDashboard() {
     } catch (err) {
       console.error("[dashboard] handleSubmit failed", err);
       const message = err instanceof Error
-        ? `Failed to create project: ${err.message}`
-        : "Failed to create project. Please try again.";
+        ? t("dashboard.createProjectFailedWithMessage", { message: err.message })
+        : t("dashboard.createProjectFailed");
       setError(message);
       setIsCreating(false);
       setCreatingStatus("");
@@ -295,16 +297,16 @@ export function useDashboard() {
     updateBothArrays((prev) => prev.filter((p) => p.id !== id));
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     setDeleteConfirmId(null);
-    try { await apiDeleteProject(id); emitDashboardEvent(DASHBOARD_EVENTS.PROJECTS_CHANGED); addToast("success", `"${name}" deleted`); }
-    catch { addToast("error", `Failed to delete "${name}"`); fetchProjects(); fetchRecentlyViewed(); }
+    try { await apiDeleteProject(id); emitDashboardEvent(DASHBOARD_EVENTS.PROJECTS_CHANGED); addToast("success", t("dashboard.toasts.projectDeleted", { name })); }
+    catch { addToast("error", t("dashboard.toasts.deleteFailed", { name })); fetchProjects(); fetchRecentlyViewed(); }
   };
 
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
     updateBothArrays((prev) => prev.filter((p) => !selectedIds.has(p.id)));
     setSelectedIds(new Set()); setBulkDeleteConfirm(false);
-    try { await Promise.all(ids.map((id) => apiDeleteProject(id))); emitDashboardEvent(DASHBOARD_EVENTS.PROJECTS_CHANGED); addToast("success", `${ids.length} project${ids.length === 1 ? "" : "s"} deleted`); }
-    catch { addToast("error", "Failed to delete some projects"); fetchProjects(); fetchRecentlyViewed(); }
+    try { await Promise.all(ids.map((id) => apiDeleteProject(id))); emitDashboardEvent(DASHBOARD_EVENTS.PROJECTS_CHANGED); addToast("success", t("dashboard.toasts.projectsDeleted", { count: ids.length })); }
+    catch { addToast("error", t("dashboard.toasts.bulkDeleteFailed")); fetchProjects(); fetchRecentlyViewed(); }
   };
 
   const handleDuplicate = async (id: string) => {
@@ -374,7 +376,7 @@ export function useDashboard() {
   };
 
   const contextProject = contextMenu.projectId ? (projects.find((p) => p.id === contextMenu.projectId) ?? recentProjects.find((p) => p.id === contextMenu.projectId) ?? null) : null;
-  const activeFolderName = activeFolderId ? folders.find((f) => f.id === activeFolderId)?.name ?? "Folder" : null;
+  const activeFolderName = activeFolderId ? folders.find((f) => f.id === activeFolderId)?.name ?? t("common.folder") : null;
 
   return {
     // Auth

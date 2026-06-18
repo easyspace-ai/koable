@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CreditCard, Zap, ExternalLink, Loader2, CheckCircle2, XCircle, AlertTriangle, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { ArrowLeft, CreditCard, Zap, Loader2, CheckCircle2, XCircle, AlertTriangle, X } from "lucide-react";
 import { PricingCards } from "@/modules/billing/components/pricing-cards";
 import { CreditDisplay } from "@/modules/billing/components/credit-display";
 import {
@@ -21,7 +22,6 @@ function useActiveWorkspaceId(): { workspaceId: string | undefined; loading: boo
 
   useEffect(() => {
     const resolve = async () => {
-      // 1. Try localStorage first
       const stored = localStorage.getItem("doable_active_workspace_id");
       if (stored) {
         setWorkspaceId(stored);
@@ -29,7 +29,6 @@ function useActiveWorkspaceId(): { workspaceId: string | undefined; loading: boo
         return;
       }
 
-      // 2. Fetch workspaces from API
       try {
         const wsRes = await apiFetch<{ data: ApiWorkspace[] }>("/workspaces");
         if (wsRes.data && wsRes.data.length > 0) {
@@ -40,7 +39,6 @@ function useActiveWorkspaceId(): { workspaceId: string | undefined; loading: boo
           return;
         }
 
-        // 3. No workspaces exist — create one
         const slug = `my-workspace-${Date.now()}`;
         const createRes = await apiFetch<{ data: ApiWorkspace }>("/workspaces", {
           method: "POST",
@@ -61,18 +59,21 @@ function useActiveWorkspaceId(): { workspaceId: string | undefined; loading: boo
   return { workspaceId, loading };
 }
 
+function BillingLoading() {
+  const t = useTranslations("dashboard.billing.page");
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
+        <p className="text-sm text-muted-foreground">{t("loading")}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function BillingPageWrapper() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-            <p className="text-sm text-muted-foreground">Loading billing...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<BillingLoading />}>
       <BillingPage />
     </Suspense>
   );
@@ -80,6 +81,8 @@ export default function BillingPageWrapper() {
 
 function BillingPage() {
   const router = useRouter();
+  const t = useTranslations("dashboard.billing.page");
+  const tDashCommon = useTranslations("dashboard.common");
   const { workspaceId: WORKSPACE_ID, loading: wsLoading } = useActiveWorkspaceId();
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
@@ -93,32 +96,23 @@ function BillingPage() {
     useBillingActions(WORKSPACE_ID);
   const { plan: currentPlan } = useCurrentPlan(WORKSPACE_ID);
 
-  // Show loading spinner while resolving workspace
   if (wsLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          <p className="text-sm text-muted-foreground">Loading billing...</p>
-        </div>
-      </div>
-    );
+    return <BillingLoading />;
   }
 
-  // Workspace could not be resolved (user likely not signed in)
   if (!WORKSPACE_ID) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="rounded-xl border border-border bg-card p-8 text-center max-w-md">
-          <p className="text-foreground font-medium">Unable to load billing</p>
+          <p className="text-foreground font-medium">{t("unableToLoad")}</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Please sign in to manage your subscription and credits.
+            {t("signInPrompt")}
           </p>
           <button
             onClick={() => router.push("/login")}
             className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
           >
-            Sign in
+            {t("signIn")}
           </button>
         </div>
       </div>
@@ -127,38 +121,36 @@ function BillingPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-6 py-10">
-      {/* Back button + Header */}
       <div>
         <button
           onClick={() => router.push("/dashboard")}
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to dashboard
+          {t("backToDashboard")}
         </button>
-        <h1 className="text-2xl font-bold text-foreground">Billing</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage your subscription, credits, and usage.
+          {t("subtitle")}
         </p>
       </div>
 
-      {/* Status Messages */}
       {success && (
         <div className="flex items-center gap-3 rounded-lg border border-green-800 bg-green-950/50 p-4 text-sm text-green-300">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-green-400" />
-          Subscription updated successfully!
+          {t("subscriptionUpdated")}
         </div>
       )}
       {canceled && (
         <div className="flex items-center gap-3 rounded-lg border border-yellow-800 bg-yellow-950/50 p-4 text-sm text-yellow-300">
           <XCircle className="h-5 w-5 shrink-0 text-yellow-400" />
-          Checkout was canceled. No changes were made.
+          {t("checkoutCanceled")}
         </div>
       )}
       {topupSuccess && (
         <div className="flex items-center gap-3 rounded-lg border border-green-800 bg-green-950/50 p-4 text-sm text-green-300">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-green-400" />
-          Credits added successfully!
+          {t("creditsAdded")}
         </div>
       )}
       {actionError && (
@@ -170,14 +162,13 @@ function BillingPage() {
           <button
             onClick={clearError}
             className="shrink-0 rounded p-1 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition-colors"
-            aria-label="Dismiss error"
+            aria-label={t("dismissError")}
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      {/* Credits Overview */}
       <CreditDisplay
         credits={credits}
         loading={creditsLoading}
@@ -187,7 +178,6 @@ function BillingPage() {
         }}
       />
 
-      {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
         <button
           onClick={() => openPortal()}
@@ -195,7 +185,7 @@ function BillingPage() {
           className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-          Manage Subscription
+          {t("manageSubscription")}
         </button>
         <button
           onClick={() => topUp(100)}
@@ -203,13 +193,12 @@ function BillingPage() {
           className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-          Buy 100 Credits
+          {t("buyCredits")}
         </button>
       </div>
 
-      {/* Plans */}
       <section data-plans-section>
-        <h2 className="mb-4 text-xl font-semibold text-foreground">Plans</h2>
+        <h2 className="mb-4 text-xl font-semibold text-foreground">{t("plansTitle")}</h2>
         {plansLoading ? (
           <div className="grid gap-6 md:grid-cols-3">
             {[1, 2, 3].map((i) => (
@@ -218,12 +207,12 @@ function BillingPage() {
           </div>
         ) : plans.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-8 text-center">
-            <p className="text-muted-foreground">Unable to load plans. Please try again later.</p>
+            <p className="text-muted-foreground">{t("plansLoadFailed")}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-3 rounded-lg bg-secondary px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors"
             >
-              Retry
+              {tDashCommon("retry")}
             </button>
           </div>
         ) : (
@@ -236,9 +225,8 @@ function BillingPage() {
         )}
       </section>
 
-      {/* Usage History */}
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-foreground">Usage History</h2>
+        <h2 className="mb-4 text-xl font-semibold text-foreground">{t("usageTitle")}</h2>
         {usageLoading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
@@ -247,9 +235,9 @@ function BillingPage() {
           </div>
         ) : usage.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-8 text-center">
-            <p className="text-muted-foreground">No usage recorded yet.</p>
+            <p className="text-muted-foreground">{t("noUsage")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Credit usage will appear here once you start using AI features.
+              {t("noUsageHint")}
             </p>
           </div>
         ) : (
@@ -257,9 +245,9 @@ function BillingPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-card">
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Action</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Credits</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("tableAction")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("tableCredits")}</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("tableDate")}</th>
                 </tr>
               </thead>
               <tbody>

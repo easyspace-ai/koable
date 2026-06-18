@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { Paintbrush } from "lucide-react";
-
-// ─── Types ──────────────────────────────────────────────────
+import { useTranslation } from "@/lib/i18n";
 
 interface ColorEditorProps {
   textColor: string;
@@ -12,16 +11,26 @@ interface ColorEditorProps {
   onBgColorChange: (value: string) => void;
 }
 
-// ─── Sub-Components ─────────────────────────────────────────
-
 function ColorRow({
   label,
   value,
   onChange,
+  inheritLabel,
+  cssValueLabel,
+  colorPlaceholder,
+  pickColorLabel,
+  applyLabel,
+  cancelLabel,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  inheritLabel: string;
+  cssValueLabel: string;
+  colorPlaceholder: string;
+  pickColorLabel: string;
+  applyLabel: string;
+  cancelLabel: string;
 }) {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -56,10 +65,7 @@ function ColorRow({
     setDraft(e.target.value);
   };
 
-  // Display label: shorten long values
-  const displayValue = value || "Inherit";
-
-  // Attempt to render swatch color
+  const displayValue = value || inheritLabel;
   const swatchColor = value === "transparent" || !value ? "transparent" : value;
 
   return (
@@ -72,7 +78,6 @@ function ColorRow({
           {label}
         </label>
         <div className="flex flex-1 items-center gap-2 min-w-0">
-          {/* Color swatch */}
           <div
             className="h-5 w-5 shrink-0 rounded-full border border-border"
             style={{ backgroundColor: swatchColor }}
@@ -83,21 +88,14 @@ function ColorRow({
         </div>
       </button>
 
-      {/* Popover */}
       {popoverOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={handleClose}
-          />
-          {/* Popover content */}
+          <div className="fixed inset-0 z-40" onClick={handleClose} />
           <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-border bg-popover p-3 shadow-md">
             <div className="space-y-2.5">
-              {/* Text input */}
               <div>
                 <label className="mb-1 block text-[10px] text-muted-foreground">
-                  CSS Value
+                  {cssValueLabel}
                 </label>
                 <input
                   type="text"
@@ -106,14 +104,13 @@ function ColorRow({
                   onKeyDown={handleKeyDown}
                   autoFocus
                   className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-[11px] text-foreground outline-none font-mono focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/20 transition-all"
-                  placeholder="#000000 or color name"
+                  placeholder={colorPlaceholder}
                 />
               </div>
 
-              {/* Native color picker */}
               <div>
                 <label className="mb-1 block text-[10px] text-muted-foreground">
-                  Pick Color
+                  {pickColorLabel}
                 </label>
                 <input
                   type="color"
@@ -123,19 +120,18 @@ function ColorRow({
                 />
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={handleCommit}
                   className="flex-1 rounded-md bg-brand-500/20 px-2 py-1.5 text-[11px] font-medium text-brand-400 transition-colors hover:bg-brand-500/30"
                 >
-                  Apply
+                  {applyLabel}
                 </button>
                 <button
                   onClick={handleClose}
                   className="flex-1 rounded-md bg-secondary px-2 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted"
                 >
-                  Cancel
+                  {cancelLabel}
                 </button>
               </div>
             </div>
@@ -146,33 +142,55 @@ function ColorRow({
   );
 }
 
-// ─── Component ──────────────────────────────────────────────
-
 export function ColorEditor({
   textColor,
   backgroundColor,
   onTextColorChange,
   onBgColorChange,
 }: ColorEditorProps) {
+  const { t } = useTranslation("editor");
+
+  const colorLabels = useMemo(
+    () => ({
+      inherit: t("visualEdit.colors.inherit"),
+      cssValue: t("visualEdit.colors.cssValue"),
+      colorPlaceholder: t("visualEdit.colors.colorPlaceholder"),
+      pickColor: t("visualEdit.colors.pickColor"),
+      apply: t("visualEdit.colors.apply"),
+      cancel: t("visualEdit.colors.cancel"),
+    }),
+    [t],
+  );
+
   return (
     <div className="rounded-lg border border-border bg-card">
-      {/* Section Header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Paintbrush className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-foreground">Colors</span>
+        <span className="text-xs font-medium text-foreground">{t("visualEdit.colors.title")}</span>
       </div>
 
-      {/* Content */}
       <div className="space-y-1 px-3 pb-3">
         <ColorRow
-          label="Text color"
+          label={t("visualEdit.colors.textColor")}
           value={textColor}
           onChange={onTextColorChange}
+          inheritLabel={colorLabels.inherit}
+          cssValueLabel={colorLabels.cssValue}
+          colorPlaceholder={colorLabels.colorPlaceholder}
+          pickColorLabel={colorLabels.pickColor}
+          applyLabel={colorLabels.apply}
+          cancelLabel={colorLabels.cancel}
         />
         <ColorRow
-          label="Background"
+          label={t("visualEdit.colors.background")}
           value={backgroundColor}
           onChange={onBgColorChange}
+          inheritLabel={colorLabels.inherit}
+          cssValueLabel={colorLabels.cssValue}
+          colorPlaceholder={colorLabels.colorPlaceholder}
+          pickColorLabel={colorLabels.pickColor}
+          applyLabel={colorLabels.apply}
+          cancelLabel={colorLabels.cancel}
         />
       </div>
     </div>

@@ -7,10 +7,12 @@ import { PreviewToolbar } from "./preview-toolbar";
 import { Eye, Loader2, AlertTriangle } from "lucide-react";
 import type { DeviceMode } from "@/modules/editor/visual-edit/types";
 import { DEVICE_WIDTHS } from "@/modules/editor/visual-edit/types";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Component ──────────────────────────────────────────────
 
 export function PreviewPanel() {
+  const { t } = useTranslation("editor");
   const projectId = useEditorStore((s) => s.projectId);
   const fileTree = useEditorStore((s) => s.fileTree);
   const isStreaming = useEditorStore((s) => s.isStreaming);
@@ -140,7 +142,7 @@ export function PreviewPanel() {
     walk(fileTree);
     // Always include root
     if (!entries.some((e) => e.path === "/")) {
-      entries.unshift({ label: "Home", path: "/" });
+      entries.unshift({ label: t("pages.home"), path: "/" });
     }
     entries.sort((a, b) => {
       if (a.path === "/") return -1;
@@ -148,7 +150,7 @@ export function PreviewPanel() {
       return a.label.localeCompare(b.label);
     });
     return entries;
-  }, [fileTree]);
+  }, [fileTree, t]);
 
   // ─── Fullscreen toggle ──────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null);
@@ -246,7 +248,7 @@ export function PreviewPanel() {
               <div className="flex flex-col items-center gap-2">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="text-xs text-muted-foreground">
-                  Loading preview...
+                  {t("chrome.loadingLivePreview")}
                 </span>
               </div>
             </div>
@@ -256,7 +258,7 @@ export function PreviewPanel() {
           {isStreaming && !previewLoading && (
             <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-full bg-primary/90 px-2.5 py-1 shadow-md">
               <div className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-              <span className="text-[10px] font-medium text-white">AI generating...</span>
+              <span className="text-[10px] font-medium text-white">{t("chrome.aiWritingCode")}</span>
             </div>
           )}
 
@@ -266,16 +268,16 @@ export function PreviewPanel() {
               <div className="flex flex-col items-center gap-2 text-center px-4">
                 <AlertTriangle className="h-8 w-8 text-muted-foreground/50" />
                 <p className="text-sm font-medium text-foreground">
-                  Preview unavailable
+                  {t("chrome.previewUnavailable")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  The preview server may not be running.
+                  {t("preview.emptyDescription")}
                 </p>
                 <button
                   onClick={handleRefresh}
                   className="mt-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Retry
+                  {t("versionHistory.tryAgain")}
                 </button>
               </div>
             </div>
@@ -297,7 +299,7 @@ export function PreviewPanel() {
             // don't crash in the iframe (opaque-origin Storage throws and the
             // in-memory polyfill can't redefine the non-configurable getter).
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-fullscreen"
-            title="Project preview"
+            title={t("preview.projectPreview")}
           />
         </div>
       </div>
@@ -308,14 +310,16 @@ export function PreviewPanel() {
 // ─── Empty State ──────────────────────────────────────────────
 
 function EmptyPreview() {
+  const { t } = useTranslation("editor");
+
   return (
     <div className="flex h-full flex-col items-center justify-center text-center px-6">
       <Eye className="h-10 w-10 text-muted-foreground/30" />
       <h3 className="mt-3 text-sm font-medium text-foreground">
-        Live Preview
+        {t("preview.livePreview")}
       </h3>
       <p className="mt-1 text-xs text-muted-foreground max-w-[200px]">
-        Your app preview will appear here as the AI generates code.
+        {t("preview.emptyDescription")}
       </p>
     </div>
   );

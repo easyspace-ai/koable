@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Marketplace moderation queue + reports inbox. Two tabs:
@@ -67,6 +68,7 @@ interface ReportItem {
 
 export default function ModerationPage() {
   const router = useRouter();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
   const [tab, setTab] = useState<Tab>("queue");
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -132,9 +134,9 @@ export default function ModerationPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
         <ShieldCheck className="h-12 w-12" />
-        <p className="font-medium text-foreground">Platform admin access required</p>
+        <p className="font-medium text-foreground">{t("page.accessRequired")}</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> {t("page.backToDashboard")}
         </Button>
       </div>
     );
@@ -148,39 +150,38 @@ export default function ModerationPage() {
             href="/admin"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Admin
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("trace.adminBreadcrumb")}
           </Link>
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-1 flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-brand-400" />
-          Marketplace moderation
+          {t("moderation.title")}
         </h1>
         <p className="text-sm text-muted-foreground mb-6">
-          Review listings flagged for moderator approval and respond to community reports.
+          {t("moderation.description")}
         </p>
 
-        {/* Tabs */}
         <div className="flex gap-1 rounded-lg border border-border bg-card p-1 mb-6 w-fit">
           {([
-            { id: "queue", label: "Review queue", Icon: Inbox, badge: queue.length },
-            { id: "reports", label: "Reports", Icon: Flag, badge: reports.length },
-          ] as const).map((t) => {
-            const active = tab === t.id;
+            { id: "queue", label: t("moderation.tabReviewQueue"), Icon: Inbox, badge: queue.length },
+            { id: "reports", label: t("moderation.tabReports"), Icon: Flag, badge: reports.length },
+          ] as const).map((tabItem) => {
+            const active = tab === tabItem.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
+                key={tabItem.id}
+                onClick={() => setTab(tabItem.id)}
                 className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                   active
                     ? "bg-secondary text-secondary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <t.Icon className="h-3.5 w-3.5" />
-                {t.label}
-                {t.badge > 0 && (
+                <tabItem.Icon className="h-3.5 w-3.5" />
+                {tabItem.label}
+                {tabItem.badge > 0 && (
                   <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
-                    {t.badge}
+                    {tabItem.badge}
                   </span>
                 )}
               </button>
@@ -194,7 +195,7 @@ export default function ModerationPage() {
           </div>
         ) : tab === "queue" ? (
           queue.length === 0 ? (
-            <EmptyState Icon={ListChecks} title="No listings awaiting review" />
+            <EmptyState Icon={ListChecks} title={t("moderation.queueEmpty")} />
           ) : (
             <ul className="space-y-4">
               {queue.map((item) => (
@@ -209,18 +210,21 @@ export default function ModerationPage() {
                           href={`/marketplace/${item.listing_slug}`}
                           target="_blank"
                           className="text-muted-foreground hover:text-foreground"
-                          title="Open listing in new tab"
+                          title={t("moderation.openListingTitle")}
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        by {item.publisher_name} · v{item.version} · submitted{" "}
-                        {new Date(item.submitted_at).toLocaleString()}
+                        {t("moderation.queueMeta", {
+                          publisher: item.publisher_name,
+                          version: item.version,
+                          date: new Date(item.submitted_at).toLocaleString(),
+                        })}
                       </p>
                     </div>
                     <div className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
-                      <AlertTriangle className="h-3 w-3" /> Needs review
+                      <AlertTriangle className="h-3 w-3" /> {t("moderation.needsReview")}
                     </div>
                   </div>
 
@@ -230,16 +234,18 @@ export default function ModerationPage() {
 
                   {item.manifest_summary && (
                     <div className="mb-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                      <Stat label="Skills" value={item.manifest_summary.skills ?? 0} />
-                      <Stat label="Rules" value={item.manifest_summary.rules ?? 0} />
-                      <Stat label="Knowledge" value={item.manifest_summary.knowledge ?? 0} />
-                      <Stat label="Connectors" value={item.manifest_summary.connectors ?? 0} />
+                      <Stat label={t("moderation.skills")} value={item.manifest_summary.skills ?? 0} />
+                      <Stat label={t("moderation.rules")} value={item.manifest_summary.rules ?? 0} />
+                      <Stat label={t("moderation.knowledge")} value={item.manifest_summary.knowledge ?? 0} />
+                      <Stat label={t("moderation.connectors")} value={item.manifest_summary.connectors ?? 0} />
                     </div>
                   )}
 
                   {item.manifest_summary?.permissions && item.manifest_summary.permissions.length > 0 && (
                     <div className="mb-3">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Permissions:</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
+                        {t("moderation.permissions")}
+                      </p>
                       <ul className="space-y-1 text-xs text-muted-foreground">
                         {item.manifest_summary.permissions.map((p) => (
                           <li key={p} className="flex items-start gap-1.5">
@@ -253,7 +259,7 @@ export default function ModerationPage() {
 
                   <Textarea
                     rows={2}
-                    placeholder="Optional decision note (sent to publisher on rejection)…"
+                    placeholder={t("moderation.decisionNotePlaceholder")}
                     value={decisionNotes[item.id] ?? ""}
                     onChange={(e) => setDecisionNotes((s) => ({ ...s, [item.id]: e.target.value }))}
                     className="mb-3 text-xs"
@@ -270,7 +276,7 @@ export default function ModerationPage() {
                       ) : (
                         <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                       )}
-                      Approve & publish
+                      {t("moderation.approvePublish")}
                     </Button>
                     <Button
                       size="sm"
@@ -278,7 +284,7 @@ export default function ModerationPage() {
                       onClick={() => decideQueueItem(item.id, "reject")}
                       disabled={busyId === item.id}
                     >
-                      <XCircle className="mr-1 h-3.5 w-3.5" /> Reject
+                      <XCircle className="mr-1 h-3.5 w-3.5" /> {t("moderation.reject")}
                     </Button>
                   </div>
                 </li>
@@ -286,7 +292,7 @@ export default function ModerationPage() {
             </ul>
           )
         ) : reports.length === 0 ? (
-          <EmptyState Icon={Flag} title="No open reports" />
+          <EmptyState Icon={Flag} title={t("moderation.reportsEmpty")} />
         ) : (
           <ul className="space-y-3">
             {reports.map((r) => (
@@ -308,7 +314,10 @@ export default function ModerationPage() {
                     </Link>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    by {r.reporter_name} · {new Date(r.created_at).toLocaleString()}
+                    {t("moderation.reportMeta", {
+                      reporter: r.reporter_name,
+                      date: new Date(r.created_at).toLocaleString(),
+                    })}
                   </p>
                   {r.detail && <p className="mt-2 text-sm text-muted-foreground">{r.detail}</p>}
                 </div>
@@ -319,7 +328,7 @@ export default function ModerationPage() {
                     onClick={() => resolveReport(r.id, "actioned")}
                     disabled={busyId === r.id}
                   >
-                    Take action
+                    {t("moderation.takeAction")}
                   </Button>
                   <Button
                     size="sm"
@@ -327,7 +336,7 @@ export default function ModerationPage() {
                     onClick={() => resolveReport(r.id, "dismissed")}
                     disabled={busyId === r.id}
                   >
-                    Dismiss
+                    {t("moderation.dismiss")}
                   </Button>
                 </div>
               </li>

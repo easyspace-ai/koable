@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
 import type { AuthEnv } from "../middleware/auth.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { sql } from "../db/index.js";
@@ -13,6 +14,7 @@ import {
   DomainError,
 } from "../services/domain-service.js";
 import { PLAN_LIMITS } from "@doable/shared";
+import { internalServerError } from "../lib/api-error.js";
 
 const domains = customDomainQueries(sql);
 const projects = projectQueries(sql);
@@ -51,18 +53,10 @@ const addDomainSchema = z.object({
   domain: z.string().min(4).max(253),
 });
 
-customDomainRoutes.post("/project/:projectId", async (c) => {
+customDomainRoutes.post("/project/:projectId", zValidator("json", addDomainSchema), async (c) => {
   const projectId = c.req.param("projectId");
   const userId = c.get("userId");
-
-  // Validate request body
-  const body = await c.req.json().catch(() => ({}));
-  const parsed = addDomainSchema.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: "Invalid domain", details: parsed.error.flatten() }, 400);
-  }
-
-  // Check plan allows custom domains
+  const { domain } = c.req.valid("json");
   const project = await projects.findById(projectId);
   if (!project) {
     return c.json({ error: "Project not found" }, 404);
@@ -82,18 +76,18 @@ customDomainRoutes.post("/project/:projectId", async (c) => {
   }
 
   try {
-    const domain = await addDomain({
+    const domainRecord = await addDomain({
       projectId,
-      domain: parsed.data.domain,
+      domain,
       userId,
     });
-    return c.json({ data: domain }, 201);
+    return c.json({ data: domainRecord }, 201);
   } catch (err) {
     if (err instanceof DomainError) {
       return c.json({ error: err.message }, err.statusCode as any);
     }
     console.error("[custom-domains] Unexpected error:", err);
-    return c.json({ error: "Internal server error" }, 500);
+    return internalServerError(c, "custom-domains/add", err);
   }
 });
 
@@ -128,7 +122,7 @@ customDomainRoutes.delete("/:domainId", async (c) => {
       return c.json({ error: err.message }, err.statusCode as any);
     }
     console.error("[custom-domains] Remove error:", err);
-    return c.json({ error: "Internal server error" }, 500);
+    return internalServerError(c, "custom-domains/remove", err);
   }
 });
 
@@ -145,6 +139,6 @@ customDomainRoutes.post("/:domainId/verify", async (c) => {
       return c.json({ error: err.message }, err.statusCode as any);
     }
     console.error("[custom-domains] Verify error:", err);
-    return c.json({ error: "Internal server error" }, 500);
+    return internalServerError(c, "custom-domains/verify", err);
   }
 });

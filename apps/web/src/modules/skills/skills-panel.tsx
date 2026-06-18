@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   BookOpen,
   Plus,
@@ -15,11 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   useSkills,
-  type Skill,
-  type Rule,
 } from "./use-skills";
-
-// ─── Types ──────────────────────────────────────────────────
 
 interface SkillsPanelProps {
   workspaceId: string;
@@ -28,8 +25,6 @@ interface SkillsPanelProps {
 
 import { type ScopeType, InlineCreateForm, SkillCard } from "./skills-panel-components";
 
-// ─── Section Header ─────────────────────────────────────────
-
 function SectionHeader({
   icon: Icon,
   title,
@@ -37,6 +32,7 @@ function SectionHeader({
   expanded,
   onToggle,
   onAdd,
+  itemType,
 }: {
   icon: typeof BookOpen;
   title: string;
@@ -44,7 +40,9 @@ function SectionHeader({
   expanded: boolean;
   onToggle: () => void;
   onAdd: () => void;
+  itemType: string;
 }) {
+  const t = useTranslations("skills");
   return (
     <div className="flex items-center justify-between px-1 py-2">
       <button
@@ -58,12 +56,12 @@ function SectionHeader({
         )}
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-semibold">{title}</span>
-        <span className="text-xs text-muted-foreground">({count})</span>
+        <span className="text-xs text-muted-foreground">{t("sectionHeader.count", { count })}</span>
       </button>
       <button
         onClick={onAdd}
         className="p-1 rounded-md hover:bg-muted transition-colors"
-        title={`Add ${title.toLowerCase().slice(0, -1)}`}
+        title={t("sectionHeader.addItemTitle", { itemType })}
       >
         <Plus className="h-3.5 w-3.5" />
       </button>
@@ -71,9 +69,8 @@ function SectionHeader({
   );
 }
 
-// ─── Main Panel ─────────────────────────────────────────────
-
 export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
+  const t = useTranslations("skills");
   const {
     skills,
     rules,
@@ -115,16 +112,15 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold">Skills & Rules</h3>
+          <h3 className="text-sm font-semibold">{t("panel.title")}</h3>
         </div>
         <button
           onClick={() => void refresh()}
           className="p-1.5 rounded-md hover:bg-muted transition-colors"
-          title="Refresh"
+          title={t("panel.refreshTitle")}
         >
           <RefreshCw
             className={cn("h-3.5 w-3.5", loading && "animate-spin")}
@@ -132,27 +128,23 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="px-4 py-2 text-xs text-red-600 bg-red-50 dark:bg-red-950/30 border-b">
           {error}
         </div>
       )}
 
-      {/* Content */}
       <div className="flex-1 overflow-auto">
         <div className="p-3 space-y-1">
-          {/* Loading state */}
           {loading && skills.length === 0 && rules.length === 0 && (
             <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-              Loading...
+              {t("panel.loading")}
             </div>
           )}
 
-          {/* ── Skills Section ─────────────────────────────── */}
           <SectionHeader
             icon={Lightbulb}
-            title="Skills"
+            title={t("panel.sectionSkills")}
             count={skills.length}
             expanded={skillsSectionOpen}
             onToggle={() => setSkillsSectionOpen((v) => !v)}
@@ -160,21 +152,19 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
               setSkillsSectionOpen(true);
               setShowSkillForm(true);
             }}
+            itemType={t("inlineCreate.labels.skill")}
           />
 
           {skillsSectionOpen && (
             <div className="space-y-2 pl-1">
-              {/* Skill create form */}
               {showSkillForm && (
                 <InlineCreateForm
-                  label="Skill"
-                  placeholder={"---\nname: my-skill\ntrigger: auto\n---\n\nSkill content here..."}
+                  type="skill"
                   onSubmit={handleCreateSkill}
                   onCancel={() => setShowSkillForm(false)}
                 />
               )}
 
-              {/* Skill list */}
               {skills.map((skill) => (
                 <SkillCard
                   key={skill.id}
@@ -193,25 +183,22 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
                 />
               ))}
 
-              {/* Empty state */}
               {!loading && skills.length === 0 && !showSkillForm && (
                 <div className="flex flex-col items-center py-6 text-center">
                   <Lightbulb className="h-6 w-6 text-muted-foreground/30 mb-2" />
                   <p className="text-xs text-muted-foreground">
-                    No skills yet. Skills give your AI reusable capabilities.
+                    {t("panel.emptySkills")}
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Divider */}
           <div className="border-t my-2" />
 
-          {/* ── Rules Section ──────────────────────────────── */}
           <SectionHeader
             icon={Shield}
-            title="Rules"
+            title={t("panel.sectionRules")}
             count={rules.length}
             expanded={rulesSectionOpen}
             onToggle={() => setRulesSectionOpen((v) => !v)}
@@ -219,21 +206,19 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
               setRulesSectionOpen(true);
               setShowRuleForm(true);
             }}
+            itemType={t("inlineCreate.labels.rule")}
           />
 
           {rulesSectionOpen && (
             <div className="space-y-2 pl-1">
-              {/* Rule create form */}
               {showRuleForm && (
                 <InlineCreateForm
-                  label="Rule"
-                  placeholder="Always respond in a friendly tone.\nNever include raw SQL in responses."
+                  type="rule"
                   onSubmit={handleCreateRule}
                   onCancel={() => setShowRuleForm(false)}
                 />
               )}
 
-              {/* Rule list */}
               {rules.map((rule) => (
                 <SkillCard
                   key={rule.id}
@@ -252,12 +237,11 @@ export const SkillsPanel = ({ workspaceId, projectId }: SkillsPanelProps) => {
                 />
               ))}
 
-              {/* Empty state */}
               {!loading && rules.length === 0 && !showRuleForm && (
                 <div className="flex flex-col items-center py-6 text-center">
                   <Shield className="h-6 w-6 text-muted-foreground/30 mb-2" />
                   <p className="text-xs text-muted-foreground">
-                    No rules yet. Rules guide how your AI behaves.
+                    {t("panel.emptyRules")}
                   </p>
                 </div>
               )}

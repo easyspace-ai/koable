@@ -1,8 +1,8 @@
 import { createConnection, type Socket } from "node:net";
 import type { IncomingMessage } from "node:http";
 import { getDevServerInternalUrl } from "../../projects/dev-server.js";
+import { isUuid } from "../../lib/uuid.js";
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PREFIX_RE = /^\/preview\/([0-9a-f-]+)(\/.*)?$/i;
 // The platform HMR config tells Vite's client to connect at `/preview/<id>/__hmr`,
 // but Vite's WS handler is at server root (not under `--base`), so we rewrite
@@ -38,7 +38,7 @@ export function handleWebSocketUpgrade(
 ): void {
   const url = req.url ?? "";
   const m = url.match(PREFIX_RE);
-  if (!m || !UUID_RE.test(m[1] ?? "")) {
+  if (!m || !isUuid(m[1] ?? "")) {
     clientSocket.destroy();
     return;
   }

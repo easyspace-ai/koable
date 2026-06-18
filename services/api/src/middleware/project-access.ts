@@ -13,11 +13,10 @@
 
 import { createMiddleware } from "hono/factory";
 import { sql } from "../db/index.js";
-import { projectQueries, workspaceQueries } from "@doable/db";
+import { projectQueries } from "@doable/db";
 import type { AuthEnv } from "./auth.js";
 
 const projects = projectQueries(sql);
-const workspacesQ = workspaceQueries(sql);
 
 export type ProjectAccessRole = "workspace" | "collaborator" | "public";
 
@@ -40,22 +39,18 @@ export async function hasProjectAccess(
 ): Promise<ProjectAccessResult | null> {
   if (!userId || !projectId) return null;
 
-  const project = await projects.findById(projectId);
-  if (!project) return null;
+  const access = await projects.checkUserAccess(projectId, userId);
+  if (!access) return null;
 
-  // 1. Workspace member — has access to all projects in the workspace
-  const wsRole = await workspacesQ.getMemberRole(project.workspace_id, userId);
-  if (wsRole) return { role: "workspace", detail: wsRole };
+  if (access.workspaceRole) {
+    return { role: "workspace", detail: access.workspaceRole };
+  }
 
-  // 2. Explicit project collaborator
-  const [collab] = await sql<{ role: string }[]>`
-    SELECT role FROM project_collaborators
-    WHERE project_id = ${projectId} AND user_id = ${userId}
-  `;
-  if (collab) return { role: "collaborator", detail: collab.role };
+  if (access.collabRole) {
+    return { role: "collaborator", detail: access.collabRole };
+  }
 
-  // 3. Public visibility (read-only)
-  if (allowPublic && (project as any).visibility === "public") {
+  if (allowPublic && access.visibility === "public") {
     return { role: "public" };
   }
 

@@ -1,5 +1,6 @@
 
 import { sql } from "../db/index.js";
+import { isUuid } from "../lib/uuid.js";
 
 export interface SandboxAuditRecord {
   projectId: string;
@@ -33,10 +34,9 @@ function isMissingTableError(err: unknown): boolean {
 }
 
 // Coerce non-UUID values to null — UUID columns reject empty strings and sentinels.
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function asUuidOrNull(value: string | null | undefined): string | null {
   if (value == null) return null;
-  return UUID_RE.test(value) ? value : null;
+  return isUuid(value) ? value : null;
 }
 
 export async function auditSpawn(record: SandboxAuditRecord): Promise<void> {

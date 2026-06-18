@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Type,
   AlignLeft,
@@ -8,6 +9,7 @@ import {
   AlignJustify,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -36,27 +38,6 @@ const FONT_SIZE_OPTIONS = [
   { value: "3rem", label: "5xl" },
 ];
 
-const FONT_WEIGHT_OPTIONS = [
-  { value: "", label: "Select weight" },
-  { value: "300", label: "Light" },
-  { value: "400", label: "Regular" },
-  { value: "500", label: "Medium" },
-  { value: "600", label: "Semibold" },
-  { value: "700", label: "Bold" },
-];
-
-const FONT_STYLE_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "italic", label: "Italic" },
-];
-
-const ALIGNMENT_OPTIONS = [
-  { value: "left", icon: AlignLeft, label: "Align left" },
-  { value: "center", icon: AlignCenter, label: "Align center" },
-  { value: "right", icon: AlignRight, label: "Align right" },
-  { value: "justify", icon: AlignJustify, label: "Justify" },
-] as const;
-
 // ─── Component ──────────────────────────────────────────────
 
 export function TypographyEditor({
@@ -69,22 +50,51 @@ export function TypographyEditor({
   onFontStyleChange,
   onTextAlignChange,
 }: TypographyEditorProps) {
-  // Find closest matching font size label
+  const { t } = useTranslation("editor");
+
+  const fontWeightOptions = useMemo(
+    () => [
+      { value: "", label: t("visualEdit.typography.selectWeight") },
+      { value: "300", label: t("visualEdit.typography.light") },
+      { value: "400", label: t("visualEdit.typography.regular") },
+      { value: "500", label: t("visualEdit.typography.medium") },
+      { value: "600", label: t("visualEdit.typography.semibold") },
+      { value: "700", label: t("visualEdit.typography.bold") },
+    ],
+    [t],
+  );
+
+  const fontStyleOptions = useMemo(
+    () => [
+      { value: "normal", label: t("visualEdit.typography.normal") },
+      { value: "italic", label: t("visualEdit.typography.italic") },
+    ],
+    [t],
+  );
+
+  const alignmentOptions = useMemo(
+    () =>
+      [
+        { value: "left", icon: AlignLeft, label: t("visualEdit.typography.alignLeft") },
+        { value: "center", icon: AlignCenter, label: t("visualEdit.typography.alignCenter") },
+        { value: "right", icon: AlignRight, label: t("visualEdit.typography.alignRight") },
+        { value: "justify", icon: AlignJustify, label: t("visualEdit.typography.justify") },
+      ] as const,
+    [t],
+  );
+
   const matchedSize = FONT_SIZE_OPTIONS.find((opt) => opt.value === fontSize);
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      {/* Section Header */}
       <div className="flex items-center gap-2 px-3 py-2">
         <Type className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-foreground">Typography</span>
+        <span className="text-xs font-medium text-foreground">{t("visualEdit.typography.title")}</span>
       </div>
 
-      {/* Content */}
       <div className="space-y-2.5 px-3 pb-3">
-        {/* Font Size */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Size</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.typography.size")}</label>
           <select
             value={matchedSize ? fontSize : ""}
             onChange={(e) => onFontSizeChange(e.target.value)}
@@ -103,15 +113,14 @@ export function TypographyEditor({
           </select>
         </div>
 
-        {/* Font Style */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Style</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.typography.style")}</label>
           <select
             value={fontStyle}
             onChange={(e) => onFontStyleChange(e.target.value)}
             className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-[11px] text-foreground outline-none focus:border-brand-500/50 transition-colors"
           >
-            {FONT_STYLE_OPTIONS.map((opt) => (
+            {fontStyleOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -119,20 +128,19 @@ export function TypographyEditor({
           </select>
         </div>
 
-        {/* Font Weight */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Weight</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.typography.weight")}</label>
           <select
-            value={FONT_WEIGHT_OPTIONS.find((o) => o.value === fontWeight) ? fontWeight : ""}
+            value={fontWeightOptions.find((o) => o.value === fontWeight) ? fontWeight : ""}
             onChange={(e) => onFontWeightChange(e.target.value)}
             className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-[11px] text-foreground outline-none focus:border-brand-500/50 transition-colors"
           >
-            {!FONT_WEIGHT_OPTIONS.find((o) => o.value === fontWeight) && fontWeight && (
+            {!fontWeightOptions.find((o) => o.value === fontWeight) && fontWeight && (
               <option value="" disabled>
                 {fontWeight}
               </option>
             )}
-            {FONT_WEIGHT_OPTIONS.map((opt) => (
+            {fontWeightOptions.map((opt) => (
               <option key={opt.value} value={opt.value} disabled={opt.value === ""}>
                 {opt.label}
               </option>
@@ -140,11 +148,10 @@ export function TypographyEditor({
           </select>
         </div>
 
-        {/* Text Alignment */}
         <div className="flex items-center gap-2">
-          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">Align</label>
+          <label className="w-20 shrink-0 text-[11px] text-muted-foreground">{t("visualEdit.typography.align")}</label>
           <div className="flex gap-0.5 rounded-md border border-input bg-background p-0.5">
-            {ALIGNMENT_OPTIONS.map(({ value, icon: Icon, label }) => (
+            {alignmentOptions.map(({ value, icon: Icon, label }) => (
               <button
                 key={value}
                 onClick={() => onTextAlignChange(value)}

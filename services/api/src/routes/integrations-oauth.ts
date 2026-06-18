@@ -6,6 +6,7 @@ import { getIntegration } from "../integrations/registry/index.js";
 import { oauthApps } from "../integrations/credential-vault.js";
 import { buildAuthorizationUrl, handleOAuthCallback } from "../integrations/oauth2.js";
 import { getEnhancedAuthModule, storeEnhancedAuthSession, getEnhancedAuthSession } from "../integrations/enhanced-auth/index.js";
+import { operationFailed } from "../lib/api-error.js";
 import * as crypto from "node:crypto";
 
 const workspaces = workspaceQueries(sql);
@@ -65,9 +66,7 @@ integrationOAuthRoutes.get("/integrations/oauth/:id/authorize", authMiddleware, 
 
     return c.json({ authorizationUrl });
   } catch (err) {
-    return c.json({
-      error: `Failed to build authorization URL: ${err instanceof Error ? err.message : String(err)}`,
-    }, 500);
+    return operationFailed(c, "integrations/oauth/authorize", err, "Failed to build authorization URL");
   }
 });
 
@@ -101,9 +100,9 @@ integrationOAuthRoutes.get("/integrations/oauth/callback", async (c) => {
       <script>window.close();</script>
     </body></html>`);
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[integrations/oauth/callback]", err);
     return c.html(`<!DOCTYPE html><html><head><title>Error</title></head><body>
-      <p>Connection failed: ${errorMsg.replace(/</g, "&lt;")}</p>
+      <p>Connection failed. Please close this window and try again.</p>
       <p><a href="javascript:window.close()">Close this window</a></p>
     </body></html>`, 400);
   }
@@ -225,6 +224,6 @@ integrationOAuthRoutes.get("/integrations/enhanced-auth/:id/resources", authMidd
     const resources = await module.listResources(session.accessToken);
     return c.json({ data: resources });
   } catch (err) {
-    return c.json({ error: err instanceof Error ? err.message : String(err) }, 500);
+    return operationFailed(c, "integrations/enhanced-auth/resources", err, "Failed to load resources");
   }
 });

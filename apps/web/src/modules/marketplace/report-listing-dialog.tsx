@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Flag, Loader2, CheckCircle2, X, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -14,22 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api";
 
-/**
- * Lightweight report-this-listing dialog. Backed by
- * `POST /marketplace/listings/:id/report`. The reason taxonomy is fixed
- * server-side (see marketplace_reports.reason CHECK constraint).
- */
-
-const REASONS = [
-  { id: "spam", label: "Spam or low effort" },
-  { id: "malware", label: "Malware / malicious behaviour" },
-  { id: "broken", label: "Broken or non-functional" },
-  { id: "inappropriate", label: "Inappropriate content" },
-  { id: "copyright", label: "Copyright / trademark violation" },
-  { id: "other", label: "Other" },
-] as const;
-
-type Reason = typeof REASONS[number]["id"];
+const REASON_IDS = ["spam", "malware", "broken", "inappropriate", "copyright", "other"] as const;
+type Reason = typeof REASON_IDS[number];
 
 export interface ReportListingDialogProps {
   open: boolean;
@@ -44,6 +31,7 @@ export function ReportListingDialog({
   listingId,
   listingTitle,
 }: ReportListingDialogProps) {
+  const t = useTranslations("marketplace");
   const [reason, setReason] = useState<Reason>("spam");
   const [detail, setDetail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -72,7 +60,7 @@ export function ReportListingDialog({
         reset();
       }, 800);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to file report");
+      setError(err instanceof Error ? err.message : t("reportDialog.errors.failed"));
     } finally {
       setBusy(false);
     }
@@ -90,30 +78,30 @@ export function ReportListingDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-destructive" />
-            Report this listing
+            {t("reportDialog.title")}
           </DialogTitle>
           <DialogDescription>
-            Tell us what's wrong with &ldquo;{listingTitle}&rdquo;. Reports are reviewed by moderators.
+            {t("reportDialog.description", { title: listingTitle })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-2">
           <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Reason</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">{t("reportDialog.reasonLabel")}</label>
             <div className="grid grid-cols-1 gap-1">
-              {REASONS.map((r) => {
-                const active = reason === r.id;
+              {REASON_IDS.map((id) => {
+                const active = reason === id;
                 return (
                   <button
-                    key={r.id}
-                    onClick={() => setReason(r.id)}
+                    key={id}
+                    onClick={() => setReason(id)}
                     className={`text-left rounded-md border px-3 py-2 text-sm transition-colors ${
                       active
                         ? "border-brand-500/50 bg-brand-500/10 text-brand-200"
                         : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent"
                     }`}
                   >
-                    {r.label}
+                    {t(`reportDialog.reasons.${id}`)}
                   </button>
                 );
               })}
@@ -122,13 +110,13 @@ export function ReportListingDialog({
 
           <div>
             <label className="block text-xs font-medium text-muted-foreground mb-1">
-              Details <span className="text-muted-foreground/70">(optional)</span>
+              {t("reportDialog.detailsLabel")} <span className="text-muted-foreground/70">{t("reportDialog.detailsOptional")}</span>
             </label>
             <Textarea
               rows={3}
               value={detail}
               onChange={(e) => setDetail(e.target.value)}
-              placeholder="Anything that helps moderators triage…"
+              placeholder={t("reportDialog.detailsPlaceholder")}
               maxLength={2000}
             />
           </div>
@@ -142,22 +130,22 @@ export function ReportListingDialog({
           {done && (
             <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/5 p-3 text-sm text-emerald-400">
               <CheckCircle2 className="h-4 w-4" />
-              <span>Report received — thanks.</span>
+              <span>{t("reportDialog.success.received")}</span>
             </div>
           )}
         </div>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            <X className="mr-1 h-3.5 w-3.5" /> Cancel
+            <X className="mr-1 h-3.5 w-3.5" /> {t("reportDialog.cancel")}
           </Button>
           <Button onClick={submit} disabled={busy || done} variant="destructive">
             {busy ? (
-              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> Sending...</>
+              <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> {t("reportDialog.sending")}</>
             ) : done ? (
-              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Sent</>
+              <><CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> {t("reportDialog.sent")}</>
             ) : (
-              <><Flag className="mr-1.5 h-3.5 w-3.5" /> Submit report</>
+              <><Flag className="mr-1.5 h-3.5 w-3.5" /> {t("reportDialog.submitReport")}</>
             )}
           </Button>
         </DialogFooter>

@@ -11,6 +11,7 @@ import {
 import { validatePathSafe } from "../../projects/path-safety.js";
 import { sql } from "../../db/index.js";
 import { emitActivity } from "../../lib/activity.js";
+import { internalServerError } from "../../lib/api-error.js";
 
 export const fileCrudRoutes = new Hono<AuthEnv>({ strict: false });
 
@@ -26,7 +27,7 @@ fileCrudRoutes.get("/projects/:id/files", async (c) => {
     if (err instanceof FileAccessError) {
       return c.json({ error: err.message }, 403);
     }
-    return c.json({ data: [] });
+    return internalServerError(c, "project-files/list", err);
   }
 });
 
@@ -62,7 +63,7 @@ fileCrudRoutes.get("/projects/:id/files/*", async (c) => {
     if (err instanceof FileAccessError) {
       return c.json({ error: err.message }, 403);
     }
-    throw err;
+    return internalServerError(c, "project-files/read", err);
   }
 });
 
@@ -117,7 +118,7 @@ fileCrudRoutes.put("/projects/:id/files/*", async (c) => {
     if (err instanceof FileAccessError) {
       return c.json({ error: err.message }, 403);
     }
-    throw err;
+    return internalServerError(c, "project-files/write", err);
   }
 });
 
@@ -156,7 +157,7 @@ fileCrudRoutes.delete("/projects/:id/files/*", async (c) => {
     if (err instanceof FileAccessError) {
       return c.json({ error: err.message }, 403);
     }
-    throw err;
+    return internalServerError(c, "project-files/delete", err);
   }
 });
 

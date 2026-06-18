@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,19 +11,27 @@ import { useAuth } from "@/hooks/use-auth";
 import { getGitHubLoginUrl, getGoogleLoginUrl } from "@/lib/api";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  missing_tokens: "Authentication failed. Please try again.",
-  oauth_failed: "OAuth authentication failed. Please try again.",
-  access_denied: "Access was denied. Please try again.",
-  missing_code: "Authentication code was missing. Please try again.",
-  no_email: "No email address associated with your account. Please try again.",
-  ACCOUNT_DENIED: "Your signup was not approved.",
-};
+const OAUTH_ERROR_KEYS = [
+  "missing_tokens",
+  "oauth_failed",
+  "access_denied",
+  "missing_code",
+  "no_email",
+  "ACCOUNT_DENIED",
+] as const;
+
+type OAuthErrorKey = (typeof OAUTH_ERROR_KEYS)[number];
+
+function isOAuthErrorKey(value: string): value is OAuthErrorKey {
+  return (OAUTH_ERROR_KEYS as readonly string[]).includes(value);
+}
 
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, completeMfaLogin, isAuthenticated, isLoading: authLoading } = useAuth();
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
 
   // Redirect after sign-in (honor returnTo, fall back to dashboard).
   useEffect(() => {
@@ -87,10 +96,14 @@ function LoginPageInner() {
     }
     const errorParam = searchParams.get("error");
     if (errorParam) {
-      const fallback = messageParam ?? `Authentication error: ${errorParam}`;
-      setError(OAUTH_ERROR_MESSAGES[errorParam] ?? fallback);
+      const fallback = messageParam ?? `${tCommon("error")}: ${errorParam}`;
+      setError(
+        isOAuthErrorKey(errorParam)
+          ? t(`oauthErrors.${errorParam}`)
+          : fallback,
+      );
     }
-  }, [searchParams]);
+  }, [searchParams, t, tCommon]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -130,17 +143,19 @@ function LoginPageInner() {
       if (err && typeof err === "object" && "body" in err) {
         const apiErr = err as { status?: number; body: { error: string; message?: string }; retryAfter?: number };
         if (apiErr.status === 429) {
-          const wait = apiErr.retryAfter ? ` Try again in ${apiErr.retryAfter} seconds.` : "";
-          setError(`Too many login attempts.${wait}`);
+          const wait = apiErr.retryAfter
+            ? ` ${t("tryAgainIn", { seconds: apiErr.retryAfter })}`
+            : "";
+          setError(`${t("tooManyAttempts")}${wait}`);
         } else if (apiErr.body.error === "PENDING_APPROVAL") {
           setPendingMessage(apiErr.body.message ?? "Your signup is awaiting approval.");
         } else if (apiErr.body.error === "ACCOUNT_DENIED") {
-          setError(apiErr.body.message ?? "Your signup was not approved.");
+          setError(apiErr.body.message ?? t("oauthErrors.ACCOUNT_DENIED"));
         } else {
           setError(apiErr.body.error);
         }
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(t("genericError"));
       }
     } finally {
       setIsLoading(false);
@@ -179,7 +194,7 @@ function LoginPageInner() {
           setMfaCode("");
         }
       } else {
-        setError("Verification failed. Please try again.");
+        setError(t("verificationFailed"));
       }
     } finally {
       setIsLoading(false);
@@ -207,7 +222,7 @@ function LoginPageInner() {
     return (
       <>
         <h2 className="mb-3 text-center text-xl font-semibold text-[hsl(var(--foreground))]">
-          You&apos;re on the list
+          {t("pendingTitle")}
         </h2>
         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 text-sm leading-relaxed text-[hsl(var(--foreground))] whitespace-pre-wrap">
           {pendingMessage}
@@ -217,7 +232,7 @@ function LoginPageInner() {
           onClick={() => { setPendingMessage(null); setError(null); }}
           className="mt-6 block w-full text-center text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
         >
-          Back to sign in
+          {t("backToSignIn")}
         </button>
       </>
     );
@@ -227,10 +242,10 @@ function LoginPageInner() {
     return (
       <>
         <h2 className="mb-2 text-center text-xl font-semibold text-[hsl(var(--foreground))]">
-          Two-factor authentication
+          {t("mfaTitle")}
         </h2>
         <p className="mb-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
-          Enter the 6-digit code from your authenticator app, or a recovery code.
+          {t("mfaDescription")}
         </p>
 
         <form onSubmit={handleMfaSubmit} className="space-y-4">
@@ -244,14 +259,14 @@ function LoginPageInner() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="mfaCode">Verification code</Label>
+            <Label htmlFor="mfaCode">{t("verificationCode")}</Label>
             <Input
               id="mfaCode"
               type="text"
               inputMode="text"
               autoComplete="one-time-code"
               autoFocus
-              placeholder="123456 or recovery-code"
+              placeholder={t("verificationPlaceholder")}
               required
               disabled={isLoading}
               className="rounded-xl text-center tracking-widest"
@@ -268,10 +283,10 @@ function LoginPageInner() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
+                {t("verifying")}
               </>
             ) : (
-              "Verify and continue"
+              t("verifyAndContinue")
             )}
           </Button>
 
@@ -280,7 +295,7 @@ function LoginPageInner() {
             onClick={() => { setMfaToken(null); setMfaCode(""); setError(null); }}
             className="block w-full text-center text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
           >
-            Back to sign in
+            {t("backToSignIn")}
           </button>
         </form>
       </>
@@ -290,7 +305,7 @@ function LoginPageInner() {
   return (
     <>
       <h2 className="mb-6 text-center text-xl font-semibold text-[hsl(var(--foreground))]">
-        Sign in to your account
+        {t("signInTitle")}
       </h2>
 
       {/* OAuth Buttons */}
@@ -306,7 +321,7 @@ function LoginPageInner() {
           ) : (
             <GitHubIcon className="mr-2 h-4 w-4" />
           )}
-          Continue with GitHub
+          {t("continueWithGitHub")}
         </Button>
         <Button
           variant="outline"
@@ -319,7 +334,7 @@ function LoginPageInner() {
           ) : (
             <GoogleIcon className="mr-2 h-4 w-4" />
           )}
-          Continue with Google
+          {t("continueWithGoogle")}
         </Button>
       </div>
 
@@ -330,7 +345,7 @@ function LoginPageInner() {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-[hsl(var(--card))] px-2 text-[hsl(var(--muted-foreground))]">
-            Or continue with email
+            {t("orContinueWithEmail")}
           </span>
         </div>
       </div>
@@ -351,11 +366,11 @@ function LoginPageInner() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("email")}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t("emailPlaceholder")}
             autoComplete="email"
             required
             disabled={isFormDisabled}
@@ -367,19 +382,19 @@ function LoginPageInner() {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Link
               href="/forgot-password"
               className="text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
             >
-              Forgot password?
+              {t("forgotPassword")}
             </Link>
           </div>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder={t("passwordPlaceholder")}
               autoComplete="current-password"
               required
               disabled={isFormDisabled}
@@ -392,7 +407,7 @@ function LoginPageInner() {
               tabIndex={-1}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -416,7 +431,7 @@ function LoginPageInner() {
             htmlFor="remember"
             className="text-sm text-[hsl(var(--muted-foreground))] select-none cursor-pointer"
           >
-            Remember me
+            {t("rememberMe")}
           </label>
         </div>
 
@@ -428,21 +443,21 @@ function LoginPageInner() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              {t("signingIn")}
             </>
           ) : (
-            "Sign in"
+            t("signIn")
           )}
         </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
-        Don&apos;t have an account?{" "}
+        {t("noAccount")}{" "}
         <Link
           href="/signup"
           className="font-medium text-brand-700 hover:underline"
         >
-          Sign up
+          {t("signUp")}
         </Link>
       </p>
     </>

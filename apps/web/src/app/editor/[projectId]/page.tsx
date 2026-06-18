@@ -263,23 +263,16 @@ const AUTOSAVE_DELAY_MS = 1500;
 /** Tabs that render a full panel (replacing the preview pane) */
 const PANEL_TABS: ActiveTab[] = ["history", "cloud", "analytics", "files", "security", "speed", "environment", "skills", "build"];
 
-/** All items available in the triple-dots "More" menu */
-interface MoreMenuItem {
-  key: ActiveTab;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}
-
-const MORE_MENU_ITEMS: MoreMenuItem[] = [
-  { key: "design", icon: Palette, label: "Design" },
-  { key: "cloud", icon: Cloud, label: "Cloud" },
-  { key: "analytics", icon: BarChart3, label: "Analytics" },
-  { key: "files", icon: FolderOpen, label: "Files" },
-  { key: "security", icon: Shield, label: "Security" },
-  { key: "speed", icon: Gauge, label: "Speed" },
-  { key: "environment", icon: Boxes, label: "Environment" },
-  { key: "skills", icon: Sparkles, label: "Skills & Rules" },
-  { key: "build", icon: Hammer, label: "Build" },
+const MORE_MENU_TABS: { key: ActiveTab; icon: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
+  { key: "design", icon: Palette, labelKey: "chrome.tabDesign" },
+  { key: "cloud", icon: Cloud, labelKey: "chrome.tabCloud" },
+  { key: "analytics", icon: BarChart3, labelKey: "chrome.tabAnalytics" },
+  { key: "files", icon: FolderOpen, labelKey: "chrome.tabFiles" },
+  { key: "security", icon: Shield, labelKey: "chrome.tabSecurity" },
+  { key: "speed", icon: Gauge, labelKey: "chrome.tabSpeed" },
+  { key: "environment", icon: Boxes, labelKey: "chrome.tabEnvironment" },
+  { key: "skills", icon: Sparkles, labelKey: "chrome.tabSkills" },
+  { key: "build", icon: Hammer, labelKey: "chrome.tabBuild" },
 ];
 
 /** Load pinned toolbar items from localStorage */
@@ -1672,6 +1665,7 @@ function nowTimestamp(): string {
 
 // ─── Component ──────────────────────────────────────────────
 function EditorPageInner() {
+  const { t } = useTranslation("editor");
   const params = useParams<{ projectId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -5041,7 +5035,7 @@ function EditorPageInner() {
           <button
             onClick={() => router.push("/dashboard")}
             className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-brand-100 border border-brand-600 dark:bg-gradient-to-br dark:from-brand-600 dark:to-brand-700 dark:border-transparent shadow-sm shadow-brand-700/20 dark:shadow-brand-900/30 hover:brightness-95 transition-all"
-            title="Back to dashboard"
+            title={t("chrome.backToDashboard")}
           >
             <span className="text-sm font-bold text-brand-700 dark:text-white self-end mb-0.5">D</span>
             <span className="h-1.5 w-1.5 rounded-full bg-violet-700 dark:bg-violet-400 self-end mb-1.5 ml-0.5 shrink-0" />
@@ -5100,15 +5094,15 @@ function EditorPageInner() {
                   <span className="truncate">{liveStatus}{streamIdleSeconds != null ? ` · ${streamIdleSeconds}s` : ""}</span>
                   <span className="font-mono tabular-nums text-[#9b9a77]/70 text-[10px] flex-shrink-0">{chatElapsedSec}s</span>
                   {chatElapsedSec >= 60 && (
-                    <span className="italic text-[#9b9a77]/60 text-[10px] flex-shrink-0">Taking longer than usual</span>
+                    <span className="italic text-[#9b9a77]/60 text-[10px] flex-shrink-0">{t("chrome.takingLonger")}</span>
                   )}
                 </>
               ) : (
                 scaffoldStatus === "ready"
-                  ? "Previewing last saved version"
+                  ? t("chrome.previewingLastSaved")
                   : scaffoldStatus === "error"
-                    ? "Preview unavailable"
-                    : "Loading Live Preview..."
+                    ? t("chrome.previewUnavailable")
+                    : t("chrome.loadingLivePreview")
               )}
             </span>
           </div>
@@ -5117,7 +5111,7 @@ function EditorPageInner() {
           {scaffoldStatus !== "ready" && scaffoldStatus !== "idle" && scaffoldStatus !== "error" && (
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
               <Loader2 className="h-3 w-3 animate-spin text-brand-700 dark:text-brand-400" />
-              {scaffoldStatus === "scaffolding" ? "Getting ready..." : "Starting..."}
+              {scaffoldStatus === "scaffolding" ? t("chrome.gettingReady") : t("chrome.starting")}
             </div>
           )}
         </div>
@@ -5127,10 +5121,10 @@ function EditorPageInner() {
           <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none">
           {/* Core toolbar buttons */}
           {([
-            { key: "history" as ActiveTab, icon: Clock, label: "History", isToggle: false },
-            { key: "chat" as ActiveTab, icon: PanelLeftClose, label: "Toggle sidebar", isToggle: true },
-            { key: "preview" as ActiveTab, icon: Globe, label: "Preview", isToggle: false },
-            { key: "code" as ActiveTab, icon: Code2, label: "Code", isToggle: false },
+            { key: "history" as ActiveTab, icon: Clock, label: t("chrome.tabHistory"), isToggle: false },
+            { key: "chat" as ActiveTab, icon: PanelLeftClose, label: t("chrome.tabToggleSidebar"), isToggle: true },
+            { key: "preview" as ActiveTab, icon: Globe, label: t("chrome.tabPreview"), isToggle: false },
+            { key: "code" as ActiveTab, icon: Code2, label: t("chrome.tabCode"), isToggle: false },
           ]).map(({ key, icon: Icon, label, isToggle }, idx) => {
             const isActive = !isToggle && activeTab === key;
             return (
@@ -5158,10 +5152,11 @@ function EditorPageInner() {
 
           {/* Pinned items from More menu */}
           {pinnedItems.map((tabKey) => {
-            const item = MORE_MENU_ITEMS.find((m) => m.key === tabKey);
+            const item = MORE_MENU_TABS.find((m) => m.key === tabKey);
             if (!item) return null;
             const IconComp = item.icon;
             const isActive = activeTab === tabKey;
+            const label = t(item.labelKey);
             return (
               <button
                 key={`pinned-${tabKey}`}
@@ -5171,10 +5166,10 @@ function EditorPageInner() {
                     ? "gap-1.5 bg-brand-500/15 text-brand-700 dark:text-brand-400 px-2.5 py-1"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent p-1.5"
                 }`}
-                title={item.label}
+                title={label}
               >
                 <IconComp className="h-4 w-4" />
-                {isActive && <span className="text-xs">{item.label}</span>}
+                {isActive && <span className="text-xs">{label}</span>}
               </button>
             );
           })}
@@ -5189,7 +5184,7 @@ function EditorPageInner() {
                   ? "bg-brand-500/15 text-brand-700 dark:text-brand-400"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
               }`}
-              title="More views"
+              title={t("chrome.moreViews")}
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
@@ -5198,8 +5193,9 @@ function EditorPageInner() {
             {showMoreMenu && (
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-lg border border-border bg-muted shadow-xl shadow-md py-1 z-50">
                 {/* View tabs with pin/unpin */}
-                <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Views</div>
-                {MORE_MENU_ITEMS.map(({ key, icon: MenuIcon, label }) => {
+                <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{t("chrome.views")}</div>
+                {MORE_MENU_TABS.map(({ key, icon: MenuIcon, labelKey }) => {
+                  const label = t(labelKey);
                   const isActive = activeTab === key;
                   const isPinned = pinnedItems.includes(key);
                   return (
@@ -5231,7 +5227,7 @@ function EditorPageInner() {
                             ? "text-[#4D91FF] hover:text-blue-300"
                             : "text-muted-foreground hover:text-foreground"
                         }`}
-                        title={isPinned ? "Unpin from toolbar" : "Pin to toolbar"}
+                        title={isPinned ? t("chrome.unpinFromToolbar") : t("chrome.pinToToolbar")}
                       >
                         {isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                       </button>
@@ -5241,41 +5237,41 @@ function EditorPageInner() {
                 {/* Separator */}
                 <div className="my-1 border-t border-border" />
                 {/* Project actions */}
-                <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Project</div>
+                <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{t("chrome.project")}</div>
                 <button
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                   onClick={() => { router.push(`/projects/${resolvedProjectId}/settings`); setShowMoreMenu(false); }}
                 >
                   <Settings className="h-4 w-4 flex-shrink-0" />
-                  <span>Settings</span>
+                  <span>{t("chrome.settings")}</span>
                 </button>
                 <button
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                   onClick={() => { handleDownloadZip(); setShowMoreMenu(false); }}
                 >
                   <Download className="h-4 w-4 flex-shrink-0" />
-                  <span>Download project</span>
+                  <span>{t("chrome.downloadProject")}</span>
                 </button>
                 <button
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                   onClick={() => { handleDuplicateProject(); setShowMoreMenu(false); }}
                 >
                   <CopyPlus className="h-4 w-4 flex-shrink-0" />
-                  <span>{isDuplicating ? "Duplicating..." : "Duplicate project"}</span>
+                  <span>{isDuplicating ? t("chrome.duplicating") : t("chrome.duplicateProject")}</span>
                 </button>
                 <button
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                   onClick={() => { handleCopyProjectLink(); setShowMoreMenu(false); }}
                 >
                   <Link className="h-4 w-4 flex-shrink-0" />
-                  <span>Copy project link</span>
+                  <span>{t("chrome.copyProjectLink")}</span>
                 </button>
                 <button
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
                   onClick={() => { setShortcutsDialogOpen(true); setShowMoreMenu(false); }}
                 >
                   <Keyboard className="h-4 w-4 flex-shrink-0" />
-                  <span>Keyboard shortcuts</span>
+                  <span>{t("chrome.keyboardShortcuts")}</span>
                 </button>
                 {/* Separator */}
                 <div className="my-1 border-t border-border" />
@@ -5284,7 +5280,7 @@ function EditorPageInner() {
                   onClick={() => { setDeleteConfirmOpen(true); setShowMoreMenu(false); }}
                 >
                   <Trash2 className="h-4 w-4 flex-shrink-0" />
-                  <span>Delete project</span>
+                  <span>{t("chrome.deleteProject")}</span>
                 </button>
               </div>
             )}
@@ -5327,7 +5323,7 @@ function EditorPageInner() {
                   }
                 }}
                 className="bg-transparent text-[11px] text-foreground font-mono outline-none w-24 placeholder:text-muted-foreground"
-                placeholder="/path"
+                placeholder={t("chrome.routePlaceholder")}
                 autoFocus
               />
             </form>
@@ -5339,7 +5335,7 @@ function EditorPageInner() {
                 setTimeout(() => routeInputRef.current?.select(), 0);
               }}
               className="flex items-center gap-1 rounded-full bg-muted border border-border px-2.5 py-1 hover:border-border transition-colors cursor-text"
-              title="Click to navigate to a route"
+              title={t("chrome.clickToNavigate")}
             >
               <Globe className="h-3 w-3 text-muted-foreground" />
               <span className="text-[11px] text-muted-foreground font-mono">{previewRoute}</span>
@@ -5347,9 +5343,9 @@ function EditorPageInner() {
           )}
           <div className="flex items-center rounded-full bg-muted border border-border p-0.5">
             {([
-              { mode: "desktop" as DeviceMode, Icon: Monitor, label: "Desktop" },
-              { mode: "tablet" as DeviceMode, Icon: Tablet, label: "Tablet (768px)" },
-              { mode: "mobile" as DeviceMode, Icon: Smartphone, label: "Mobile (375px)" },
+              { mode: "desktop" as DeviceMode, Icon: Monitor, label: t("chrome.desktop") },
+              { mode: "tablet" as DeviceMode, Icon: Tablet, label: t("chrome.tablet") },
+              { mode: "mobile" as DeviceMode, Icon: Smartphone, label: t("chrome.mobile") },
             ]).map(({ mode, Icon, label }) => (
               <button
                 key={mode}
@@ -5372,7 +5368,7 @@ function EditorPageInner() {
               }
             }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Refresh preview"
+            title={t("chrome.refreshPreview")}
             disabled={!previewUrl}
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -5382,7 +5378,7 @@ function EditorPageInner() {
               if (previewUrl) window.open(previewUrl, "_blank");
             }}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Open in new tab"
+            title={t("chrome.openNewTab")}
             disabled={!previewUrl}
           >
             <ExternalLink className="h-3.5 w-3.5" />
@@ -5390,7 +5386,7 @@ function EditorPageInner() {
           <button
             onClick={handleToggleFullscreen}
             className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+            title={isFullscreen ? t("chrome.exitFullscreen") : t("chrome.fullscreen")}
           >
             {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </button>
@@ -5407,7 +5403,7 @@ function EditorPageInner() {
             className="flex h-7 items-center gap-1.5 rounded-full bg-muted px-2.5 text-sm text-[#FCFBF8] hover:bg-[#333] transition-colors"
           >
             <UserPlus className="h-4 w-4" />
-            <span className="hidden lg:inline">Share</span>
+            <span className="hidden lg:inline">{t("chrome.share")}</span>
           </button>
           {/* GitHub sync button with status */}
           <GitHubButton
@@ -5426,7 +5422,7 @@ function EditorPageInner() {
             onClick={() => router.push("/billing")}
             className="flex h-7 items-center gap-1.5 rounded-lg bg-accent border border-border px-2.5 text-sm text-foreground hover:bg-accent hover:text-foreground transition-all"
           >
-            <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" /><span className="hidden md:inline">Upgrade</span>
+            <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400" /><span className="hidden md:inline">{t("chrome.upgrade")}</span>
           </button>
           {/* Deploy */}
           <button
@@ -5436,10 +5432,10 @@ function EditorPageInner() {
               setPublishModalOpen(true);
             }}
             className="flex h-7 items-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-3 text-sm font-medium text-white shadow-lg shadow-brand-900/30 hover:brightness-110 transition-all"
-            title="Deploy to a public URL"
+            title={t("chrome.deployToPublicUrl")}
           >
             <CloudUpload className="h-4 w-4 md:hidden" />
-            <span className="hidden md:inline">Deploy</span>
+            <span className="hidden md:inline">{t("deploy.deploy")}</span>
           </button>
         </div>
       </header>
@@ -5500,12 +5496,12 @@ function EditorPageInner() {
                     {chatMode === "agent" ? (
                       <>
                         <Hammer className="h-3.5 w-3.5 text-brand-700 dark:text-brand-400" />
-                        <span>Work mode — generates code</span>
+                        <span>{t("chrome.workMode")}</span>
                       </>
                     ) : (
                       <>
                         <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                        <span>Strategize mode — creates plans only</span>
+                        <span>{t("chrome.strategizeMode")}</span>
                       </>
                     )}
                   </div>
@@ -6369,7 +6365,7 @@ function EditorPageInner() {
                         }
                       }}
                       onPaste={fileAttachments.handlePaste}
-                      placeholder={inputValue.length > 0 ? "" : "Ask Doable..."}
+                      placeholder={inputValue.length > 0 ? "" : t("chrome.askDoable")}
                       rows={1}
                       disabled={isStreaming}
                       className="w-full max-h-[40vh] min-h-[48px] resize-none bg-transparent px-4 py-3.5 text-[14px] leading-relaxed text-foreground placeholder:text-muted-foreground/70 outline-none disabled:opacity-50"
@@ -6383,7 +6379,7 @@ function EditorPageInner() {
                         <button
                           onClick={fileAttachments.openFilePicker}
                           className="shrink-0 relative flex h-7 w-7 items-center justify-center rounded-full border border-border bg-accent text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200"
-                          title="Attach file (images, text, code, PDF)"
+                          title={t("chrome.attachFile")}
                         >
                           <Plus className="h-3.5 w-3.5" />
                           {fileAttachments.attachments.length > 0 && (
@@ -6411,10 +6407,10 @@ function EditorPageInner() {
                                 ? "bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-[0_0_10px_rgba(168,85,247,0.1)]"
                                 : "text-muted-foreground hover:text-foreground"
                             }`}
-                            title="Strategize mode — creates plans only"
+                            title={t("chrome.strategizeMode")}
                           >
                             <Target className="h-3 w-3" />
-                            <span className="hidden @[26rem]:inline">Strategize</span>
+                            <span className="hidden @[26rem]:inline">{t("chrome.strategize")}</span>
                           </button>
                           <button
                             onClick={() => setChatMode("agent")}
@@ -6423,10 +6419,10 @@ function EditorPageInner() {
                                 ? "bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-[0_0_10px_rgba(168,85,247,0.1)]"
                                 : "text-muted-foreground hover:text-foreground"
                             }`}
-                            title="Work mode — generates code"
+                            title={t("chrome.workMode")}
                           >
                             <Hammer className="h-3 w-3" />
-                            <span className="hidden @[26rem]:inline">Work</span>
+                            <span className="hidden @[26rem]:inline">{t("chrome.work")}</span>
                           </button>
                         </div>
                         
@@ -6438,10 +6434,10 @@ function EditorPageInner() {
                               ? "border-brand-500/50 bg-brand-500/10 text-brand-700 dark:text-brand-300"
                               : "border-border bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                           }`}
-                          title="Design View"
+                          title={t("chrome.designView")}
                         >
                           <Paintbrush className="h-3 w-3" />
-                          <span className="hidden @[26rem]:inline">Design View</span>
+                          <span className="hidden @[26rem]:inline">{t("chrome.designView")}</span>
                         </button>
                         
                         {/* Model selector — hidden unless admin enables it */}
@@ -6471,7 +6467,7 @@ function EditorPageInner() {
                                 ? "text-red-400 bg-red-500/10 border border-red-500/20 animate-pulse"
                                 : "text-muted-foreground hover:text-foreground hover:bg-accent border border-transparent"
                             }`}
-                            title={speechRecognition.isListening ? "Stop recording" : "Voice input"}
+                            title={speechRecognition.isListening ? t("chrome.stopRecording") : t("chrome.voiceInput")}
                           >
                             <Mic className="h-3.5 w-3.5" />
                           </button>
@@ -6482,7 +6478,7 @@ function EditorPageInner() {
                           <button
                             onClick={handleStopStreaming}
                             className="flex h-7 items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-2.5 text-red-500 hover:bg-red-500/20 transition-colors shadow-sm"
-                            title="Stop generation"
+                            title={t("chrome.stopGeneration")}
                           >
                             <Square className="h-3 w-3 fill-current" />
                             <span className="text-[10px] sm:text-[11px] font-medium">Stop</span>
@@ -6837,13 +6833,13 @@ function EditorPageInner() {
                       </div>
                       <h3 className="text-sm font-medium text-foreground mb-1">
                         {scaffoldStatus !== "ready"
-                          ? "Setting up workspace..."
+                          ? t("chrome.settingUpWorkspace")
                           : planPhase === "building"
-                            ? "Building from plan..."
-                            : "Building your app..."}
+                            ? t("chrome.buildingFromPlan")
+                            : t("chrome.buildingYourApp")}
                       </h3>
                       <p className="text-xs text-muted-foreground max-w-[260px] text-center">
-                        {liveStatus || scaffoldProgressMsg || (scaffoldStatus !== "ready" ? "Installing dependencies" : "AI is writing code")}
+                        {liveStatus || scaffoldProgressMsg || (scaffoldStatus !== "ready" ? t("chrome.installingDependencies") : t("chrome.aiWritingCode"))}
                       </p>
                     </div>
                   )}
@@ -6924,9 +6920,9 @@ function EditorPageInner() {
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
         <DialogContent className="bg-card border-border text-foreground max-w-md" onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle className="text-foreground">Share Project</DialogTitle>
+            <DialogTitle className="text-foreground">{t("chrome.shareProject")}</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Share your project with others or embed it on your website.
+              {t("chrome.shareDescription")}
             </DialogDescription>
           </DialogHeader>
 
@@ -6941,12 +6937,12 @@ function EditorPageInner() {
                 )}
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {projectVisibility === "public" ? "Link sharing enabled" : "Private project"}
+                    {projectVisibility === "public" ? t("chrome.linkSharingEnabled") : t("chrome.privateProject")}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {projectVisibility === "public"
-                      ? "Anyone with the link can join and collaborate"
-                      : "Only invited collaborators can access"}
+                      ? t("chrome.linkSharingPublic")
+                      : t("chrome.linkSharingPrivate")}
                   </p>
                 </div>
               </div>
@@ -6967,7 +6963,7 @@ function EditorPageInner() {
             {/* Collaborate Link — only shown when link sharing is enabled */}
             {projectVisibility === "public" && (
               <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Collaboration Link</label>
+                <label className="text-sm font-medium text-foreground mb-1.5 block">{t("chrome.collaborationLink")}</label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 rounded-md bg-secondary border border-border px-3 py-2 text-sm text-muted-foreground font-mono truncate">
                     {`${typeof window !== "undefined" ? window.location.origin : ""}/editor/${resolvedProjectId}`}
@@ -6981,9 +6977,9 @@ function EditorPageInner() {
                       });
                     }}
                     className="flex h-9 items-center gap-1.5 rounded-md bg-brand-600 hover:bg-brand-500 px-3 text-sm font-medium text-white transition-colors"
-                    title="Copy collaboration link"
+                    title={t("chrome.copyCollaborationLink")}
                   >
-                    {shareCopied === "collab" ? <><Check className="h-4 w-4" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy Link</>}
+                    {shareCopied === "collab" ? <><Check className="h-4 w-4" /> {t("chrome.copied")}</> : <><Copy className="h-4 w-4" /> {t("chrome.copyLink")}</>}
                   </button>
                 </div>
               </div>
@@ -6997,7 +6993,7 @@ function EditorPageInner() {
                     <Eye className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium text-foreground">{shareStats.uniqueVisitors}</p>
-                      <p className="text-xs text-muted-foreground">{shareStats.uniqueVisitors === 1 ? "visitor" : "visitors"}</p>
+                      <p className="text-xs text-muted-foreground">{shareStats.uniqueVisitors === 1 ? t("chrome.visitor") : t("chrome.visitors")}</p>
                     </div>
                   </div>
                   <div className="h-8 w-px bg-border" />
@@ -7005,7 +7001,7 @@ function EditorPageInner() {
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <div>
                       <p className="text-sm font-medium text-foreground">{shareStats.totalVisits}</p>
-                      <p className="text-xs text-muted-foreground">total views</p>
+                      <p className="text-xs text-muted-foreground">{t("chrome.totalViews")}</p>
                     </div>
                   </div>
                 </div>
@@ -7014,7 +7010,7 @@ function EditorPageInner() {
                 {shareStats.visitors.length > 0 && (
                   <div className="rounded-lg bg-secondary border border-border overflow-hidden">
                     <div className="px-4 py-2 border-b border-border">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">People who viewed this project</p>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("chrome.peopleViewed")}</p>
                     </div>
                     <div className="max-h-48 overflow-y-auto divide-y divide-border">
                       {shareStats.visitors.map((visitor) => (
@@ -7029,7 +7025,7 @@ function EditorPageInner() {
                             </div>
                           </div>
                           <div className="text-right shrink-0 ml-3">
-                            <p className="text-xs text-muted-foreground">{visitor.visit_count} {visitor.visit_count === 1 ? "visit" : "visits"}</p>
+                            <p className="text-xs text-muted-foreground">{visitor.visit_count} {visitor.visit_count === 1 ? t("chrome.visit") : t("chrome.visits")}</p>
                             <p className="text-xs text-muted-foreground">{new Date(visitor.last_visited_at).toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -7046,7 +7042,7 @@ function EditorPageInner() {
                 <div className="flex items-center gap-2">
                   <Users className="h-3.5 w-3.5 text-muted-foreground" />
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Collaborators{collaborators.length > 0 ? ` (${collaborators.length})` : ""}
+                    {t("chrome.collaborators")}{collaborators.length > 0 ? ` (${collaborators.length})` : ""}
                   </p>
                 </div>
               </div>
@@ -7079,7 +7075,7 @@ function EditorPageInner() {
                           }}
                           disabled={removingCollabId === collab.user_id}
                           className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                          title="Remove collaborator"
+                          title={t("chrome.removeCollaborator")}
                         >
                           {removingCollabId === collab.user_id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -7093,7 +7089,7 @@ function EditorPageInner() {
                 </div>
               ) : (
                 <div className="px-4 py-4 text-center">
-                  <p className="text-sm text-muted-foreground">No collaborators yet</p>
+                  <p className="text-sm text-muted-foreground">{t("chrome.noCollaborators")}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {projectVisibility === "public"
                       ? "Share the link above to invite people"
@@ -7107,7 +7103,7 @@ function EditorPageInner() {
 
             {/* Preview URL */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Preview URL</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">{t("chrome.previewUrl")}</label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-md bg-secondary border border-border px-3 py-2 text-sm text-muted-foreground font-mono truncate">
                   {previewUrl ?? "Not available yet"}
@@ -7116,7 +7112,7 @@ function EditorPageInner() {
                   onClick={handleCopyPreviewUrl}
                   disabled={!previewUrl}
                   className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                  title="Copy URL"
+                  title={t("chrome.copyUrl")}
                 >
                   {shareCopied === "preview" ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
                 </button>
@@ -7127,7 +7123,7 @@ function EditorPageInner() {
 
             {/* Embed Code */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">Embed Code</label>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">{t("chrome.embedCode")}</label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-md bg-secondary border border-border px-3 py-2 text-xs text-muted-foreground font-mono truncate">
                   {previewUrl
@@ -7138,7 +7134,7 @@ function EditorPageInner() {
                   onClick={handleCopyEmbedCode}
                   disabled={!previewUrl}
                   className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                  title="Copy embed code"
+                  title={t("chrome.copyEmbedCode")}
                 >
                   {shareCopied === "embed" ? <Check className="h-4 w-4 text-emerald-400" /> : <Code className="h-4 w-4" />}
                 </button>
@@ -7151,7 +7147,7 @@ function EditorPageInner() {
               onClick={() => setShareDialogOpen(false)}
               className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
-              Close
+              {t("chrome.close")}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -7163,10 +7159,10 @@ function EditorPageInner() {
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center gap-2">
               <Rocket className="h-5 w-5 text-blue-400" />
-              Deploy Project
+              {t("deploy.modalTitle")}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Push your project to a public URL.
+              {t("deploy.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -7175,7 +7171,7 @@ function EditorPageInner() {
             {publishStatus === "idle" && (
               <>
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-2 block">Environment</label>
+                  <label className="text-sm font-medium text-foreground mb-2 block">{t("deploy.environment")}</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setPublishEnv("production")}
@@ -7186,8 +7182,8 @@ function EditorPageInner() {
                       }`}
                     >
                       <Globe className="h-5 w-5" />
-                      <span className="font-medium">Live</span>
-                      <span className="text-xs opacity-70">Production deploy</span>
+                      <span className="font-medium">{t("deploy.live")}</span>
+                      <span className="text-xs opacity-70">{t("deploy.productionDeploy")}</span>
                     </button>
                     <button
                       onClick={() => setPublishEnv("preview")}
@@ -7198,8 +7194,8 @@ function EditorPageInner() {
                       }`}
                     >
                       <Eye className="h-5 w-5" />
-                      <span className="font-medium">Test</span>
-                      <span className="text-xs opacity-70">Preview deploy</span>
+                      <span className="font-medium">{t("deploy.test")}</span>
+                      <span className="text-xs opacity-70">{t("deploy.previewDeploy")}</span>
                     </button>
                   </div>
                 </div>
@@ -7209,7 +7205,7 @@ function EditorPageInner() {
                   className="w-full flex items-center justify-center gap-2 rounded-md bg-[#1E52F1] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 transition-colors"
                 >
                   <Rocket className="h-4 w-4" />
-                  Deploy to {publishEnv === "production" ? "Live" : "Test"}
+                  {t("deploy.deployTo", { env: publishEnv === "production" ? t("deploy.live") : t("deploy.test") })}
                 </button>
               </>
             )}
@@ -7219,16 +7215,16 @@ function EditorPageInner() {
               <div className="flex flex-col items-center py-8 text-center">
                 <Loader2 className="h-10 w-10 animate-spin text-blue-400 mb-4" />
                 <h3 className="text-sm font-medium text-foreground mb-1">
-                  {publishStatus === "building" ? "Building project..." : "Deploying..."}
+                  {publishStatus === "building" ? t("chrome.buildingProject") : t("chrome.deploying")}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  This may take a moment. Please don&apos;t close this dialog.
+                  {t("chrome.deployDialogHint")}
                 </p>
                 {/* Progress steps */}
                 <div className="mt-6 w-full max-w-xs space-y-2">
                   <div className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                    <span className="text-foreground">Preparing files</span>
+                    <span className="text-foreground">{t("chrome.preparingFiles")}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     {publishStatus === "building" ? (
@@ -7237,7 +7233,7 @@ function EditorPageInner() {
                       <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                     )}
                     <span className={publishStatus === "building" ? "text-blue-300" : "text-foreground"}>
-                      Building project
+                      {t("deploy.buildingProject")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
@@ -7247,7 +7243,7 @@ function EditorPageInner() {
                       <div className="h-4 w-4 rounded-full border border-border" />
                     )}
                     <span className={publishStatus === "deploying" ? "text-blue-300" : "text-muted-foreground"}>
-                      Deploying to {publishEnv === "production" ? "production" : "preview"}
+                      {publishEnv === "production" ? t("deploy.deployingToProduction") : t("deploy.deployingToPreview")}
                     </span>
                   </div>
                 </div>
@@ -7260,9 +7256,9 @@ function EditorPageInner() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 mb-4">
                   <CheckCircle2 className="h-8 w-8 text-emerald-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground mb-1">Live!</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-1">{t("deploy.liveTitle")}</h3>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Your project is now live at:
+                  {t("deploy.liveAt")}
                 </p>
                 {publishedUrl && (
                   <div className="flex items-center gap-2 w-full">
@@ -7274,14 +7270,14 @@ function EditorPageInner() {
                         navigator.clipboard.writeText(publishedUrl);
                       }}
                       className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                      title="Copy URL"
+                      title={t("chrome.copyUrl")}
                     >
                       <Copy className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => window.open(publishedUrl, "_blank")}
                       className="flex h-9 w-9 items-center justify-center rounded-md bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                      title="Open in new tab"
+                      title={t("chrome.openNewTab")}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </button>
@@ -7291,12 +7287,12 @@ function EditorPageInner() {
                   onClick={handleUnpublish}
                   disabled={unpublishing}
                   className="mt-5 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-400 transition-colors disabled:opacity-50"
-                  title="Remove the live site and free the URL"
+                  title={t("deploy.takeDownTitle")}
                 >
                   {unpublishing ? (
-                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Taking down…</>
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("deploy.takingDown")}</>
                   ) : (
-                    <><XCircle className="h-3.5 w-3.5" /> Take down this site</>
+                    <><XCircle className="h-3.5 w-3.5" /> {t("deploy.takeDownSite")}</>
                   )}
                 </button>
               </div>
@@ -7308,14 +7304,14 @@ function EditorPageInner() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/10 mb-4">
                   <XCircle className="h-8 w-8 text-red-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-red-300 mb-1">Deploy failed</h3>
+                <h3 className="text-sm font-semibold text-red-300 mb-1">{t("deploy.deploymentFailed")}</h3>
                 <p className="text-xs text-muted-foreground mb-4 max-w-sm">
-                  {publishError ?? "Something went wrong during deployment."}
+                  {publishError ?? t("deploy.failedGeneric")}
                 </p>
                 {publishBuildLog && (
                   <details className="w-full text-left mb-4">
                     <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                      View build log
+                      {t("deploy.viewBuildLog")}
                     </summary>
                     <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-card border border-border p-3 text-[11px] text-muted-foreground font-mono">
                       {publishBuildLog}
@@ -7330,7 +7326,7 @@ function EditorPageInner() {
                     }}
                     className="rounded-md bg-secondary border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                   >
-                    Try again
+                    {t("versionHistory.tryAgain")}
                   </button>
                   <button
                     onClick={() => {
@@ -7339,7 +7335,7 @@ function EditorPageInner() {
                     }}
                     className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
                   >
-                    Try to Fix
+                    {t("deploy.tryToFix")}
                   </button>
                 </div>
               </div>

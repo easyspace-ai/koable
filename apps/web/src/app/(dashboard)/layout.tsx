@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { AuthProvider } from "@/providers/auth-provider";
 import { AuthGuard } from "@/components/auth-guard";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
@@ -12,6 +13,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("dashboard.layout");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const closeSidebar = useCallback(() => setMobileSidebarOpen(false), []);
 
@@ -19,11 +21,10 @@ export default function DashboardLayout({
     <AuthProvider>
       <AuthGuard>
         <div className="flex h-screen overflow-hidden bg-background">
-          {/* Mobile hamburger */}
           <button
             onClick={() => setMobileSidebarOpen(true)}
             className="fixed top-3 left-3 z-50 flex h-9 w-9 items-center justify-center rounded-lg bg-card border border-border text-foreground md:hidden"
-            aria-label="Open menu"
+            aria-label={t("openMenu")}
           >
             <Menu className="h-5 w-5" />
           </button>

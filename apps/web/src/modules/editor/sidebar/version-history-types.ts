@@ -48,7 +48,10 @@ export interface DiffResult {
 
 // ─── Date grouping helpers ──────────────────────────────────
 
-export function getDateGroup(dateStr: string): string {
+export function getDateGroup(
+  dateStr: string,
+  labels?: { today: string; yesterday: string },
+): string {
   const date = new Date(dateStr);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -60,8 +63,8 @@ export function getDateGroup(dateStr: string): string {
     date.getDate()
   );
 
-  if (dateDay.getTime() === today.getTime()) return "Today";
-  if (dateDay.getTime() === yesterday.getTime()) return "Yesterday";
+  if (dateDay.getTime() === today.getTime()) return labels?.today ?? "Today";
+  if (dateDay.getTime() === yesterday.getTime()) return labels?.yesterday ?? "Yesterday";
 
   if (date.getFullYear() === now.getFullYear()) {
     return date.toLocaleDateString("en-US", {
@@ -86,11 +89,12 @@ export function formatTime(dateStr: string): string {
 }
 
 export function groupVersionsByDate(
-  versions: VersionEntry[]
+  versions: VersionEntry[],
+  labels?: { today: string; yesterday: string },
 ): Map<string, VersionEntry[]> {
   const groups = new Map<string, VersionEntry[]>();
   for (const version of versions) {
-    const group = getDateGroup(version.created_at);
+    const group = getDateGroup(version.created_at, labels);
     const existing = groups.get(group);
     if (existing) {
       existing.push(version);

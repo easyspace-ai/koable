@@ -24,7 +24,8 @@ export function registerQueueRoutes(app: Hono<AuthEnv>) {
       `;
       return c.json({ data: queue });
     } catch (err) {
-      return c.json({ data: [], error: String(err) }, 500);
+      console.error("[chat/queue] Failed to list queue:", err);
+      return c.json({ data: [], error: "Failed to load message queue" }, 500);
     }
   });
 
@@ -71,7 +72,8 @@ export function registerQueueRoutes(app: Hono<AuthEnv>) {
 
         return c.json({ data: { id: queued?.id, position: queued?.position } });
       } catch (err) {
-        return c.json({ error: String(err) }, 500);
+        console.error("[chat/queue] Failed to enqueue message:", err);
+        return c.json({ error: "Failed to enqueue message" }, 500);
       }
     },
   );
@@ -104,7 +106,8 @@ export function registerQueueRoutes(app: Hono<AuthEnv>) {
 
       return c.json({ data: { cancelled: true } });
     } catch (err) {
-      return c.json({ error: String(err) }, 500);
+      console.error("[chat/queue] Failed to cancel queued message:", err);
+      return c.json({ error: "Failed to cancel queued message" }, 500);
     }
   });
 }

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -14,6 +15,7 @@ import { stopDevServer, getDevServerInternalUrl } from "../../projects/dev-serve
 import { projects, workspacesQ, requireProjectAccess, isRoleAtLeast, validateProjectIdParam } from "./helpers.js";
 import { signProjectJwt } from "../../auth/project-jwt.js";
 import { PROJECT_JWT_SECRET } from "../../lib/secrets.js";
+import { updateProjectSchema } from "../../schemas/projects.js";
 
 const stars = starQueries(sql);
 const shareTracking = shareTrackingQueries(sql);
@@ -114,18 +116,8 @@ projectItemRoutes.get("/:id", async (c) => {
 });
 
 // ─── Update Project ─────────────────────────────────────────
-/** Strip HTML/script tags from user-supplied names to prevent stored XSS */
-const safeName = (s: string) => s.replace(/<[^>]*>/g, "").trim();
 
-const updateSchema = z.object({
-  name: z.string().min(1).max(100).transform(safeName).pipe(z.string().min(1)).optional(),
-  description: z.string().max(500).optional(),
-  status: z.enum(["creating", "draft", "published", "error"]).optional(),
-  visibility: z.enum(["public", "private"]).optional(),
-  folderId: z.string().uuid().nullable().optional(),
-});
-
-projectItemRoutes.patch("/:id", async (c) => {
+projectItemRoutes.patch("/:id", zValidator("json", updateProjectSchema), async (c) => {
   const id = c.req.param("id");
   const userId = c.get("userId");
 
@@ -137,17 +129,9 @@ projectItemRoutes.patch("/:id", async (c) => {
     return c.json({ error: "Viewers cannot edit projects" }, 403);
   }
 
-  const body = await c.req.json();
-  const parsed = updateSchema.safeParse(body);
+  const parsed = c.req.valid("json");
 
-  if (!parsed.success) {
-    return c.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      400
-    );
-  }
-
-  const project = await projects.update(id, parsed.data);
+  const project = await projects.update(id, parsed);
 
   if (!project) {
     return c.json({ error: "Project not found" }, 404);
@@ -157,7 +141,7 @@ projectItemRoutes.patch("/:id", async (c) => {
 });
 
 // PUT also updates the project (some frontends use PUT instead of PATCH)
-projectItemRoutes.put("/:id", async (c) => {
+projectItemRoutes.put("/:id", zValidator("json", updateProjectSchema), async (c) => {
   const id = c.req.param("id");
   const userId = c.get("userId");
 
@@ -169,17 +153,9 @@ projectItemRoutes.put("/:id", async (c) => {
     return c.json({ error: "Viewers cannot edit projects" }, 403);
   }
 
-  const body = await c.req.json();
-  const parsed = updateSchema.safeParse(body);
+  const parsed = c.req.valid("json");
 
-  if (!parsed.success) {
-    return c.json(
-      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-      400
-    );
-  }
-
-  const project = await projects.update(id, parsed.data);
+  const project = await projects.update(id, parsed);
 
   if (!project) {
     return c.json({ error: "Project not found" }, 404);

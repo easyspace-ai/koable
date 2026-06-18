@@ -4,9 +4,11 @@ import { zValidator } from "@hono/zod-validator";
 import { sql } from "../db/index.js";
 import { marketplaceQueries, environmentQueries, workspaceQueries } from "@doable/db";
 import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
+import { tracedQuery } from "../db/traced.js";
 import { bundleService } from "../services/bundle-service.js";
 import { JSON_V1_FORMAT, STANDARDS_ZIP_FORMAT } from "@doable/marketplace-bundle";
 import { getKVStore } from "@doable/shared/kv-store";
+import { isUuid } from "../lib/uuid.js";
 
 const kv = getKVStore();
 const CATEGORIES_CACHE_KEY = "marketplace:categories:v1";
@@ -126,15 +128,17 @@ const browseSchema = z.object({
 
 publicRoutes.get("/marketplace/listings", zValidator("query", browseSchema), async (c) => {
   const q = c.req.valid("query");
-  const result = await mkt.browseListings({
-    categorySlug: q.category,
-    search: q.search,
-    tags: q.tags?.split(",").map((t) => t.trim()).filter(Boolean),
-    featured: q.featured === "true",
-    sort: q.sort ?? "popular",
-    limit: q.limit,
-    offset: q.offset,
-  });
+  const result = await tracedQuery("marketplace.browseListings", "marketplace listings browse", () =>
+    mkt.browseListings({
+      categorySlug: q.category,
+      search: q.search,
+      tags: q.tags?.split(",").map((t) => t.trim()).filter(Boolean),
+      featured: q.featured === "true",
+      sort: q.sort ?? "popular",
+      limit: q.limit,
+      offset: q.offset,
+    }),
+  );
   return c.json(result);
 });
 
@@ -230,8 +234,7 @@ publicRoutes.get("/marketplace/feed.json", async (c) => {
  */
 authedRoutes.post("/marketplace/listings/:id/install", async (c) => {
   const listingId = c.req.param("id");
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!UUID_RE.test(listingId)) return c.json({ error: "Listing not found" }, 404);
+  if (!isUuid(listingId)) return c.json({ error: "Listing not found" }, 404);
 
   const userId = c.get("userId");
   const { workspaceId } = await c.req.json<{ workspaceId: string }>();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useCallback, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,13 @@ import { ArrowLeft, Loader2, Mail } from "lucide-react";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export default function ForgotPasswordPage() {
+  const tAuth = useTranslations("auth");
+  const t = useTranslations("dashboard");
+  const translateForgot = useCallback(
+    (key: string) => t(`auth.forgotPassword.${key}`),
+    [t],
+  );
+
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,8 +36,8 @@ export default function ForgotPasswordPage() {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({ error: "Request failed" }));
-        throw new Error(body.error ?? "Request failed");
+        const body = await res.json().catch(() => ({ error: translateForgot("requestFailed") }));
+        throw new Error(body.error ?? translateForgot("requestFailed"));
       }
 
       setIsSubmitted(true);
@@ -37,7 +45,7 @@ export default function ForgotPasswordPage() {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("Something went wrong. Please try again.");
+        setError(translateForgot("genericError"));
       }
     } finally {
       setIsLoading(false);
@@ -51,14 +59,13 @@ export default function ForgotPasswordPage() {
           <Mail className="h-6 w-6 text-green-600 dark:text-green-400" />
         </div>
         <h2 className="mb-2 text-xl font-semibold text-[hsl(var(--foreground))]">
-          Check your email
+          {translateForgot("successTitle")}
         </h2>
         <p className="mb-6 text-sm text-[hsl(var(--muted-foreground))]">
-          If an account exists for <strong className="text-[hsl(var(--foreground))]">{email}</strong>,
-          we&apos;ve sent password reset instructions to your inbox.
+          {t("auth.forgotPassword.successDescription", { email })}
         </p>
         <p className="mb-6 text-xs text-[hsl(var(--muted-foreground))]">
-          Didn&apos;t receive the email? Check your spam folder or{" "}
+          {translateForgot("successHintBefore")}{" "}
           <button
             type="button"
             onClick={() => {
@@ -67,7 +74,7 @@ export default function ForgotPasswordPage() {
             }}
             className="font-medium text-brand-700 hover:underline"
           >
-            try again
+            {translateForgot("tryAgainLink")}
           </button>
         </p>
         <Link
@@ -75,7 +82,7 @@ export default function ForgotPasswordPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to sign in
+          {tAuth("backToSignIn")}
         </Link>
       </div>
     );
@@ -88,10 +95,10 @@ export default function ForgotPasswordPage() {
           <Mail className="h-6 w-6 text-brand-700" />
         </div>
         <h2 className="text-xl font-semibold text-[hsl(var(--foreground))]">
-          Forgot your password?
+          {translateForgot("title")}
         </h2>
         <p className="mt-2 text-sm text-[hsl(var(--muted-foreground))]">
-          No worries. Enter your email and we&apos;ll send you reset instructions.
+          {translateForgot("description")}
         </p>
       </div>
 
@@ -110,11 +117,11 @@ export default function ForgotPasswordPage() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email">{translateForgot("emailLabel")}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={tAuth("emailPlaceholder")}
             autoComplete="email"
             required
             disabled={isLoading}
@@ -132,10 +139,10 @@ export default function ForgotPasswordPage() {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending...
+              {translateForgot("sending")}
             </>
           ) : (
-            "Send reset instructions"
+            translateForgot("sendButton")
           )}
         </Button>
       </form>
@@ -146,7 +153,7 @@ export default function ForgotPasswordPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to sign in
+          {tAuth("backToSignIn")}
         </Link>
       </p>
     </>

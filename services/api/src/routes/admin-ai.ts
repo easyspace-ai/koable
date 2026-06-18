@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
 import { aiSettingsQueries, platformAiDefaultsQueries } from "@doable/db";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
 import { ENCRYPTION_KEY } from "../lib/secrets.js";
 import { getConfig } from "../lib/platformConfig.js";
 import { savePlatformEmbeddingProvider } from "./setup.js";
@@ -13,9 +12,6 @@ const aiSettings = aiSettingsQueries(sql, ENCRYPTION_KEY);
 const platformDefaults = platformAiDefaultsQueries(sql);
 
 export const adminAiRoutes = new Hono<AuthEnv>({ strict: false });
-
-adminAiRoutes.use("*", authMiddleware);
-adminAiRoutes.use("*", platformAdminMiddleware);
 
 // ─── AI Allocation helpers ──────────────────────────────
 
@@ -511,25 +507,30 @@ adminAiRoutes.post("/platform-ai-defaults/apply-to-existing", async (c) => {
   `;
 
   let updated = 0;
+  const targets: { id: string; owner_id: string }[] = [];
   for (const ws of workspaces) {
     if (!overwrite) {
-      // Skip workspaces that already have a copilot account or provider configured
       const [existing] = await sql<{ has_config: boolean }[]>`
         SELECT (default_copilot_account_id IS NOT NULL OR default_provider_id IS NOT NULL) AS has_config
         FROM workspace_ai_settings WHERE workspace_id = ${ws.id}
       `;
       if (existing?.has_config) continue;
     }
-
-    await allocateAiToUser(adminId, ws.owner_id, ws.id, {
-      source: defaults.source as "copilot" | "custom",
-      copilotAccountId: defaults.copilot_account_id,
-      copilotModel: defaults.copilot_model,
-      providerId: defaults.provider_id,
-      providerModel: defaults.provider_model,
-    });
-    updated++;
+    targets.push(ws);
   }
+
+  await Promise.all(
+    targets.map((ws) =>
+      allocateAiToUser(adminId, ws.owner_id, ws.id, {
+        source: defaults.source as "copilot" | "custom",
+        copilotAccountId: defaults.copilot_account_id,
+        copilotModel: defaults.copilot_model,
+        providerId: defaults.provider_id,
+        providerModel: defaults.provider_model,
+      }),
+    ),
+  );
+  updated = targets.length;
 
   console.log(`[Admin] Applied platform AI defaults for plan=${plan} to ${updated}/${workspaces.length} workspaces`);
   return c.json({ data: { plan, total: workspaces.length, updated } });

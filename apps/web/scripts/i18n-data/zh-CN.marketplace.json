@@ -1,0 +1,134 @@
+{
+  "importDialog": {
+    "tabs": {
+      "json": "JSON",
+      "zip": "Zip",
+      "githubUrl": "GitHub URL"
+    },
+    "title": "从 Doable 外部导入",
+    "description": "从 JSON 清单、Standards Zip 或公共 GitHub 仓库导入环境。",
+    "jsonPlaceholder": "{\"schemaVersion\":\"1.0.0\",\"format\":\"doable.json.v1\",...}",
+    "jsonHint": "粘贴 {format} 清单。未通过架构验证的内容将被拒绝。",
+    "jsonFormatLabel": "doable.json.v1",
+    "zipDropPrompt": "将 Standards Zip 拖放到此处，或点击浏览",
+    "zipCompatibility": "兼容 Anthropic Skills、Cursor Rules、MCP 和 Claude Code 插件布局。",
+    "urlPlaceholder": "https://github.com/owner/repo 或 https://github.com/owner/repo/tree/main/skills/foo",
+    "urlHint": "仅公共仓库。导入将打包路径并解码为 Standards Zip。",
+    "trustNote": "导入作为草稿环境进入您的工作区。在您单独授权每个连接器之前，不会运行代码或调用外部服务。",
+    "errors": {
+      "pickZip": "请先选择 .zip 文件",
+      "pasteUrl": "请先粘贴 GitHub URL",
+      "importFailed": "导入失败"
+    },
+    "success": {
+      "imported": "已导入。"
+    },
+    "cancel": "取消",
+    "importing": "导入中...",
+    "imported": "已导入",
+    "importToWorkspace": "导入到工作区"
+  },
+  "installDialog": {
+    "title": "安装「{title}」？",
+    "description": "查看此包将添加到工作区的内容。",
+    "warningBanner": "包含 {dangerPart}{warnCount, plural, one {# 项} other {# 项}}需要您注意。",
+    "warningBannerDangerPart": "{count} 个高影响项和 ",
+    "emptyBundle": "此包为空。",
+    "permissions": {
+      "skills": {
+        "label": "向 AI 添加 {count, plural, one {# 个技能} other {# 个技能}}",
+        "detail": "技能是 AI 可自动调用的可复用系统提示。"
+      },
+      "rules": {
+        "label": "添加 {count, plural, one {# 条规则} other {# 条规则}}，自动附加到匹配文件",
+        "detail": "规则作用于文件 glob（例如 *.tsx）。它们不会自行运行代码。"
+      },
+      "knowledge": {
+        "label": "向上下文添加 {count, plural, one {# 个知识文件} other {# 个知识文件}}",
+        "detail": "知识文件在相关时被 AI 读取 — 不会执行或获取任何内容。"
+      },
+      "connectors": {
+        "label": "{count, plural, one {# 个 MCP 连接器} other {# 个 MCP 连接器}}可与外部服务通信",
+        "detail": "安装后您将被要求单独授权每个连接器。"
+      },
+      "credentials": {
+        "label": "您可能需要提供凭据（API 密钥、OAuth）",
+        "detail": "凭据存储在您的工作区 — 不会与发布者共享。"
+      }
+    },
+    "isolationNote": "安装会在工作区创建隔离副本。安装后原始发布者无法修改它。",
+    "errors": {
+      "installFailed": "安装失败"
+    },
+    "success": {
+      "installed": "已安装。"
+    },
+    "cancel": "取消",
+    "installing": "安装中...",
+    "installed": "已安装",
+    "installToWorkspace": "安装到工作区"
+  },
+  "reportDialog": {
+    "title": "举报此列表",
+    "description": "告诉我们「{title}」有什么问题。举报由版主审核。",
+    "reasonLabel": "原因",
+    "reasons": {
+      "spam": "垃圾或低质量",
+      "malware": "恶意软件 / 恶意行为",
+      "broken": "损坏或无法使用",
+      "inappropriate": "不当内容",
+      "copyright": "版权 / 商标侵权",
+      "other": "其他"
+    },
+    "detailsLabel": "详情",
+    "detailsOptional": "（可选）",
+    "detailsPlaceholder": "任何有助于版主分类的信息…",
+    "errors": {
+      "failed": "提交举报失败"
+    },
+    "success": {
+      "received": "已收到举报 — 谢谢。"
+    },
+    "cancel": "取消",
+    "sending": "发送中...",
+    "sent": "已发送",
+    "submitReport": "提交举报"
+  },
+  "listingCard": {
+    "byPublisher": "作者 {publisher}",
+    "featured": "精选",
+    "noDescription": "无描述",
+    "skillCount": "{count, plural, one {# 个技能} other {# 个技能}}",
+    "ruleCount": "{count, plural, one {# 条规则} other {# 条规则}}",
+    "fileCount": "{count, plural, one {# 个文件} other {# 个文件}}",
+    "version": "v{version}",
+    "installed": "已安装",
+    "install": "安装"
+  },
+  "panel": {
+    "title": "市场",
+    "discoverVsMarketplace": "发现 vs 市场",
+    "discoverHelpTitle": "发现和市场有什么区别？",
+    "import": "导入",
+    "importTitle": "从 JSON、Standards Zip 或公共 GitHub URL 导入包",
+    "myListings": "我的列表",
+    "myListingsTitle": "管理您发布的列表",
+    "listOnMarketplace": "上架到市场",
+    "listOnMarketplaceTitle": "打包您的环境之一并上架",
+    "subtitle": "安装社区创建的 AI 环境 — 技能、规则、知识和 MCP 连接器。",
+    "searchPlaceholder": "搜索环境、技能、标签...",
+    "sort": {
+      "popular": "热门",
+      "newest": "最新",
+      "rating": "评分"
+    },
+    "categoryAll": "全部",
+    "categoryAllIcon": "🔥",
+    "empty": {
+      "title": "未找到列表",
+      "searchHint": "尝试其他搜索词",
+      "publishHint": "成为第一个发布环境的人！"
+    },
+    "resultCount": "{count, plural, one {# 个环境} other {# 个环境}}"
+  }
+}

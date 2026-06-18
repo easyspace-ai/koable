@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, ShieldCheck, User as UserIcon, Bot, Wrench, Brain } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 type SessionInfo = {
@@ -47,6 +48,7 @@ export default function AdminAuditConversationPage() {
   const router = useRouter();
   const params = useParams<{ sessionId: string }>();
   const sessionId = params.sessionId;
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
 
   const [session, setSession] = useState<SessionInfo | null>(null);
@@ -70,7 +72,7 @@ export default function AdminAuditConversationPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Failed to load conversation");
+          setError(e instanceof Error ? e.message : t("audit.sessionLoadFailed"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -80,7 +82,7 @@ export default function AdminAuditConversationPage() {
     return () => {
       cancelled = true;
     };
-  }, [isPlatformAdmin, sessionId]);
+  }, [isPlatformAdmin, sessionId, t]);
 
   if (adminLoading || loading) {
     return (
@@ -93,9 +95,9 @@ export default function AdminAuditConversationPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
         <ShieldCheck className="h-12 w-12" />
-        <p className="font-medium text-foreground">Platform admin access required</p>
+        <p className="font-medium text-foreground">{t("page.accessRequired")}</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> {t("page.backToDashboard")}
         </Button>
       </div>
     );
@@ -109,7 +111,7 @@ export default function AdminAuditConversationPage() {
             href="/admin/audit"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Audit search
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("audit.sessionBreadcrumb")}
           </Link>
         </div>
 
@@ -122,18 +124,18 @@ export default function AdminAuditConversationPage() {
         {session && (
           <div className="mb-6 rounded-lg border border-border bg-card p-4">
             <h1 className="mb-2 text-xl font-semibold text-foreground">
-              Conversation transcript
+              {t("audit.sessionTitle")}
             </h1>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
-              <Info label="User" value={session.user_display_name || session.user_email || session.user_id} />
-              <Info label="Email" value={session.user_email ?? "—"} />
-              <Info label="Mode" value={session.mode} />
-              <Info label="Workspace" value={session.workspace_name ?? "—"} />
-              <Info label="Project" value={session.project_name ?? "—"} />
-              <Info label="Updated" value={new Date(session.updated_at).toLocaleString()} />
-              <Info label="Session ID" value={session.session_id} mono />
-              <Info label="User ID" value={session.user_id} mono />
-              <Info label="Project ID" value={session.project_id} mono />
+              <Info label={t("audit.fieldUser")} value={session.user_display_name || session.user_email || session.user_id} />
+              <Info label={t("audit.fieldEmail")} value={session.user_email ?? "—"} />
+              <Info label={t("audit.fieldMode")} value={session.mode} />
+              <Info label={t("audit.fieldWorkspace")} value={session.workspace_name ?? "—"} />
+              <Info label={t("audit.fieldProject")} value={session.project_name ?? "—"} />
+              <Info label={t("audit.fieldUpdated")} value={new Date(session.updated_at).toLocaleString()} />
+              <Info label={t("audit.fieldSessionId")} value={session.session_id} mono />
+              <Info label={t("audit.fieldUserId")} value={session.user_id} mono />
+              <Info label={t("audit.fieldProjectId")} value={session.project_id} mono />
             </dl>
           </div>
         )}
@@ -141,7 +143,7 @@ export default function AdminAuditConversationPage() {
         <div className="space-y-3">
           {messages.length === 0 && (
             <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-              This session has no recorded messages.
+              {t("audit.noMessages")}
             </div>
           )}
           {messages.map((m) => (
@@ -163,6 +165,7 @@ function Info({ label, value, mono }: { label: string; value: string; mono?: boo
 }
 
 function MessageBubble({ message }: { message: Message }) {
+  const { t } = useTranslation("admin");
   const role = message.role;
   const Icon = role === "user" ? UserIcon : role === "assistant" ? Bot : Wrench;
   const tone =
@@ -193,7 +196,7 @@ function MessageBubble({ message }: { message: Message }) {
       {message.thinking_content && (
         <details className="mb-2 rounded border border-border bg-background/40 p-2 text-xs">
           <summary className="cursor-pointer font-medium text-muted-foreground">
-            <Brain className="mr-1 inline h-3 w-3" /> Thinking
+            <Brain className="mr-1 inline h-3 w-3" /> {t("audit.thinking")}
           </summary>
           <pre className="mt-2 whitespace-pre-wrap text-muted-foreground">{message.thinking_content}</pre>
         </details>
@@ -206,7 +209,7 @@ function MessageBubble({ message }: { message: Message }) {
       {hasToolCalls && (
         <details className="mt-2 rounded border border-border bg-background/40 p-2 text-xs">
           <summary className="cursor-pointer font-medium text-muted-foreground">
-            <Wrench className="mr-1 inline h-3 w-3" /> Tool calls
+            <Wrench className="mr-1 inline h-3 w-3" /> {t("audit.toolCalls")}
           </summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap text-muted-foreground">
             {JSON.stringify(message.tool_calls, null, 2)}

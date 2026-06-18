@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Loader2, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -19,26 +20,27 @@ export function OAuthForm({
   onOAuth: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="space-y-4 py-2">
       <p className="text-sm text-muted-foreground">
-        You&apos;ll be redirected to {itemName} to authorize
-        access. A popup window will open for you to sign in.
+        {t("connectFlowForms.oauth.description", { name: itemName })}
       </p>
       <DialogFooter>
         <Button variant="outline" onClick={onCancel} disabled={loading}>
-          Cancel
+          {t("connectFlowForms.oauth.cancel")}
         </Button>
         <Button onClick={onOAuth} disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              Connecting...
+              {t("connectFlowForms.oauth.connecting")}
             </>
           ) : (
             <>
               <ExternalLink className="h-4 w-4 mr-2" />
-              Sign in with {itemName}
+              {t("connectFlowForms.oauth.signIn", { name: itemName })}
             </>
           )}
         </Button>
@@ -72,14 +74,16 @@ export function SecretTextForm({
   onConnect: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="space-y-4 py-2">
       <div className="space-y-2">
-        <label className="text-sm font-medium">API Key</label>
+        <label className="text-sm font-medium">{t("connectFlowForms.secretText.apiKeyLabel")}</label>
         <div className="relative">
           <Input
             type={showSecret ? "text" : "password"}
-            placeholder="Enter your API key"
+            placeholder={t("connectFlowForms.secretText.apiKeyPlaceholder")}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             className="pr-10"
@@ -96,21 +100,31 @@ export function SecretTextForm({
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          Label <span className="text-muted-foreground font-normal">(optional)</span>
+          {t("connectFlowForms.secretText.labelOptional")}{" "}
+          <span className="text-muted-foreground font-normal">
+            {t("connectFlowForms.secretText.optionalSuffix")}
+          </span>
         </label>
         <Input
           type="text"
-          placeholder={`My ${itemName} connection`}
+          placeholder={t("connectFlowForms.secretText.labelPlaceholder", { name: itemName })}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
         />
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel} disabled={loading}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel} disabled={loading}>
+          {t("connectFlowForms.secretText.cancel")}
+        </Button>
         <Button onClick={onConnect} disabled={loading || !apiKey.trim()}>
           {loading ? (
-            <><Loader2 className="h-4 w-4 animate-spin mr-2" />Connecting...</>
-          ) : "Connect"}
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              {t("connectFlowForms.secretText.connecting")}
+            </>
+          ) : (
+            t("connectFlowForms.secretText.connect")
+          )}
         </Button>
       </DialogFooter>
     </div>
@@ -146,18 +160,26 @@ export function BasicAuthForm({
   onConnect: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="space-y-4 py-2">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Username</label>
-        <Input type="text" placeholder="Enter username" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+        <label className="text-sm font-medium">{t("connectFlowForms.basicAuth.usernameLabel")}</label>
+        <Input
+          type="text"
+          placeholder={t("connectFlowForms.basicAuth.usernamePlaceholder")}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          autoFocus
+        />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium">Password</label>
+        <label className="text-sm font-medium">{t("connectFlowForms.basicAuth.passwordLabel")}</label>
         <div className="relative">
           <Input
             type={showSecret ? "text" : "password"}
-            placeholder="Enter password"
+            placeholder={t("connectFlowForms.basicAuth.passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="pr-10"
@@ -173,16 +195,31 @@ export function BasicAuthForm({
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          Label <span className="text-muted-foreground font-normal">(optional)</span>
+          {t("connectFlowForms.basicAuth.labelOptional")}{" "}
+          <span className="text-muted-foreground font-normal">
+            {t("connectFlowForms.basicAuth.optionalSuffix")}
+          </span>
         </label>
-        <Input type="text" placeholder={`My ${itemName} connection`} value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+        <Input
+          type="text"
+          placeholder={t("connectFlowForms.basicAuth.labelPlaceholder", { name: itemName })}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel} disabled={loading}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel} disabled={loading}>
+          {t("connectFlowForms.basicAuth.cancel")}
+        </Button>
         <Button onClick={onConnect} disabled={loading || !username.trim() || !password.trim()}>
           {loading ? (
-            <><Loader2 className="h-4 w-4 animate-spin mr-2" />Connecting...</>
-          ) : "Connect"}
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              {t("connectFlowForms.basicAuth.connecting")}
+            </>
+          ) : (
+            t("connectFlowForms.basicAuth.connect")
+          )}
         </Button>
       </DialogFooter>
     </div>
@@ -220,6 +257,7 @@ export function CustomAuthForm({
   onConnect: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("integrations");
   const fields = item.customAuthFields ?? [];
 
   return (
@@ -230,7 +268,9 @@ export function CustomAuthForm({
             <label className="text-sm font-medium">
               {field.displayName}
               {!field.required && (
-                <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                <span className="text-muted-foreground font-normal ml-1">
+                  {t("connectFlowForms.customAuth.optionalSuffix")}
+                </span>
               )}
             </label>
             {field.description && (
@@ -246,7 +286,7 @@ export function CustomAuthForm({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                 )}
               >
-                <option value="">Select...</option>
+                <option value="">{t("connectFlowForms.customAuth.selectPlaceholder")}</option>
                 {field.options.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -255,7 +295,9 @@ export function CustomAuthForm({
               <div className="relative">
                 <Input
                   type={showSecret ? "text" : "password"}
-                  placeholder={`Enter ${field.displayName.toLowerCase()}`}
+                  placeholder={t("connectFlowForms.customAuth.enterFieldPlaceholder", {
+                    fieldName: field.displayName.toLowerCase(),
+                  })}
                   value={customFields[field.name] ?? ""}
                   onChange={(e) => setCustomField(field.name, e.target.value)}
                   className="pr-10"
@@ -272,7 +314,9 @@ export function CustomAuthForm({
             ) : (
               <Input
                 type="text"
-                placeholder={`Enter ${field.displayName.toLowerCase()}`}
+                placeholder={t("connectFlowForms.customAuth.enterFieldPlaceholder", {
+                  fieldName: field.displayName.toLowerCase(),
+                })}
                 value={customFields[field.name] ?? ""}
                 onChange={(e) => setCustomField(field.name, e.target.value)}
                 autoFocus={field === fields.find((f) => f.required)}
@@ -282,11 +326,13 @@ export function CustomAuthForm({
         ))
       ) : (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Authentication Token</label>
+          <label className="text-sm font-medium">
+            {t("connectFlowForms.customAuth.authTokenLabel")}
+          </label>
           <div className="relative">
             <Input
               type={showSecret ? "text" : "password"}
-              placeholder="Enter your authentication token"
+              placeholder={t("connectFlowForms.customAuth.authTokenPlaceholder")}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               className="pr-10"
@@ -305,21 +351,31 @@ export function CustomAuthForm({
 
       <div className="space-y-2">
         <label className="text-sm font-medium">
-          Label <span className="text-muted-foreground font-normal">(optional)</span>
+          {t("connectFlowForms.customAuth.labelOptional")}{" "}
+          <span className="text-muted-foreground font-normal">
+            {t("connectFlowForms.customAuth.optionalSuffix")}
+          </span>
         </label>
         <Input
           type="text"
-          placeholder={`My ${item.displayName} connection`}
+          placeholder={t("connectFlowForms.customAuth.labelPlaceholder", { name: item.displayName })}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
         />
       </div>
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel} disabled={loading}>Cancel</Button>
+        <Button variant="outline" onClick={onCancel} disabled={loading}>
+          {t("connectFlowForms.customAuth.cancel")}
+        </Button>
         <Button onClick={onConnect} disabled={loading || !isValid}>
           {loading ? (
-            <><Loader2 className="h-4 w-4 animate-spin mr-2" />Connecting...</>
-          ) : "Connect"}
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              {t("connectFlowForms.customAuth.connecting")}
+            </>
+          ) : (
+            t("connectFlowForms.customAuth.connect")
+          )}
         </Button>
       </DialogFooter>
     </div>

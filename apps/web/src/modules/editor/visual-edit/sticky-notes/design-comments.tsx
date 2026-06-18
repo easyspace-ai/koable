@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { MessageCircle, Check, X, Send, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ interface CommentPinProps {
 }
 
 export function CommentPin({ comment, index, isActive, onClick }: CommentPinProps) {
+  const { t } = useTranslation("editor");
   const color = comment.userColor ?? "#64B5F6";
 
   return (
@@ -50,7 +52,10 @@ export function CommentPin({ comment, index, isActive, onClick }: CommentPinProp
         backgroundColor: color,
         borderColor: isActive ? "white" : "rgba(255,255,255,0.7)",
       }}
-      title={`${comment.displayName ?? "User"}: ${comment.content.slice(0, 60)}`}
+      title={t("visualEdit.comments.pinTitle", {
+        name: comment.displayName ?? t("visualEdit.comments.user"),
+        preview: comment.content.slice(0, 60),
+      })}
     >
       <span className="text-[10px] font-bold text-white leading-none">
         {index + 1}
@@ -87,6 +92,7 @@ export function CommentThread({
   anchorX,
   anchorY,
 }: CommentThreadProps) {
+  const { t } = useTranslation("editor");
   const [replyText, setReplyText] = useState("");
   const [showReplies, setShowReplies] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -141,7 +147,7 @@ export function CommentThread({
             {(comment.displayName ?? "U")[0]?.toUpperCase()}
           </div>
           <span className="text-xs font-medium text-foreground truncate max-w-[140px]">
-            {comment.displayName ?? "User"}
+            {comment.displayName ?? t("visualEdit.comments.user")}
           </span>
           <span className="text-[10px] text-muted-foreground">
             {formatTimeAgo(comment.createdAt)}
@@ -153,7 +159,7 @@ export function CommentThread({
               type="button"
               onClick={onUnresolve}
               className="p-1 rounded text-green-400 hover:bg-muted transition-colors"
-              title="Re-open comment"
+              title={t("visualEdit.comments.reopen")}
             >
               <Check className="w-3.5 h-3.5" />
             </button>
@@ -162,7 +168,7 @@ export function CommentThread({
               type="button"
               onClick={onResolve}
               className="p-1 rounded text-muted-foreground hover:text-green-400 hover:bg-muted transition-colors"
-              title="Resolve comment"
+              title={t("visualEdit.comments.resolve")}
             >
               <Check className="w-3.5 h-3.5" />
             </button>
@@ -172,7 +178,7 @@ export function CommentThread({
               type="button"
               onClick={() => onDelete(comment.id)}
               className="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-muted transition-colors"
-              title="Delete comment"
+              title={t("visualEdit.comments.delete")}
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -201,7 +207,10 @@ export function CommentThread({
             className="flex items-center gap-1 w-full px-3 py-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
           >
             {showReplies ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {replies.length} {replies.length === 1 ? "reply" : "replies"}
+            {replies.length}{" "}
+            {replies.length === 1
+              ? t("visualEdit.comments.replySingular")
+              : t("visualEdit.comments.replyPlural")}
           </button>
           {showReplies && (
             <div className="max-h-[200px] overflow-y-auto">
@@ -214,14 +223,14 @@ export function CommentThread({
                     >
                       {(reply.displayName ?? "U")[0]?.toUpperCase()}
                     </div>
-                    <span className="text-[11px] font-medium text-foreground">{reply.displayName ?? "User"}</span>
+                    <span className="text-[11px] font-medium text-foreground">{reply.displayName ?? t("visualEdit.comments.user")}</span>
                     <span className="text-[10px] text-muted-foreground">{formatTimeAgo(reply.createdAt)}</span>
                     {reply.userId === currentUserId && (
                       <button
                         type="button"
                         onClick={() => onDelete(reply.id)}
                         className="ml-auto p-0.5 rounded text-muted-foreground hover:text-red-400 transition-colors"
-                        title="Delete reply"
+                        title={t("visualEdit.comments.deleteReply")}
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -244,7 +253,7 @@ export function CommentThread({
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Reply..."
+              placeholder={t("visualEdit.comments.replyPlaceholder")}
               rows={1}
               className="flex-1 resize-none rounded-lg bg-secondary px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:bg-muted transition-colors"
             />
@@ -253,7 +262,7 @@ export function CommentThread({
               onClick={handleSubmit}
               disabled={!replyText.trim()}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-brand-400 disabled:opacity-30"
-              title="Send reply"
+              title={t("visualEdit.comments.sendReply")}
             >
               <Send className="w-3.5 h-3.5" />
             </button>
@@ -295,6 +304,7 @@ interface NewCommentInputProps {
 }
 
 export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputProps) {
+  const { t } = useTranslation("editor");
   const [text, setText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -329,7 +339,7 @@ export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputPro
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <MessageCircle className="w-3.5 h-3.5 text-brand-400" />
-        <span className="text-xs font-medium text-foreground">Add comment</span>
+        <span className="text-xs font-medium text-foreground">{t("visualEdit.comments.addComment")}</span>
       </div>
       <div className="px-3 py-2">
         <textarea
@@ -337,7 +347,7 @@ export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputPro
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Leave a comment..."
+          placeholder={t("visualEdit.comments.leaveComment")}
           rows={2}
           className="w-full resize-none rounded-lg bg-secondary px-2.5 py-1.5 text-xs text-foreground outline-none placeholder:text-muted-foreground focus:bg-muted transition-colors"
         />
@@ -348,7 +358,7 @@ export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputPro
           onClick={onCancel}
           className="px-2 py-1 rounded-lg text-[11px] text-muted-foreground hover:bg-muted transition-colors"
         >
-          Cancel
+          {t("visualEdit.comments.cancel")}
         </button>
         <button
           type="button"
@@ -356,7 +366,7 @@ export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputPro
           disabled={!text.trim()}
           className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-brand-400 text-white hover:bg-brand-500 disabled:opacity-40 transition-colors"
         >
-          Comment
+          {t("visualEdit.comments.comment")}
         </button>
       </div>
     </div>

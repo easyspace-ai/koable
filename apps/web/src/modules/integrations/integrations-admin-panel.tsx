@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Search,
   Check,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api";
-import { CATEGORY_LABELS, type CustomAuthField } from "./use-integration-catalog";
+import { getCategoryLabel, type CustomAuthField } from "./use-integration-catalog";
 import { IntegrationConfigForm, type ExistingCredentialHint } from "./integration-config-form";
 import { PROVIDER_SETUP_GUIDES } from "./provider-setup-guides";
 
@@ -61,23 +62,17 @@ interface PlatformCredential {
 // still needs to click Enable + Configure — presets only set the selection.
 // IDs that aren't in the live catalog are skipped gracefully.
 
-const PRESET_STACKS: ReadonlyArray<{ key: string; label: string; description: string; ids: readonly string[] }> = [
+const PRESET_STACKS: ReadonlyArray<{ key: "productivity" | "dev" | "marketing"; ids: readonly string[] }> = [
   {
     key: "productivity",
-    label: "Productivity",
-    description: "Email, calendar, docs, chat",
     ids: ["google_sheets", "gmail", "google_calendar", "notion", "slack"],
   },
   {
     key: "dev",
-    label: "Dev",
-    description: "Source, tickets, errors, on-call",
     ids: ["github", "linear", "sentry", "pagerduty", "jira"],
   },
   {
     key: "marketing",
-    label: "Marketing",
-    description: "Email, CRM, payments, booking",
     ids: ["mailchimp", "hubspot", "stripe", "calendly", "intercom"],
   },
 ];
@@ -89,6 +84,7 @@ interface IntegrationsAdminPanelProps {
 }
 
 export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: IntegrationsAdminPanelProps) {
+  const t = useTranslations("integrations");
   const [workspaces, setWorkspaces] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(propWorkspaceId || "");
 
@@ -175,11 +171,11 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       setPlatformCredsMap(credsMap);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load integrations");
+      setError(err instanceof Error ? err.message : t("adminPanel.errors.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, isPlatformMode]);
+  }, [workspaceId, isPlatformMode, t]);
 
   useEffect(() => {
     fetchData();
@@ -215,7 +211,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       }
       await fetchData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update");
+      setError(err instanceof Error ? err.message : t("adminPanel.errors.failedToUpdate"));
     } finally {
       setSaving(null);
     }
@@ -290,23 +286,29 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
     }
     setBulkBusy(null);
     if (failures > 0) {
-      setError(`${failures} of ${ids.length} ${kind} operations failed. The list has been refreshed.`);
+      setError(
+        t("adminPanel.bulk.partialFailure", {
+          failures,
+          total: ids.length,
+          kind: kind === "enable" ? t("adminPanel.bulk.enabling") : t("adminPanel.bulk.disabling"),
+        }),
+      );
     }
     clearSelection();
     await fetchData();
-  }, [selectedIds, isPlatformMode, workspaceId, fetchData, clearSelection]);
+  }, [selectedIds, isPlatformMode, workspaceId, fetchData, clearSelection, t]);
 
   const applyPreset = useCallback((presetIds: readonly string[]) => {
     // Only select IDs that actually exist in the current catalog
     const available = new Set(catalog.map((i) => i.id));
     const matching = presetIds.filter((id) => available.has(id));
     if (matching.length === 0) {
-      setError(`None of this preset's integrations are in the catalog yet.`);
+      setError(t("adminPanel.presets.noneInCatalog"));
       return;
     }
     setError(null);
     setSelectedIds(new Set(matching));
-  }, [catalog]);
+  }, [catalog, t]);
 
   // Filter and search
   const filtered = catalog.filter((item) => {
@@ -360,8 +362,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
         <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
           <ExternalLink className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-700 dark:text-blue-400">
-            Integrations enabled here apply <strong>globally to all workspaces</strong> (existing and new).
-            Users across the platform will see these integrations in their catalog.
+            {t("adminPanel.platformModeBanner")}
           </div>
         </div>
       )}
@@ -369,25 +370,25 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-lg border p-3 bg-background">
           <div className="text-2xl font-bold text-foreground">{enabledCount}</div>
-          <div className="text-xs text-muted-foreground">Enabled</div>
+          <div className="text-xs text-muted-foreground">{t("adminPanel.summary.enabled")}</div>
         </div>
         <div className={cn("rounded-lg border p-3 bg-background", platformConfiguredCount > 0 && "border-green-500/50")}>
           <div className={cn("text-2xl font-bold", platformConfiguredCount > 0 ? "text-green-600" : "text-foreground")}>
             {platformConfiguredCount}
           </div>
-          <div className="text-xs text-muted-foreground">Configured (DB)</div>
+          <div className="text-xs text-muted-foreground">{t("adminPanel.summary.configuredDb")}</div>
         </div>
         <div className={cn("rounded-lg border p-3 bg-background", envConfiguredCount > 0 && "border-blue-500/50")}>
           <div className={cn("text-2xl font-bold", envConfiguredCount > 0 ? "text-blue-600" : "text-foreground")}>
             {envConfiguredCount}
           </div>
-          <div className="text-xs text-muted-foreground">Via Env Vars</div>
+          <div className="text-xs text-muted-foreground">{t("adminPanel.summary.viaEnvVars")}</div>
         </div>
         <div className={cn("rounded-lg border p-3 bg-background", unconfiguredCount > 0 && "border-yellow-500/50")}>
           <div className={cn("text-2xl font-bold", unconfiguredCount > 0 ? "text-yellow-600" : "text-foreground")}>
             {unconfiguredCount}
           </div>
-          <div className="text-xs text-muted-foreground">Enabled, Needs Config</div>
+          <div className="text-xs text-muted-foreground">{t("adminPanel.summary.needsConfig")}</div>
         </div>
       </div>
 
@@ -395,8 +396,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
         <div className="flex items-start gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-3">
           <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 shrink-0" />
           <div className="text-sm text-yellow-700 dark:text-yellow-400">
-            <strong>{unconfiguredCount} integration(s)</strong> are enabled but missing credentials.
-            Users won&apos;t be able to connect until credentials are configured. Click <strong>Configure</strong> on a row below to fix.
+            {t("adminPanel.warnings.unconfigured", { count: unconfiguredCount })}
           </div>
         </div>
       )}
@@ -405,10 +405,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
         <div className="flex items-start gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
           <Key className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
           <div className="text-sm text-blue-700 dark:text-blue-400">
-            <strong>{envConfiguredCount} integration(s)</strong> are pre-configured via server environment variables
-            (e.g. <code className="text-[11px] bg-background/50 px-1 py-0.5 rounded border">GOOGLE_CLIENT_ID</code>,{" "}
-            <code className="text-[11px] bg-background/50 px-1 py-0.5 rounded border">OAUTH_*_CLIENT_ID</code>).
-            These work automatically without manual OAuth setup here.
+            {t("adminPanel.warnings.envConfigured", { count: envConfiguredCount })}
           </div>
         </div>
       )}
@@ -416,15 +413,15 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       {/* Preset stacks — one-click select-a-common-bundle */}
       {isPlatformMode && (
         <div className="flex items-start gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground mt-1.5 mr-1">Quick start:</span>
+          <span className="text-xs text-muted-foreground mt-1.5 mr-1">{t("adminPanel.presets.quickStart")}</span>
           {PRESET_STACKS.map((preset) => (
             <button
               key={preset.key}
               onClick={() => applyPreset(preset.ids)}
               className="rounded-md border border-dashed border-input bg-background px-2.5 py-1 text-xs hover:bg-muted transition-colors"
-              title={preset.description}
+              title={t(`adminPanel.presets.${preset.key}.description`)}
             >
-              {preset.label}
+              {t(`adminPanel.presets.${preset.key}.label`)}
             </button>
           ))}
         </div>
@@ -434,10 +431,16 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 shadow-sm">
           <div className="text-sm font-medium text-foreground">
-            {selectedIds.size} integration{selectedIds.size === 1 ? "" : "s"} selected
+            {t("adminPanel.bulk.selected", { count: selectedIds.size })}
             {bulkBusy && (
               <span className="ml-2 text-xs text-muted-foreground">
-                · {bulkBusy.kind === "enable" ? "Enabling" : "Disabling"} {bulkBusy.done}/{bulkBusy.total}…
+                {t("adminPanel.bulk.progress", {
+                  kind: bulkBusy.kind === "enable"
+                    ? t("adminPanel.bulk.enabling")
+                    : t("adminPanel.bulk.disabling"),
+                  done: bulkBusy.done,
+                  total: bulkBusy.total,
+                })}
               </span>
             )}
           </div>
@@ -447,21 +450,29 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
               disabled={!!bulkBusy}
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {bulkBusy?.kind === "enable" ? <Loader2 className="h-3 w-3 animate-spin" /> : "Enable selected"}
+              {bulkBusy?.kind === "enable" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                t("adminPanel.bulk.enableSelected")
+              )}
             </button>
             <button
               onClick={() => void runBulk("disable")}
               disabled={!!bulkBusy}
               className="rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50 transition-colors"
             >
-              {bulkBusy?.kind === "disable" ? <Loader2 className="h-3 w-3 animate-spin" /> : "Disable selected"}
+              {bulkBusy?.kind === "disable" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                t("adminPanel.bulk.disableSelected")
+              )}
             </button>
             <button
               onClick={clearSelection}
               disabled={!!bulkBusy}
               className="rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Clear
+              {t("adminPanel.bulk.clear")}
             </button>
           </div>
         </div>
@@ -476,7 +487,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
             name="integration-catalog-search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search integrations..."
+            placeholder={t("adminPanel.filters.searchPlaceholder")}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"
@@ -493,10 +504,10 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
           onChange={(e) => setCategory(e.target.value || null)}
           className="rounded-md border border-input bg-background px-3 py-2 text-sm"
         >
-          <option value="">All Categories</option>
+          <option value="">{t("adminPanel.filters.allCategories")}</option>
           {categories.map((cat) => (
             <option key={cat} value={cat}>
-              {CATEGORY_LABELS[cat] || cat}
+              {getCategoryLabel(t, cat)}
             </option>
           ))}
         </select>
@@ -512,7 +523,13 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                   : "bg-background text-muted-foreground hover:text-foreground"
               )}
             >
-              {mode === "all" ? "All" : mode === "enabled" ? "Enabled" : mode === "env" ? "Env Vars" : "Needs Config"}
+              {mode === "all"
+                ? t("adminPanel.filters.all")
+                : mode === "enabled"
+                  ? t("adminPanel.filters.enabled")
+                  : mode === "env"
+                    ? t("adminPanel.filters.envVars")
+                    : t("adminPanel.filters.needsConfig")}
             </button>
           ))}
         </div>
@@ -527,7 +544,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
       {/* Integration list grouped by category */}
       <div className="space-y-4">
         {Object.entries(grouped)
-          .sort(([a], [b]) => (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b))
+          .sort(([a], [b]) => getCategoryLabel(t, a).localeCompare(getCategoryLabel(t, b)))
           .map(([cat, items]) => {
             const categoryIds = items.map((i) => i.id);
             const allSelectedInCategory = categoryIds.length > 0 && categoryIds.every((id) => selectedIds.has(id));
@@ -544,10 +561,12 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                     else deselectAllVisible(categoryIds);
                   }}
                   className="h-3.5 w-3.5 rounded border-input cursor-pointer"
-                  aria-label={`Select all in ${CATEGORY_LABELS[cat] || cat}`}
+                  aria-label={t("adminPanel.list.selectAllInCategory", {
+                    category: getCategoryLabel(t, cat),
+                  })}
                 />
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {CATEGORY_LABELS[cat] || cat} ({items.length})
+                  {getCategoryLabel(t, cat)} ({items.length})
                 </h3>
               </div>
               <div className="space-y-1">
@@ -583,7 +602,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                           checked={selectedIds.has(item.id)}
                           onChange={() => toggleSelected(item.id)}
                           className="h-3.5 w-3.5 rounded border-input cursor-pointer shrink-0"
-                          aria-label={`Select ${item.displayName}`}
+                          aria-label={t("adminPanel.list.selectIntegration", { name: item.displayName })}
                         />
                         {/* Logo */}
                         <img
@@ -597,13 +616,19 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                             <span className="text-sm font-medium text-foreground">{item.displayName}</span>
                             <StatusChip authType={item.authType} />
                             {isEnvConfigured && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20" title={`Configured via: ${envInfo!.source}`}>
-                                ENV
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20"
+                                title={t("adminPanel.list.envBadgeTitle", { source: envInfo!.source })}
+                              >
+                                {t("adminPanel.list.envBadge")}
                               </span>
                             )}
                             {hasPlatformCred && !isEnvConfigured && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20" title="Platform credential configured">
-                                DB
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/20"
+                                title={t("adminPanel.list.dbBadgeTitle")}
+                              >
+                                {t("adminPanel.list.dbBadge")}
                               </span>
                             )}
                             {isEnabled && isConfigured && (
@@ -633,10 +658,16 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                                     ? "border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400 hover:bg-green-500/10"
                                     : "border-input bg-background text-foreground hover:bg-muted"
                               )}
-                              title={isConfigured ? "Update credentials" : "Configure credentials"}
+                              title={
+                                isConfigured
+                                  ? t("adminPanel.list.updateTitle")
+                                  : t("adminPanel.list.configureTitle")
+                              }
                             >
                               <Settings2 className="h-3 w-3" />
-                              {isConfigured ? "Update" : "Configure"}
+                              {isConfigured
+                                ? t("adminPanel.list.update")
+                                : t("adminPanel.list.configure")}
                               {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                             </button>
                           )}
@@ -653,9 +684,9 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
                             {isSaving ? (
                               <Loader2 className="h-3 w-3 animate-spin mx-auto" />
                             ) : isEnabled ? (
-                              "Enabled"
+                              t("adminPanel.list.enabled")
                             ) : (
-                              "Enable"
+                              t("adminPanel.list.enable")
                             )}
                           </button>
                         </div>
@@ -692,7 +723,7 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
 
       {filtered.length === 0 && (
         <div className="text-center py-8 text-sm text-muted-foreground">
-          No integrations match your filters.
+          {t("adminPanel.empty")}
         </div>
       )}
     </div>
@@ -702,12 +733,13 @@ export function IntegrationsAdminPanel({ workspaceId: propWorkspaceId }: Integra
 // ─── Status / Auth-Type Chip ─────────────────────────────────
 
 function StatusChip({ authType }: { authType: CatalogItem["authType"] }) {
+  const t = useTranslations("integrations");
   if (authType === "none") return null;
   const label =
-    authType === "oauth2" ? "OAuth"
-    : authType === "secret_text" ? "API Key"
-    : authType === "basic_auth" ? "User/Pass"
-    : "Custom";
+    authType === "oauth2" ? t("adminPanel.statusChip.oauth")
+    : authType === "secret_text" ? t("adminPanel.statusChip.apiKey")
+    : authType === "basic_auth" ? t("adminPanel.statusChip.userPass")
+    : t("adminPanel.statusChip.custom");
   return (
     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
       {label}
@@ -756,9 +788,12 @@ function WorkspaceSelector({
   selected: string;
   onChange: (id: string) => void;
 }) {
+  const t = useTranslations("integrations");
   return (
     <div className="flex items-center gap-2">
-      <label className="text-xs font-medium text-muted-foreground">Workspace:</label>
+      <label className="text-xs font-medium text-muted-foreground">
+        {t("adminPanel.workspaceSelector.label")}
+      </label>
       <select
         value={selected}
         onChange={(e) => onChange(e.target.value)}

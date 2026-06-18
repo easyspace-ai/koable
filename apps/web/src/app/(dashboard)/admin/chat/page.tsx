@@ -10,6 +10,7 @@ import {
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface Session {
   sessionId: string;
@@ -66,6 +67,7 @@ function fmtAbs(iso: string): string {
 function ChatAdminInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [total, setTotal] = useState(0);
@@ -92,11 +94,11 @@ function ChatAdminInner() {
       setTotal(r.data.total);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load chat sessions");
+      setError(e instanceof Error ? e.message : t("chat.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [offset, search, mode, projectIdFilter]);
+  }, [offset, search, mode, projectIdFilter, t]);
 
   useEffect(() => {
     if (isPlatformAdmin) load();
@@ -114,8 +116,8 @@ function ChatAdminInner() {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
         <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
-        <h1 className="text-xl font-semibold mb-2">Platform admin required</h1>
-        <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
+        <h1 className="text-xl font-semibold mb-2">{t("chat.accessTitle")}</h1>
+        <Button onClick={() => router.push("/dashboard")}>{t("page.backToDashboard")}</Button>
       </div>
     );
   }
@@ -124,26 +126,26 @@ function ChatAdminInner() {
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
         <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
-          <ArrowLeft className="h-4 w-4" /> Back to Admin
+          <ArrowLeft className="h-4 w-4" /> {t("runtime.backToAdmin")}
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600/20">
             <MessageSquare className="h-5 w-5 text-brand-400" />
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold">Chat Sessions ({total})</h1>
+            <h1 className="text-xl font-semibold">{t("chat.title", { total })}</h1>
             <p className="text-sm text-muted-foreground">
-              Every AI conversation across the platform — for training, audit, abuse review.
+              {t("chat.description")}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-1.5">
             <RotateCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
         {projectIdFilter && (
           <div className="mt-3 inline-flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-brand-500/10 border border-brand-500/30 text-brand-300">
-            Filtered to project {projectIdFilter.slice(0, 8)}…
+            {t("chat.filteredToProject", { id: projectIdFilter.slice(0, 8) })}
             <button onClick={() => router.push("/admin/chat")} className="hover:text-brand-200">
               <X className="h-3 w-3" />
             </button>
@@ -151,22 +153,19 @@ function ChatAdminInner() {
         )}
       </div>
 
-      {/* Privacy notice */}
       <div className="mb-4 p-3 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-[12px] text-emerald-300 flex items-start gap-2">
         <Shield className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
         <div>
-          <strong>Read-only audit view.</strong> Message content is auto-redacted (passwords, JWTs, API keys, hex blobs, DB URLs).
-          Every thread you open is recorded in the admin audit log with your name + timestamp.
+          <strong>{t("chat.privacyTitle")}</strong> {t("chat.privacyBody")}
         </div>
       </div>
 
-      {/* Filters */}
       <div className="mb-4 flex items-center gap-2">
         <div className="relative flex-1 max-w-md">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Filter by project name or user email…"
+            placeholder={t("chat.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -183,12 +182,12 @@ function ChatAdminInner() {
           onChange={(e) => { setMode(e.target.value); setOffset(0); }}
           className="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
         >
-          <option value="">All modes</option>
-          <option value="chat">chat</option>
-          <option value="agent">agent</option>
+          <option value="">{t("chat.filterAllModes")}</option>
+          <option value="chat">{t("chat.filterModeChat")}</option>
+          <option value="agent">{t("chat.filterModeAgent")}</option>
         </select>
         <Button variant="outline" size="sm" onClick={() => { setOffset(0); setSearch(searchInput); }}>
-          Search
+          {t("common.search")}
         </Button>
       </div>
 
@@ -202,23 +201,23 @@ function ChatAdminInner() {
         <table className="w-full text-xs">
           <thead className="bg-muted/40 border-b border-border">
             <tr className="text-left text-muted-foreground">
-              <th className="px-3 py-2 font-medium">User</th>
-              <th className="px-3 py-2 font-medium">Project</th>
-              <th className="px-3 py-2 font-medium">Mode</th>
-              <th className="px-3 py-2 font-medium text-right">Messages</th>
-              <th className="px-3 py-2 font-medium">Last activity</th>
-              <th className="px-3 py-2 font-medium">Started</th>
+              <th className="px-3 py-2 font-medium">{t("chat.columnUser")}</th>
+              <th className="px-3 py-2 font-medium">{t("chat.columnProject")}</th>
+              <th className="px-3 py-2 font-medium">{t("chat.columnMode")}</th>
+              <th className="px-3 py-2 font-medium text-right">{t("chat.columnMessages")}</th>
+              <th className="px-3 py-2 font-medium">{t("chat.columnLastActivity")}</th>
+              <th className="px-3 py-2 font-medium">{t("chat.columnStarted")}</th>
               <th className="px-3 py-2 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {loading && sessions.length === 0 ? (
               <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
+                <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> {t("common.loading")}
               </td></tr>
             ) : sessions.length === 0 ? (
               <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">
-                No chat sessions match your filter.
+                {t("chat.empty")}
               </td></tr>
             ) : sessions.map((s) => (
               <tr
@@ -241,7 +240,7 @@ function ChatAdminInner() {
                 <td className="px-3 py-2 text-muted-foreground">{fmtAge(s.createdAt)}</td>
                 <td className="px-3 py-2 text-right">
                   <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]">
-                    Open
+                    {t("chat.open")}
                   </Button>
                 </td>
               </tr>
@@ -251,7 +250,13 @@ function ChatAdminInner() {
       </div>
 
       <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>Showing {offset + 1}-{offset + sessions.length} of {total}</span>
+        <span>
+          {t("chat.paginationShowing", {
+            start: offset + 1,
+            end: offset + sessions.length,
+            total,
+          })}
+        </span>
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" disabled={offset === 0}
                   onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))} className="h-7 px-2">
@@ -270,6 +275,7 @@ function ChatAdminInner() {
 }
 
 function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => void }) {
+  const { t } = useTranslation("admin");
   const [data, setData] = useState<ThreadData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -278,9 +284,9 @@ function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => v
     setLoading(true);
     apiFetch<{ data: ThreadData }>(`/admin/chat-sessions/${session.sessionId}/messages`)
       .then((r) => setData(r.data))
-      .catch((e) => setError(e instanceof Error ? e.message : "Failed to load thread"))
+      .catch((e) => setError(e instanceof Error ? e.message : t("chat.threadLoadFailed")))
       .finally(() => setLoading(false));
-  }, [session.sessionId]);
+  }, [session.sessionId, t]);
 
   return (
     <div className="fixed inset-0 z-50 flex" role="dialog">
@@ -288,12 +294,16 @@ function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => v
       <div className="w-[800px] max-w-full bg-background border-l border-border flex flex-col">
         <div className="px-5 py-4 border-b border-border flex items-start justify-between">
           <div>
-            <div className="text-[11px] text-muted-foreground">Thread</div>
+            <div className="text-[11px] text-muted-foreground">{t("chat.threadLabel")}</div>
             <div className="text-base font-semibold mt-0.5">
-              {session.projectName ?? "(no project)"}
+              {session.projectName ?? t("chat.noProject")}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              {session.userEmail ?? session.userId} · mode={session.mode} · {session.messageCount} messages
+              {t("chat.threadMeta", {
+                user: session.userEmail ?? session.userId,
+                mode: session.mode,
+                count: session.messageCount,
+              })}
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={onClose}>
@@ -311,7 +321,7 @@ function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => v
         <div className="flex-1 overflow-y-auto bg-muted/10 p-4 space-y-3">
           {loading && (
             <div className="text-center py-8 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading thread…
+              <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> {t("chat.loadingThread")}
             </div>
           )}
           {error && (
@@ -322,7 +332,7 @@ function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => v
           {data?.messages.map((m) => <MessageCard key={m.id} m={m} />)}
           {data?.messages.length === 0 && (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              This session has no messages.
+              {t("chat.noMessages")}
             </div>
           )}
         </div>
@@ -332,6 +342,7 @@ function ThreadDrawer({ session, onClose }: { session: Session; onClose: () => v
 }
 
 function MessageCard({ m }: { m: Message }) {
+  const { t } = useTranslation("admin");
   const Icon = m.role === "user" ? UserIcon : m.role === "assistant" ? Bot : Wrench;
   const tone =
     m.role === "user" ? "border-brand-500/30 bg-brand-500/5"
@@ -350,7 +361,7 @@ function MessageCard({ m }: { m: Message }) {
           <span className="font-medium uppercase tracking-wide">{m.role}</span>
           {m.displayName && <span>· {m.displayName}</span>}
           {m.hadToolCalls && (
-            <span className="px-1 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[9px]">tools</span>
+            <span className="px-1 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[9px]">{t("chat.toolsBadge")}</span>
           )}
         </div>
         <span className="text-[10px] text-muted-foreground">{fmtAbs(m.createdAt)}</span>
@@ -364,7 +375,7 @@ function MessageCard({ m }: { m: Message }) {
               onClick={() => setExpanded((v) => !v)}
               className="ml-2 text-[11px] text-brand-400 hover:text-brand-300"
             >
-              {expanded ? "show less" : "show more"}
+              {expanded ? t("chat.showLess") : t("chat.showMore")}
             </button>
           )}
         </div>
@@ -373,7 +384,7 @@ function MessageCard({ m }: { m: Message }) {
       {m.thinkingContent && (
         <details className="mt-2">
           <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
-            thinking
+            {t("chat.thinking")}
           </summary>
           <pre className="mt-1 p-2 bg-black/30 rounded text-[10px] font-mono whitespace-pre-wrap">
             {m.thinkingContent}
@@ -384,7 +395,7 @@ function MessageCard({ m }: { m: Message }) {
       {m.toolCalls != null && (
         <details className="mt-2">
           <summary className="text-[10px] text-muted-foreground cursor-pointer hover:text-foreground">
-            tool_calls
+            {t("chat.toolCalls")}
           </summary>
           <pre className="mt-1 p-2 bg-black/30 rounded text-[10px] font-mono overflow-x-auto whitespace-pre">
             {JSON.stringify(m.toolCalls, null, 2)}
@@ -395,13 +406,18 @@ function MessageCard({ m }: { m: Message }) {
   );
 }
 
+function ChatAdminLoading() {
+  const { t } = useTranslation("admin");
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label={t("common.loading")} />
+    </div>
+  );
+}
+
 export default function ChatAdminPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense fallback={<ChatAdminLoading />}>
       <ChatAdminInner />
     </Suspense>
   );

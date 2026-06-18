@@ -44,6 +44,10 @@
     "verificationFailed": "Verification failed. Please try again.",
     "backToSignIn": "Back to sign in",
     "pendingTitle": "You're on the list",
+    "tagline": "AI-powered application builder",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "footerAgree": "By continuing, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.",
     "oauthErrors": {
       "missing_tokens": "Authentication failed. Please try again.",
       "oauth_failed": "OAuth authentication failed. Please try again.",
@@ -51,6 +55,9 @@
       "missing_code": "Authentication code was missing. Please try again.",
       "no_email": "No email address associated with your account. Please try again.",
       "ACCOUNT_DENIED": "Your signup was not approved."
-    }
+    },
+    "authErrorTitle": "Authentication Error",
+    "tryAgain": "Try again",
+    "backToLogin": "Back to Login"
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Loader2, Search, Plus, GitBranch, AlertCircle, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { ToastContainer } from "@/components/ui/toast-container";
 import { TemplateCard as NewTemplateCard } from "@/components/templates/template-card";
@@ -19,9 +20,24 @@ import { CreateProjectDialog } from "@/modules/dashboard/components/create-proje
 import { apiCreateProject } from "@/lib/api";
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboard");
   const d = useDashboard();
   const shared = useMyShared();
   const [createOpen, setCreateOpen] = useState(false);
+
+  const breadcrumbFilter =
+    d.sidebarFilter === "starred"
+      ? t("dashboard.breadcrumb.starred")
+      : d.sidebarFilter === "created-by-me"
+        ? t("dashboard.breadcrumb.createdByMe")
+        : t("dashboard.breadcrumb.sharedWithMe");
+  const breadcrumbTitle =
+    d.sidebarFilter === "starred"
+      ? t("dashboard.breadcrumb.starredProjects")
+      : d.sidebarFilter === "created-by-me"
+        ? t("dashboard.breadcrumb.myProjects")
+        : t("dashboard.breadcrumb.sharedProjects");
+  const totalCount = d.activeTab === "recent" ? d.totalRecent : d.totalProjects;
 
   const SortIcon = ({ col }: { col: SortKey }) => {
     if (d.sortKey !== col) return <ArrowUpDown className="ml-1 h-3 w-3 opacity-30" />;
@@ -95,15 +111,15 @@ export default function DashboardPage() {
                   emitDashboardEvent(DASHBOARD_EVENTS.NAVIGATE_FILTER, "all");
                 }}
               >
-                Home
+                {t("common.home")}
               </button>
               <span className="text-muted-foreground">/</span>
               <span className="text-foreground font-medium">
-                {d.activeFolderName ?? (d.sidebarFilter === "starred" ? "Starred" : d.sidebarFilter === "created-by-me" ? "Created by me" : "Shared with me")}
+                {d.activeFolderName ?? breadcrumbFilter}
               </span>
             </div>
             <h1 className="text-2xl font-semibold text-foreground mt-2">
-              {d.activeFolderName ?? (d.sidebarFilter === "starred" ? "Starred Projects" : d.sidebarFilter === "created-by-me" ? "My Projects" : "Shared Projects")}
+              {d.activeFolderName ?? breadcrumbTitle}
             </h1>
           </div>
         )}
@@ -113,7 +129,7 @@ export default function DashboardPage() {
           <div className="mb-6 rounded-lg border border-red-800/50 bg-red-900/20 px-4 py-3 text-sm text-red-400 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {d.error}
-            <button onClick={() => { d.setError(null); d.fetchProjects(); }} className="ml-auto underline hover:text-red-300">Retry</button>
+            <button onClick={() => { d.setError(null); d.fetchProjects(); }} className="ml-auto underline hover:text-red-300">{t("common.retry")}</button>
           </div>
         )}
 
@@ -126,7 +142,7 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-1.5 rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-500 transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
-            New project
+            {t("dashboard.newProject")}
           </button>
         </div>
 
@@ -155,7 +171,7 @@ export default function DashboardPage() {
         {d.isLoading && d.activeTab !== "templates" && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-            <p className="text-sm text-muted-foreground">Loading projects...</p>
+            <p className="text-sm text-muted-foreground">{t("dashboard.loading.projects")}</p>
           </div>
         )}
 
@@ -191,17 +207,17 @@ export default function DashboardPage() {
                   <th className="w-10 px-1 py-3" />
                   <th className="px-3 py-3 text-left">
                     <button className="inline-flex items-center font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => d.handleSort("name")}>
-                      Name <SortIcon col="name" />
+                      {t("dashboard.table.name")} <SortIcon col="name" />
                     </button>
                   </th>
                   <th className="px-3 py-3 text-left">
                     <button className="inline-flex items-center font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => d.handleSort("status")}>
-                      Status <SortIcon col="status" />
+                      {t("dashboard.table.status")} <SortIcon col="status" />
                     </button>
                   </th>
                   <th className="px-3 py-3 text-left">
                     <button className="inline-flex items-center font-medium text-muted-foreground hover:text-foreground transition-colors" onClick={() => d.handleSort("updated_at")}>
-                      Updated <SortIcon col="updated_at" />
+                      {t("dashboard.table.updated")} <SortIcon col="updated_at" />
                     </button>
                   </th>
                   <th className="w-10 px-3 py-3" />
@@ -234,7 +250,7 @@ export default function DashboardPage() {
           d.isLoadingTemplates ? (
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
-              <p className="text-sm text-muted-foreground">Loading templates...</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.loading.templates")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -248,7 +264,7 @@ export default function DashboardPage() {
                 ))}
               {d.templates.length === 0 && (
                 <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-sm text-muted-foreground">No templates available.</p>
+                  <p className="text-sm text-muted-foreground">{t("dashboard.empty.noTemplates")}</p>
                 </div>
               )}
             </div>
@@ -264,24 +280,24 @@ export default function DashboardPage() {
                 : <Plus className="h-8 w-8 text-muted-foreground" />}
             </div>
             <h3 className="text-lg font-medium text-foreground mb-2">
-              {d.searchQuery ? "No projects found"
-                : d.statusFilter !== "all" || d.starredFilter ? "No matching projects"
-                : d.activeFolderId ? "This folder is empty"
-                : "No projects yet"}
+              {d.searchQuery ? t("dashboard.empty.noProjectsFound")
+                : d.statusFilter !== "all" || d.starredFilter ? t("dashboard.empty.noMatchingProjects")
+                : d.activeFolderId ? t("dashboard.empty.folderEmpty")
+                : t("dashboard.empty.noProjectsYet")}
             </h3>
             <p className="text-sm text-muted-foreground max-w-sm">
-              {d.searchQuery ? `No projects match "${d.searchQuery}". Try a different search.`
-                : d.statusFilter !== "all" || d.starredFilter ? "Try adjusting your filters."
-                : "Describe what you want to build in the chat above, or import an existing project from GitHub."}
+              {d.searchQuery ? t("dashboard.empty.noSearchMatch", { query: d.searchQuery })
+                : d.statusFilter !== "all" || d.starredFilter ? t("dashboard.empty.adjustFilters")
+                : t("dashboard.empty.getStarted")}
             </p>
             {!d.searchQuery && d.statusFilter === "all" && !d.starredFilter && !d.activeFolderId && (
               <button onClick={() => d.setShowImportGitHub(true)} className="mt-4 flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300 transition-colors">
-                <GitBranch className="h-3.5 w-3.5" /> Import from GitHub
+                <GitBranch className="h-3.5 w-3.5" /> {t("dashboard.empty.importFromGitHub")}
               </button>
             )}
             {(d.searchQuery || d.statusFilter !== "all" || d.starredFilter) && (
               <button onClick={() => { d.setSearchQuery(""); d.setStatusFilter("all"); d.setStarredFilter(false); }} className="mt-4 text-sm text-brand-400 hover:text-brand-300 transition-colors">
-                Clear all filters
+                {t("dashboard.empty.clearAllFilters")}
               </button>
             )}
           </div>
@@ -296,12 +312,15 @@ export default function DashboardPage() {
                 disabled={d.isLoadingMore}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-secondary px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-50"
               >
-                {d.isLoadingMore ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading...</> : "Load more"}
+                {d.isLoadingMore ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}</> : t("dashboard.pagination.loadMore")}
               </button>
             )}
             <span className="text-xs text-muted-foreground">
-              Showing {d.displayProjects.length} of {d.activeTab === "recent" ? d.totalRecent : d.totalProjects} project{(d.activeTab === "recent" ? d.totalRecent : d.totalProjects) !== 1 ? "s" : ""}
-              {d.searchQuery && ` matching "${d.searchQuery}"`}
+              {t("dashboard.pagination.showing", {
+                shown: d.displayProjects.length,
+                total: totalCount,
+                search: d.searchQuery,
+              })}
             </span>
           </div>
         )}

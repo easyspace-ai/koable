@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Trash2,
   Loader2,
@@ -30,6 +31,7 @@ export function InlineEdit({
   placeholder?: string;
   className?: string;
 }) {
+  const t = useTranslations("settings");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
@@ -42,8 +44,8 @@ export function InlineEdit({
 
   if (!editing) {
     return (
-      <button onClick={() => { setDraft(value); setEditing(true); }} className={cn("group/edit flex items-center gap-1 text-left rounded px-1 -mx-1 hover:bg-muted/60 min-w-0", className)} title="Click to edit">
-        <span className="truncate">{value || <span className="text-muted-foreground/50 italic">{placeholder ?? "Empty"}</span>}</span>
+      <button onClick={() => { setDraft(value); setEditing(true); }} className={cn("group/edit flex items-center gap-1 text-left rounded px-1 -mx-1 hover:bg-muted/60 min-w-0", className)} title={t("skillsRules.inlineEdit.clickToEdit")}>
+        <span className="truncate">{value || <span className="text-muted-foreground/50 italic">{placeholder ?? t("skillsRules.inlineEdit.empty")}</span>}</span>
         <Pencil className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40 opacity-0 group-hover/edit:opacity-100" />
       </button>
     );
@@ -89,6 +91,7 @@ export function SkillCard({
   onUpdate: (id: string, content: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const t = useTranslations("settings");
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -122,23 +125,23 @@ export function SkillCard({
             value={skill.skill_content}
             onSave={async (val) => onUpdate(skill.id, val)}
             multiline
-            placeholder="Skill content..."
+            placeholder={t("skillsRules.skillCard.contentPlaceholder")}
             className="text-xs"
           />
           <div className="flex justify-end">
             {confirmDelete ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Delete this skill?</span>
-                <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-0.5 text-xs hover:bg-muted">Cancel</button>
+                <span className="text-xs text-muted-foreground">{t("skillsRules.skillCard.deleteConfirm")}</span>
+                <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-0.5 text-xs hover:bg-muted">{t("skillsRules.skillCard.cancel")}</button>
                 <button onClick={handleDelete} disabled={deleting}
                   className="flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-xs text-destructive-foreground disabled:opacity-50">
-                  {deleting && <Loader2 className="h-3 w-3 animate-spin" />} Delete
+                  {deleting && <Loader2 className="h-3 w-3 animate-spin" />} {t("skillsRules.skillCard.delete")}
                 </button>
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)}
                 className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                <Trash2 className="h-3 w-3" /> Delete
+                <Trash2 className="h-3 w-3" /> {t("skillsRules.skillCard.delete")}
               </button>
             )}
           </div>
@@ -157,6 +160,7 @@ export function CreateSkillForm({
   onSubmit: (data: { skillName: string; skillContent: string }) => Promise<void>;
   onCancel: () => void;
 }) {
+  const t = useTranslations("settings");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
@@ -170,26 +174,26 @@ export function CreateSkillForm({
   return (
     <div className="rounded-lg border bg-muted/30">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold">New Skill</span>
+        <span className="text-xs font-semibold">{t("skillsRules.createSkill.title")}</span>
         <button onClick={onCancel} className="rounded-md p-1 hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
       </div>
       <div className="space-y-3 p-3">
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. React Best Practices" autoFocus
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("skillsRules.createSkill.nameLabel")}</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("skillsRules.createSkill.namePlaceholder")} autoFocus
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Content</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Describe what this skill teaches the AI..." rows={5}
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("skillsRules.createSkill.contentLabel")}</label>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t("skillsRules.createSkill.contentPlaceholder")} rows={5}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground resize-none" />
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">Cancel</button>
+          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">{t("skillsRules.createSkill.cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !name.trim() || !content.trim()}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
             {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-            <Save className="h-3 w-3" /> Create
+            <Save className="h-3 w-3" /> {t("skillsRules.createSkill.create")}
           </button>
         </div>
       </div>
@@ -208,6 +212,7 @@ export function RuleCard({
   onUpdate: (id: string, content: string, filePatterns?: string[]) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const t = useTranslations("settings");
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -244,7 +249,7 @@ export function RuleCard({
                 <Badge key={p} variant="secondary" className="text-[10px] font-mono">{p}</Badge>
               ))
             ) : (
-              <span className="text-[10px] text-muted-foreground/50 italic">No file patterns</span>
+              <span className="text-[10px] text-muted-foreground/50 italic">{t("skillsRules.ruleCard.noFilePatterns")}</span>
             )}
           </div>
           {!expanded && (
@@ -258,16 +263,16 @@ export function RuleCard({
           {/* File patterns editor */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">File Patterns</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t("skillsRules.ruleCard.filePatterns")}</span>
               <button onClick={() => { setPatternsDraft(rule.file_patterns.join(", ")); setEditingPatterns(!editingPatterns); }}
                 className="text-[10px] text-muted-foreground hover:text-foreground">
-                {editingPatterns ? "Cancel" : "Edit"}
+                {editingPatterns ? t("skillsRules.ruleCard.cancel") : t("skillsRules.ruleCard.edit")}
               </button>
             </div>
             {editingPatterns ? (
               <div className="flex items-center gap-1">
                 <input type="text" value={patternsDraft} onChange={(e) => setPatternsDraft(e.target.value)}
-                  placeholder="*.tsx, *.ts, src/**/*.js"
+                  placeholder={t("skillsRules.ruleCard.patternsPlaceholder")}
                   className="flex-1 rounded border border-ring bg-background px-1.5 py-0.5 text-xs font-mono outline-none min-w-0"
                   onKeyDown={(e) => { if (e.key === "Enter") void handleSavePatterns(); if (e.key === "Escape") setEditingPatterns(false); }} />
                 <button onClick={handleSavePatterns} disabled={savingPatterns} className="rounded bg-primary p-0.5 text-primary-foreground disabled:opacity-50">
@@ -281,7 +286,7 @@ export function RuleCard({
                     <Badge key={p} variant="secondary" className="text-[10px] font-mono">{p}</Badge>
                   ))
                 ) : (
-                  <span className="text-[10px] text-muted-foreground/50 italic">No file patterns — applies to all files</span>
+                  <span className="text-[10px] text-muted-foreground/50 italic">{t("skillsRules.ruleCard.noFilePatternsAllFiles")}</span>
                 )}
               </div>
             )}
@@ -289,12 +294,12 @@ export function RuleCard({
 
           {/* Content editor */}
           <div>
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Content</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{t("skillsRules.ruleCard.content")}</span>
             <InlineEdit
               value={rule.content}
               onSave={async (val) => onUpdate(rule.id, val)}
               multiline
-              placeholder="Rule content..."
+              placeholder={t("skillsRules.ruleCard.contentPlaceholder")}
               className="text-xs mt-1"
             />
           </div>
@@ -302,17 +307,17 @@ export function RuleCard({
           <div className="flex justify-end">
             {confirmDelete ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Delete this rule?</span>
-                <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-0.5 text-xs hover:bg-muted">Cancel</button>
+                <span className="text-xs text-muted-foreground">{t("skillsRules.ruleCard.deleteConfirm")}</span>
+                <button onClick={() => setConfirmDelete(false)} className="rounded border px-2 py-0.5 text-xs hover:bg-muted">{t("skillsRules.ruleCard.cancel")}</button>
                 <button onClick={handleDelete} disabled={deleting}
                   className="flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-xs text-destructive-foreground disabled:opacity-50">
-                  {deleting && <Loader2 className="h-3 w-3 animate-spin" />} Delete
+                  {deleting && <Loader2 className="h-3 w-3 animate-spin" />} {t("skillsRules.ruleCard.delete")}
                 </button>
               </div>
             ) : (
               <button onClick={() => setConfirmDelete(true)}
                 className="flex items-center gap-1 rounded px-2 py-0.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                <Trash2 className="h-3 w-3" /> Delete
+                <Trash2 className="h-3 w-3" /> {t("skillsRules.ruleCard.delete")}
               </button>
             )}
           </div>
@@ -331,6 +336,7 @@ export function CreateRuleForm({
   onSubmit: (data: { ruleName: string; content: string; filePatterns: string[] }) => Promise<void>;
   onCancel: () => void;
 }) {
+  const t = useTranslations("settings");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
   const [patterns, setPatterns] = useState("");
@@ -346,31 +352,31 @@ export function CreateRuleForm({
   return (
     <div className="rounded-lg border bg-muted/30">
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold">New Rule</span>
+        <span className="text-xs font-semibold">{t("skillsRules.createRule.title")}</span>
         <button onClick={onCancel} className="rounded-md p-1 hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
       </div>
       <div className="space-y-3 p-3">
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Name</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. TypeScript Conventions" autoFocus
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("skillsRules.createRule.nameLabel")}</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("skillsRules.createRule.namePlaceholder")} autoFocus
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">File Patterns <span className="font-normal text-muted-foreground">(comma-separated, optional)</span></label>
-          <input type="text" value={patterns} onChange={(e) => setPatterns(e.target.value)} placeholder="*.tsx, *.ts, src/**/*.js"
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("skillsRules.createRule.filePatternsLabel")} <span className="font-normal text-muted-foreground">{t("skillsRules.createRule.filePatternsOptional")}</span></label>
+          <input type="text" value={patterns} onChange={(e) => setPatterns(e.target.value)} placeholder={t("skillsRules.createRule.filePatternsPlaceholder")}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-muted-foreground mb-1">Content</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Describe the rule the AI should follow..." rows={5}
+          <label className="block text-xs font-medium text-muted-foreground mb-1">{t("skillsRules.createRule.contentLabel")}</label>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={t("skillsRules.createRule.contentPlaceholder")} rows={5}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground resize-none" />
         </div>
         <div className="flex justify-end gap-2">
-          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">Cancel</button>
+          <button onClick={onCancel} className="rounded-md border px-3 py-1.5 text-xs hover:bg-muted">{t("skillsRules.createRule.cancel")}</button>
           <button onClick={handleSubmit} disabled={saving || !name.trim() || !content.trim()}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
             {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-            <Save className="h-3 w-3" /> Create
+            <Save className="h-3 w-3" /> {t("skillsRules.createRule.create")}
           </button>
         </div>
       </div>

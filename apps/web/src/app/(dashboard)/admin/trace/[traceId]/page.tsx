@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Activity, Loader2, ShieldCheck, MessageSquare } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { FlameGraph, type Span } from "../_components/flame-graph";
 import { SpanDetail, type TraceLog } from "../_components/span-detail";
@@ -62,6 +63,7 @@ export default function TraceDetailPage({
 }) {
   const { traceId } = use(params);
   const router = useRouter();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
   const [bundle, setBundle] = useState<Bundle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,14 +80,13 @@ export default function TraceDetailPage({
         const res = await apiFetch<Bundle>(`/admin/traces/${traceId}`);
         if (!cancelled) {
           setBundle(res);
-          // auto-select root or first errored span
           const firstError = res.spans.find((s) => s.status_code === "ERROR");
           const root = res.spans.find((s) => !s.parent_span_id);
           setSelectedSpanId(firstError?.span_id ?? root?.span_id ?? res.spans[0]?.span_id ?? null);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load trace");
+          setError(err instanceof Error ? err.message : t("trace.detailLoadFailed"));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -95,7 +96,7 @@ export default function TraceDetailPage({
     return () => {
       cancelled = true;
     };
-  }, [isPlatformAdmin, traceId]);
+  }, [isPlatformAdmin, traceId, t]);
 
   if (adminLoading) {
     return (
@@ -108,9 +109,9 @@ export default function TraceDetailPage({
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
         <ShieldCheck className="h-12 w-12" />
-        <p className="font-medium text-foreground">Platform admin access required</p>
+        <p className="font-medium text-foreground">{t("trace.accessRequired")}</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> {t("page.backToDashboard")}
         </Button>
       </div>
     );
@@ -130,10 +131,10 @@ export default function TraceDetailPage({
           href="/admin/trace"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to search
+          <ArrowLeft className="h-3.5 w-3.5" /> {t("trace.backToSearch")}
         </Link>
         <div className="mt-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          {error ?? "Trace not found"}
+          {error ?? t("trace.notFound")}
         </div>
       </div>
     );
@@ -151,30 +152,42 @@ export default function TraceDetailPage({
             href="/admin/trace"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Trace search
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("trace.searchTitle")}
           </Link>
         </div>
         <h1 className="mb-1 flex items-center gap-2 text-xl font-bold text-foreground">
           <Activity className="h-5 w-5 text-brand-400" />
           {trace.root_span_name ?? trace.trace_id}
         </h1>
-        <p className="mb-4 font-mono text-xs text-muted-foreground">trace_id: {trace.trace_id}</p>
+        <p className="mb-4 font-mono text-xs text-muted-foreground">
+          {t("trace.traceIdLabel", { id: trace.trace_id })}
+        </p>
 
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="Status" value={trace.status} highlight={trace.status === "error"} />
-          <Stat label="Duration" value={trace.duration_ms != null ? `${trace.duration_ms}ms` : "—"} />
-          <Stat label="Spans" value={String(trace.span_count)} />
-          <Stat label="Errors" value={String(trace.error_count)} highlight={trace.error_count > 0} />
-          <Stat label="Started" value={new Date(trace.started_at).toLocaleString()} />
-          <Stat label="Services" value={(trace.services ?? []).join(", ") || "—"} />
-          <Stat label="User" value={trace.user_id ? short(trace.user_id) : "—"} />
-          <Stat label="Workspace" value={trace.workspace_id ? short(trace.workspace_id) : "—"} />
+          <Stat label={t("trace.statsStatus")} value={trace.status} highlight={trace.status === "error"} />
+          <Stat
+            label={t("trace.statsDuration")}
+            value={trace.duration_ms != null ? `${trace.duration_ms}ms` : "—"}
+          />
+          <Stat label={t("trace.statsSpans")} value={String(trace.span_count)} />
+          <Stat
+            label={t("trace.statsErrors")}
+            value={String(trace.error_count)}
+            highlight={trace.error_count > 0}
+          />
+          <Stat label={t("trace.statsStarted")} value={new Date(trace.started_at).toLocaleString()} />
+          <Stat label={t("trace.statsServices")} value={(trace.services ?? []).join(", ") || "—"} />
+          <Stat label={t("trace.statsUser")} value={trace.user_id ? short(trace.user_id) : "—"} />
+          <Stat
+            label={t("trace.statsWorkspace")}
+            value={trace.workspace_id ? short(trace.workspace_id) : "—"}
+          />
         </div>
 
         {chatTrace && (
           <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-500/40 bg-brand-500/10 px-4 py-2 text-sm text-brand-200">
             <MessageSquare className="h-4 w-4" />
-            <span>Linked chat trace:</span>
+            <span>{t("trace.linkedChat")}</span>
             <Link
               href={`/admin/chat-trace/${chatTrace.id}`}
               className="font-mono text-xs underline hover:text-brand-100"
@@ -183,14 +196,14 @@ export default function TraceDetailPage({
             </Link>
             {chatTrace.session_id && (
               <span className="font-mono text-[11px] text-brand-300/80">
-                session: {short(chatTrace.session_id)}
+                {t("trace.sessionLabel", { id: short(chatTrace.session_id) })}
               </span>
             )}
           </div>
         )}
 
         <div className="mb-6">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Flame graph</h2>
+          <h2 className="mb-2 text-sm font-semibold text-foreground">{t("trace.flameGraph")}</h2>
           <FlameGraph
             spans={spans}
             traceStartedAt={trace.started_at}
@@ -202,16 +215,16 @@ export default function TraceDetailPage({
 
         <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-foreground">All logs</h2>
+            <h2 className="mb-2 text-sm font-semibold text-foreground">{t("trace.allLogs")}</h2>
             <LogsPanel logs={logs} />
           </div>
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-foreground">Span detail</h2>
+            <h2 className="mb-2 text-sm font-semibold text-foreground">{t("trace.spanDetail")}</h2>
             {selectedSpan ? (
               <SpanDetail span={selectedSpan} logs={logs} />
             ) : (
               <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-                Click a span in the flame graph to inspect.
+                {t("trace.clickSpanHint")}
               </p>
             )}
           </div>
@@ -231,10 +244,12 @@ function Stat({ label, value, highlight }: { label: string; value: string; highl
 }
 
 function LogsPanel({ logs }: { logs: TraceLog[] }) {
+  const { t } = useTranslation("admin");
+
   if (logs.length === 0) {
     return (
       <p className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
-        No correlated logs.
+        {t("trace.noLogs")}
       </p>
     );
   }

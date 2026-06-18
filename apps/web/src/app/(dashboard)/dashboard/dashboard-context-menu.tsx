@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   ExternalLink,
   Pencil,
@@ -32,6 +33,8 @@ export function ContextMenuPortal({
   onDelete: () => void;
   onHide: () => void;
 }) {
+  const t = useTranslations("dashboard");
+
   if (!menu.visible || !project) return null;
 
   return (
@@ -41,23 +44,23 @@ export function ContextMenuPortal({
       onClick={(e) => e.stopPropagation()}
     >
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => { onOpen(); onHide(); }}>
-        <ExternalLink className="h-3.5 w-3.5" /> Open in editor
+        <ExternalLink className="h-3.5 w-3.5" /> {t("dashboard.contextMenu.openInEditor")}
       </button>
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => { onRename(); onHide(); }}>
-        <Pencil className="h-3.5 w-3.5" /> Rename
+        <Pencil className="h-3.5 w-3.5" /> {t("common.rename")}
       </button>
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => { onDuplicate(); onHide(); }}>
-        <Copy className="h-3.5 w-3.5" /> Duplicate
+        <Copy className="h-3.5 w-3.5" /> {t("dashboard.contextMenu.duplicate")}
       </button>
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => { onMoveToFolder(); onHide(); }}>
-        <FolderInput className="h-3.5 w-3.5" /> Move to folder
+        <FolderInput className="h-3.5 w-3.5" /> {t("dashboard.dialogs.moveToFolder")}
       </button>
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors" onClick={() => { onStar(); onHide(); }}>
-        <Star className={`h-3.5 w-3.5 ${project.starred ? "fill-yellow-400 text-yellow-400" : ""}`} /> {project.starred ? "Unstar" : "Star"}
+        <Star className={`h-3.5 w-3.5 ${project.starred ? "fill-yellow-400 text-yellow-400" : ""}`} /> {project.starred ? t("dashboard.contextMenu.unstar") : t("dashboard.contextMenu.star")}
       </button>
       <div className="my-1 h-px bg-border" />
       <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors" onClick={() => { onDelete(); onHide(); }}>
-        <Trash2 className="h-3.5 w-3.5" /> Delete
+        <Trash2 className="h-3.5 w-3.5" /> {t("common.delete")}
       </button>
     </div>
   );

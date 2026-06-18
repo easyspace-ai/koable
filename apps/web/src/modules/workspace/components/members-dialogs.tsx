@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Mail,
@@ -15,20 +16,11 @@ import type { WorkspaceMemberData } from "../hooks/use-workspace-members";
 
 const ASSIGNABLE_ROLES = ["admin", "member", "viewer"] as const;
 
-const ROLE_LABELS: Record<string, string> = {
-  owner: "Owner",
-  admin: "Admin",
-  member: "Member",
-  viewer: "Viewer",
-};
-
 const ROLE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   admin: Shield,
   member: Users,
   viewer: Eye,
 };
-
-// ─── InviteDialog ───────────────────────────────────────────
 
 export function InviteDialog({
   open,
@@ -39,6 +31,7 @@ export function InviteDialog({
   onClose: () => void;
   onInvite: (email: string, role: string) => Promise<void>;
 }) {
+  const t = useTranslations("dashboard");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("member");
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +49,7 @@ export function InviteDialog({
       setRole("member");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send invite");
+      setError(err instanceof Error ? err.message : t("workspace.members.sendFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -67,15 +60,17 @@ export function InviteDialog({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
         <div className="mb-5">
-          <h3 className="text-lg font-semibold">Invite Member</h3>
+          <h3 className="text-lg font-semibold">{t("workspace.members.inviteDialogTitle")}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Send an invite to join this workspace.
+            {t("workspace.members.inviteDialogDescription")}
           </p>
         </div>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="invite-email" className="text-sm font-medium">Email address</label>
+            <label htmlFor="invite-email" className="text-sm font-medium">
+              {t("workspace.members.emailAddress")}
+            </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -83,7 +78,7 @@ export function InviteDialog({
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="colleague@example.com"
+                placeholder={t("workspace.danger.emailPlaceholder")}
                 autoFocus
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -92,7 +87,7 @@ export function InviteDialog({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Role</label>
+            <label className="text-sm font-medium">{t("workspace.members.role")}</label>
             <div className="flex gap-2">
               {ASSIGNABLE_ROLES.map((r) => {
                 const Icon = ROLE_ICONS[r] ?? Users;
@@ -108,7 +103,7 @@ export function InviteDialog({
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />
-                    {ROLE_LABELS[r]}
+                    {t(`workspace.members.roles.${r}`)}
                   </button>
                 );
               })}
@@ -123,7 +118,7 @@ export function InviteDialog({
             onClick={onClose}
             className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => void handleSubmit()}
@@ -135,15 +130,13 @@ export function InviteDialog({
             ) : (
               <UserPlus className="h-4 w-4" />
             )}
-            {submitting ? "Sending..." : "Send Invite"}
+            {submitting ? t("workspace.members.sending") : t("workspace.members.sendInvite")}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-// ─── RemoveConfirmDialog ────────────────────────────────────
 
 export function RemoveConfirmDialog({
   member,
@@ -154,6 +147,7 @@ export function RemoveConfirmDialog({
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
+  const t = useTranslations("dashboard");
   const [removing, setRemoving] = useState(false);
 
   const handleRemove = async () => {
@@ -173,11 +167,9 @@ export function RemoveConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-sm rounded-xl border bg-background p-6 shadow-xl">
-        <h3 className="text-lg font-semibold">Remove Member</h3>
+        <h3 className="text-lg font-semibold">{t("workspace.members.removeTitle")}</h3>
         <p className="mt-2 text-sm text-muted-foreground">
-          Are you sure you want to remove{" "}
-          <strong className="text-foreground">{displayName}</strong>{" "}
-          from this workspace? They will lose access to all projects.
+          {t("workspace.members.removeConfirm", { name: displayName })}
         </p>
 
         <div className="mt-6 flex justify-end gap-2">
@@ -185,7 +177,7 @@ export function RemoveConfirmDialog({
             onClick={onClose}
             className="rounded-md border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => void handleRemove()}
@@ -197,7 +189,7 @@ export function RemoveConfirmDialog({
             ) : (
               <Trash2 className="h-4 w-4" />
             )}
-            {removing ? "Removing..." : "Remove"}
+            {removing ? t("workspace.members.removing") : t("workspace.members.remove")}
           </button>
         </div>
       </div>

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 
 // ─── Thumbnails Panel ────────────────────────────────────────
 
@@ -40,6 +41,7 @@ interface GenerateResult {
 }
 
 export function ThumbnailsPanel() {
+  const { t } = useTranslation("admin");
   const [logs, setLogs] = useState<ThumbnailLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -87,32 +89,32 @@ export function ThumbnailsPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-muted-foreground">Generate missing project thumbnails and view the generation log.</p>
+          <p className="text-xs text-muted-foreground">{t("thumbnails.description")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button onClick={handleGenerateMissing} disabled={generating} className="gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm">
-            {generating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Play className="h-4 w-4" /> Generate Missing Thumbnails</>}
+            {generating ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("thumbnails.generating")}</> : <><Play className="h-4 w-4" /> {t("thumbnails.generateMissing")}</>}
           </Button>
           <Button onClick={fetchLogs} variant="outline" className="gap-2 text-sm">
-            <RotateCcw className="h-3.5 w-3.5" /> Refresh
+            <RotateCcw className="h-3.5 w-3.5" /> {t("common.refresh")}
           </Button>
         </div>
       </div>
       {result && (
         <div className="rounded-lg border border-brand-800/50 bg-brand-900/20 px-4 py-3 text-sm">
           <p className="text-brand-300 font-medium">{result.message}</p>
-          <p className="text-muted-foreground text-xs mt-1">Total projects: {result.total} | Missing: {result.missing} | Queued: {result.queued}</p>
+          <p className="text-muted-foreground text-xs mt-1">{t("thumbnails.resultStats", { total: result.total, missing: result.missing, queued: result.queued })}</p>
         </div>
       )}
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="bg-card px-4 py-2.5 border-b border-border flex items-center justify-between">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Generation Log</h3>
-          <span className="text-xs text-muted-foreground">{logs.length} entries</span>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("thumbnails.generationLog")}</h3>
+          <span className="text-xs text-muted-foreground">{t("thumbnails.entries", { count: logs.length })}</span>
         </div>
         {loading ? (
           <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
         ) : logs.length === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground">No thumbnail generation logs yet. Click &quot;Generate Missing Thumbnails&quot; to start.</div>
+          <div className="text-center py-8 text-sm text-muted-foreground">{t("thumbnails.empty")}</div>
         ) : (
           <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
             {logs.map((log) => (
@@ -196,6 +198,7 @@ function formatUptime(seconds: number): string {
 }
 
 export function CopilotSessionsPanel() {
+  const { t } = useTranslation("admin");
   const [data, setData] = useState<CopilotSessionsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -209,7 +212,7 @@ export function CopilotSessionsPanel() {
       setError(null);
     } catch (e) {
       console.error("Failed to fetch copilot sessions:", e);
-      if (!data) setError(e instanceof Error ? e.message : "Failed to load sessions");
+      if (!data) setError(e instanceof Error ? e.message : t("copilotSessions.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -253,9 +256,9 @@ export function CopilotSessionsPanel() {
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-3">
         <AlertTriangle className="h-5 w-5 text-amber-400" />
-        <p className="text-sm text-muted-foreground">{error ?? "No session data available"}</p>
+        <p className="text-sm text-muted-foreground">{error ?? t("copilotSessions.noData")}</p>
         <Button onClick={() => { setLoading(true); setError(null); fetchSessions(); }} variant="outline" className="gap-2 text-sm">
-          <RotateCcw className="h-3.5 w-3.5" /> Retry
+          <RotateCcw className="h-3.5 w-3.5" /> {t("copilotSessions.retry")}
         </Button>
       </div>
     );
@@ -265,29 +268,29 @@ export function CopilotSessionsPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-brand-400" /><span className="text-foreground font-medium">{data.poolSize}</span>/{data.maxEngines} engines</span>
-          <span>RSS <span className="text-foreground font-medium">{formatBytes(data.processMemory.rss)}</span></span>
-          <span>Heap <span className="text-foreground font-medium">{formatBytes(data.processMemory.heapUsed)}</span> / {formatBytes(data.processMemory.heapTotal)}</span>
-          <span>Uptime <span className="text-foreground font-medium">{formatUptime(data.uptime)}</span></span>
+          <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-brand-400" />{t("copilotSessions.engines", { pool: data.poolSize, max: data.maxEngines })}</span>
+          <span>{t("copilotSessions.rss")} <span className="text-foreground font-medium">{formatBytes(data.processMemory.rss)}</span></span>
+          <span>{t("copilotSessions.heap")} <span className="text-foreground font-medium">{formatBytes(data.processMemory.heapUsed)}</span> / {formatBytes(data.processMemory.heapTotal)}</span>
+          <span>{t("copilotSessions.uptime")} <span className="text-foreground font-medium">{formatUptime(data.uptime)}</span></span>
         </div>
         <div className="flex items-center gap-2">
           {data.poolSize > 0 && (
             <Button onClick={handleTerminateAll} disabled={terminatingAll} variant="outline" className="gap-2 text-sm border-red-800/50 text-red-400 hover:bg-red-900/20 hover:text-red-300">
-              {terminatingAll ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Stopping...</> : <><Square className="h-3.5 w-3.5" /> Stop All Engines</>}
+              {terminatingAll ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("copilotSessions.stopping")}</> : <><Square className="h-3.5 w-3.5" /> {t("copilotSessions.stopAll")}</>}
             </Button>
           )}
           <Button onClick={fetchSessions} variant="outline" className="gap-2 text-sm">
-            <RotateCcw className="h-3.5 w-3.5" /> Refresh
+            <RotateCcw className="h-3.5 w-3.5" /> {t("common.refresh")}
           </Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Auto-refreshes every 5 seconds. Each engine is a per-project Copilot CLI subprocess.</p>
+      <p className="text-xs text-muted-foreground">{t("copilotSessions.autoRefreshHint")}</p>
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="bg-card px-4 py-2.5 border-b border-border">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Engines</h3>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("copilotSessions.activeEngines")}</h3>
         </div>
         {data.engines.length === 0 ? (
-          <div className="text-center py-10 text-sm text-muted-foreground">No active Copilot engines. Sessions start when users interact with AI in the editor.</div>
+          <div className="text-center py-10 text-sm text-muted-foreground">{t("copilotSessions.noEngines")}</div>
         ) : (
           <div className="divide-y divide-border">
             {data.engines.map((engine) => (
@@ -296,7 +299,7 @@ export function CopilotSessionsPanel() {
                   <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${engine.activeRequests > 0 ? "bg-green-500 animate-pulse" : "bg-muted"}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground font-medium truncate">{engine.projectName ?? "Unknown Project"}</span>
+                      <span className="text-sm text-foreground font-medium truncate">{engine.projectName ?? t("copilotSessions.unknownProject")}</span>
                       <span className="text-[10px] text-muted-foreground font-mono">{engine.projectId.slice(0, 8)}</span>
                     </div>
                     {engine.chatSessions.length > 0 && (
@@ -311,13 +314,13 @@ export function CopilotSessionsPanel() {
                     )}
                   </div>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-                    <span title="Active requests">{engine.activeRequests > 0 ? <span className="text-green-400 font-medium">{engine.activeRequests} active</span> : <span className="text-muted-foreground">idle</span>}</span>
-                    <span title="Sessions">{engine.sessionCount} sess</span>
-                    <span title="Engine age">age {formatDuration(engine.ageMs)}</span>
-                    <span title="Time since last use">idle {formatDuration(engine.idleMs)}</span>
+                    <span title={t("copilotSessions.titleActiveRequests")}>{engine.activeRequests > 0 ? <span className="text-green-400 font-medium">{t("copilotSessions.activeRequests", { count: engine.activeRequests })}</span> : <span className="text-muted-foreground">{t("copilotSessions.idle")}</span>}</span>
+                    <span title={t("copilotSessions.titleSessions")}>{t("copilotSessions.sessions", { count: engine.sessionCount })}</span>
+                    <span title={t("copilotSessions.titleEngineAge")}>{t("copilotSessions.age", { duration: formatDuration(engine.ageMs) })}</span>
+                    <span title={t("copilotSessions.titleTimeSinceLastUse")}>{t("copilotSessions.idleDuration", { duration: formatDuration(engine.idleMs) })}</span>
                   </div>
                   <Button onClick={() => handleTerminate(engine.projectId)} disabled={terminating.has(engine.projectId)} variant="outline" className="gap-1.5 text-xs border-red-900/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 h-7 px-2">
-                    {terminating.has(engine.projectId) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />} Kill
+                    {terminating.has(engine.projectId) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />} {t("copilotSessions.kill")}
                   </Button>
                 </div>
               </div>

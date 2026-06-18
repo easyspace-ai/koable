@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   Server,
   ExternalLink,
@@ -21,6 +22,7 @@ import { SectionCard } from "./project-settings-shared";
 // ═══════════════════════════════════════════════════════════════
 
 export function EnvironmentsTab({ project }: { project: ApiProject }) {
+  const t = useTranslations("settings");
   const [environments, setEnvironments] = useState<Array<{
     id: string; name: string; icon: string; color: string; description: string;
     is_template: boolean; created_at: string;
@@ -53,17 +55,17 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
 
   const deployEnvs = [
     {
-      name: "Production",
+      name: t("environmentsTab.deployment.production.name"),
       status: "active" as const,
       url: `${project.slug}.doable.me`,
-      description: "Live site accessible to all visitors",
+      description: t("environmentsTab.deployment.production.description"),
       lastDeployed: project.updated_at,
     },
     {
-      name: "Preview",
+      name: t("environmentsTab.deployment.preview.name"),
       status: "active" as const,
       url: `preview-${project.slug}.doable.me`,
-      description: "Test changes before publishing to production",
+      description: t("environmentsTab.deployment.preview.description"),
       lastDeployed: null,
     },
   ];
@@ -72,8 +74,8 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
     <div className="space-y-6">
       {/* Per-Project Environment Override */}
       <SectionCard
-        title="Project Environment"
-        description="Override the workspace default environment for this project. The AI will use this environment's skills, rules, knowledge, and connectors."
+        title={t("environmentsTab.projectEnvironment.title")}
+        description={t("environmentsTab.projectEnvironment.description")}
       >
         {loading ? (
           <div className="flex items-center justify-center py-4">
@@ -81,7 +83,7 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
           </div>
         ) : environments.length === 0 ? (
           <p className="text-xs text-muted-foreground py-2">
-            No environments in this workspace yet. Create one from the Environments panel.
+            {t("environmentsTab.projectEnvironment.noEnvironments")}
           </p>
         ) : (
           <div className="space-y-3">
@@ -111,7 +113,7 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
                 }}
                 className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               >
-                <option value="">Use workspace default</option>
+                <option value="">{t("environmentsTab.projectEnvironment.useDefault")}</option>
                 {environments.map((env) => (
                   <option key={env.id} value={env.id}>
                     {env.icon} {env.name}
@@ -120,12 +122,12 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
               </select>
               {projectEnvId && (
                 <p className="text-xs text-muted-foreground">
-                  This project uses a custom environment override. The workspace default is bypassed.
+                  {t("environmentsTab.projectEnvironment.overrideActive")}
                 </p>
               )}
               {!projectEnvId && (
                 <p className="text-xs text-muted-foreground">
-                  Inheriting from workspace default. Select an environment above to override.
+                  {t("environmentsTab.projectEnvironment.inheritingDefault")}
                 </p>
               )}
             </div>
@@ -135,8 +137,8 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
 
       {/* Environment Presets */}
       <SectionCard
-        title="Environment Presets"
-        description="Reusable bundles of skills, instructions, MCPs, and integrations applied to this workspace."
+        title={t("environmentsTab.presets.title")}
+        description={t("environmentsTab.presets.description")}
       >
         {loading ? (
           <div className="flex items-center justify-center py-6">
@@ -145,9 +147,9 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
         ) : environments.length === 0 ? (
           <div className="flex flex-col items-center rounded-lg border-2 border-dashed p-8 text-center">
             <Server className="mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm font-medium">No environment presets</p>
+            <p className="text-sm font-medium">{t("environmentsTab.presets.emptyTitle")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Create environment presets from the editor&apos;s Environments panel.
+              {t("environmentsTab.presets.emptyDescription")}
             </p>
           </div>
         ) : (
@@ -172,8 +174,8 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
 
       {/* Deployment Environments */}
       <SectionCard
-        title="Deployment"
-        description="Deployment environments for publishing your project."
+        title={t("environmentsTab.deployment.title")}
+        description={t("environmentsTab.deployment.description")}
       >
         <div className="space-y-3">
           {deployEnvs.map((env) => (
@@ -193,7 +195,7 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
                           : "bg-muted text-muted-foreground"
                       )}
                     >
-                      {env.status}
+                      {t("environmentsTab.deployment.statusActive")}
                     </span>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -204,12 +206,13 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
                   </p>
                   {env.lastDeployed && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Last deployed:{" "}
-                      {new Date(env.lastDeployed).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
+                      {t("environmentsTab.deployment.lastDeployed", {
+                        date: new Date(env.lastDeployed).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }),
                       })}
                     </p>
                   )}
@@ -220,7 +223,7 @@ export function EnvironmentsTab({ project }: { project: ApiProject }) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                 >
-                  Visit
+                  {t("environmentsTab.deployment.visit")}
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>

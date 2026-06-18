@@ -11,14 +11,6 @@ export type SortDir = "asc" | "desc";
 
 export const VIEW_MODE_KEY = "doable_dashboard_view";
 
-export const GREETINGS = [
-  "Let's make it Doable",
-  "What's Doable today",
-  "Ready to get it done",
-  "Dream it. Do it",
-  "What will you ship",
-];
-
 export const PROJECT_GRADIENTS = [
   "from-brand-500/20 to-brand-600/20",
   "from-blue-500/20 to-cyan-600/20",
@@ -51,39 +43,35 @@ export const TEMPLATE_CATEGORY_COLORS: Record<string, { bg: string; accent: stri
   portfolio: { bg: "bg-indigo-50", accent: "bg-indigo-100", highlight: "bg-indigo-200" },
 };
 
-export const STATUS_STYLES: Record<string, { label: string; className: string }> = {
-  published: {
-    label: "Published",
-    className: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  },
-  draft: {
-    label: "Draft",
-    className: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
-  },
-  creating: {
-    label: "Creating",
-    className: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  },
-  error: {
-    label: "Error",
-    className: "bg-red-500/10 text-red-400 border-red-500/20",
-  },
+const STATUS_CLASS_NAMES: Record<string, string> = {
+  published: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  draft: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  creating: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  error: "bg-red-500/10 text-red-400 border-red-500/20",
 };
 
-export const DASHBOARD_SUGGESTIONS = [
-  "Build a SaaS landing page with pricing...",
-  "Create a portfolio website with animations...",
-  "Design a task management app...",
-  "Make an e-commerce store with checkout...",
-  "Build a social media dashboard...",
-  "Create a recipe sharing platform...",
-  "Design a fitness tracking app...",
-  "Build a blog with markdown support...",
-  "Create a real-time chat application...",
-  "Make an invoice management system...",
-];
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  published: "dashboard.toolbar.published",
+  draft: "dashboard.toolbar.draft",
+  creating: "dashboard.status.creating",
+  error: "dashboard.toolbar.error",
+};
+
+export function getProjectStatusStyle(
+  status: string,
+  t: RelativeTimeTranslate,
+): { label: string; className: string } {
+  const className = STATUS_CLASS_NAMES[status] ?? STATUS_CLASS_NAMES.draft!;
+  const labelKey = STATUS_LABEL_KEYS[status] ?? STATUS_LABEL_KEYS.draft!;
+  return { label: t(labelKey), className };
+}
 
 // ─── Helper Functions ───────────────────────────────────────
+
+export type RelativeTimeTranslate = (
+  key: string,
+  values?: { count?: number },
+) => string;
 
 export function getProjectColorIndex(name: string): number {
   let hash = 0;
@@ -97,7 +85,11 @@ export function getTemplateCategoryColors(category: string) {
   return TEMPLATE_CATEGORY_COLORS[category] ?? { bg: "bg-gray-50", accent: "bg-gray-100", highlight: "bg-gray-200" };
 }
 
-export function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(
+  dateStr: string,
+  locale: string,
+  t: RelativeTimeTranslate,
+): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -107,16 +99,16 @@ export function formatRelativeTime(dateStr: string): string {
   const diffDays = Math.floor(diffHours / 24);
   const diffWeeks = Math.floor(diffDays / 7);
 
-  if (diffSec < 60) return "Just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffWeeks < 5) return `${diffWeeks}w ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (diffSec < 60) return t("dashboard.time.justNow");
+  if (diffMin < 60) return t("dashboard.time.minutesAgo", { count: diffMin });
+  if (diffHours < 24) return t("dashboard.time.hoursAgo", { count: diffHours });
+  if (diffDays < 7) return t("dashboard.time.daysAgo", { count: diffDays });
+  if (diffWeeks < 5) return t("dashboard.time.weeksAgo", { count: diffWeeks });
+  return date.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
-export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+export function formatDate(dateStr: string, locale: string): string {
+  return new Date(dateStr).toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",

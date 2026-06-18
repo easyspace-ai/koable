@@ -6,6 +6,7 @@ import {
   AlertTriangle, HelpCircle,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 
 interface KnownTool {
   name: string;
@@ -22,6 +23,7 @@ interface ModeToolConfig {
 }
 
 export function ToolsConfigPanel() {
+  const { t } = useTranslation("admin");
   const [modes, setModes] = useState<ModeToolConfig[]>([]);
   const [knownTools, setKnownTools] = useState<KnownTool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,12 @@ export function ToolsConfigPanel() {
     });
   }
 
+  function getModeLabel(mode: string): string {
+    if (mode === "plan") return t("toolsConfig.modeLabels.plan");
+    if (mode === "build") return t("toolsConfig.modeLabels.build");
+    return mode.charAt(0).toUpperCase() + mode.slice(1);
+  }
+
   async function saveMode() {
     if (!editingMode) return;
     setSaving(true);
@@ -74,7 +82,7 @@ export function ToolsConfigPanel() {
           description: editDescription || null,
         }),
       });
-      setSuccessMsg(`Saved "${editingMode}" mode tools`);
+      setSuccessMsg(t("toolsConfig.toast.saved", { mode: editingMode }));
       setTimeout(() => setSuccessMsg(null), 3000);
       setEditingMode(null);
       await load();
@@ -100,7 +108,6 @@ export function ToolsConfigPanel() {
       setAddingMode(false);
       setNewModeName("");
       await load();
-      // Auto-open for editing
       const loaded = await apiFetch<{ modes: ModeToolConfig[]; knownTools: KnownTool[] }>("/admin/tools/modes");
       const newMode = loaded.modes.find(m => m.mode === name);
       if (newMode) startEdit(newMode);
@@ -112,10 +119,10 @@ export function ToolsConfigPanel() {
   }
 
   async function deleteMode(mode: string) {
-    if (!confirm(`Delete the "${mode}" mode configuration? This will cause the mode to use hardcoded defaults.`)) return;
+    if (!confirm(t("toolsConfig.confirm.delete", { mode }))) return;
     try {
       await apiFetch(`/admin/tools/modes/${mode}`, { method: "DELETE" });
-      setSuccessMsg(`Deleted "${mode}" mode`);
+      setSuccessMsg(t("toolsConfig.toast.deleted", { mode }));
       setTimeout(() => setSuccessMsg(null), 3000);
       if (editingMode === mode) setEditingMode(null);
       await load();
@@ -128,19 +135,16 @@ export function ToolsConfigPanel() {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
 
-  const doableTools = knownTools.filter(t => t.category === "doable");
-  const sdkTools = knownTools.filter(t => t.category === "sdk");
+  const doableTools = knownTools.filter(tool => tool.category === "doable");
+  const sdkTools = knownTools.filter(tool => tool.category === "sdk");
 
   return (
     <div className="space-y-5">
-      {/* Help text */}
       <div className="rounded-lg border border-border bg-card px-4 py-3">
         <div className="flex items-start gap-2.5">
           <HelpCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Configure which tools are available in each AI mode. <strong className="text-foreground">Strategize</strong> (plan mode) typically
-            uses read-only tools for analysis. <strong className="text-foreground">Build</strong> mode has full file creation and editing tools.
-            Changes take effect on new sessions within 60 seconds.
+            {t("toolsConfig.help")}
           </p>
         </div>
       </div>
@@ -152,15 +156,13 @@ export function ToolsConfigPanel() {
         </div>
       )}
 
-      {/* Mode cards */}
       <div className="space-y-3">
         {modes.map(mode => {
           const isEditing = editingMode === mode.mode;
-          const modeLabel = mode.mode === "plan" ? "Strategize" : mode.mode === "build" ? "Build" : mode.mode.charAt(0).toUpperCase() + mode.mode.slice(1);
+          const modeLabel = getModeLabel(mode.mode);
 
           return (
             <div key={mode.mode} className="rounded-lg border border-border bg-card">
-              {/* Mode header */}
               <div className="flex items-center gap-3 px-4 py-3">
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
                   mode.mode === "plan" ? "bg-purple-600/20" : "bg-brand-600/20"
@@ -171,7 +173,9 @@ export function ToolsConfigPanel() {
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium text-foreground">{modeLabel}</h3>
                     <code className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">{mode.mode}</code>
-                    <span className="text-[10px] text-muted-foreground">{mode.allowed_tools.length} tools</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {t("toolsConfig.toolsCount", { count: mode.allowed_tools.length })}
+                    </span>
                   </div>
                   {mode.description && <p className="text-xs text-muted-foreground mt-0.5">{mode.description}</p>}
                 </div>
@@ -179,19 +183,19 @@ export function ToolsConfigPanel() {
                   {!isEditing && (
                     <button onClick={() => startEdit(mode)}
                       className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors">
-                      <Wrench className="h-3 w-3" /> Configure
+                      <Wrench className="h-3 w-3" /> {t("toolsConfig.actions.configure")}
                     </button>
                   )}
                   {mode.mode !== "plan" && mode.mode !== "build" && (
                     <button onClick={() => deleteMode(mode.mode)}
-                      className="rounded p-1.5 text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors" title="Delete mode">
+                      className="rounded p-1.5 text-muted-foreground hover:text-red-400 hover:bg-secondary transition-colors"
+                      title={t("toolsConfig.actions.deleteMode")}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Current tools (when not editing) */}
               {!isEditing && (
                 <div className="border-t border-border px-4 py-3">
                   <div className="flex flex-wrap gap-1.5">
@@ -201,25 +205,23 @@ export function ToolsConfigPanel() {
                       </span>
                     ))}
                     {mode.allowed_tools.length === 0 && (
-                      <span className="text-xs text-muted-foreground italic">No tools configured — will use hardcoded defaults</span>
+                      <span className="text-xs text-muted-foreground italic">{t("toolsConfig.emptyTools")}</span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Edit panel */}
               {isEditing && (
                 <div className="border-t border-border px-4 py-4 space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Description</label>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">{t("toolsConfig.form.description")}</label>
                     <input type="text" value={editDescription} onChange={e => setEditDescription(e.target.value)}
-                      placeholder="e.g. Read-only planning tools"
+                      placeholder={t("toolsConfig.form.descriptionPlaceholder")}
                       className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
                   </div>
 
-                  {/* Doable tools */}
                   <div>
-                    <h4 className="text-xs font-medium text-foreground mb-2">Doable Tools</h4>
+                    <h4 className="text-xs font-medium text-foreground mb-2">{t("toolsConfig.form.doableTools")}</h4>
                     <div className="grid grid-cols-2 gap-1.5">
                       {doableTools.map(tool => (
                         <label key={tool.name}
@@ -239,9 +241,8 @@ export function ToolsConfigPanel() {
                     </div>
                   </div>
 
-                  {/* SDK tools */}
                   <div>
-                    <h4 className="text-xs font-medium text-foreground mb-2">SDK Built-in Tools</h4>
+                    <h4 className="text-xs font-medium text-foreground mb-2">{t("toolsConfig.form.sdkTools")}</h4>
                     <div className="grid grid-cols-2 gap-1.5">
                       {sdkTools.map(tool => (
                         <label key={tool.name}
@@ -261,26 +262,26 @@ export function ToolsConfigPanel() {
                     </div>
                   </div>
 
-                  {/* Warning for plan mode */}
                   {mode.mode === "plan" && editAllowedTools.has("edit_file") && (
                     <div className="flex items-center gap-2 rounded-lg border border-amber-600/30 bg-amber-600/5 px-3 py-2">
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                      <span className="text-xs text-amber-300">Strategize mode with write tools enabled may cause unintended file modifications.</span>
+                      <span className="text-xs text-amber-300">{t("toolsConfig.warning.planWriteTools")}</span>
                     </div>
                   )}
 
-                  {/* Actions */}
                   <div className="flex items-center gap-2 pt-1">
                     <button onClick={saveMode} disabled={saving}
                       className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-xs font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors">
-                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save Changes
+                      {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} {t("toolsConfig.actions.saveChanges")}
                     </button>
                     <button onClick={() => setEditingMode(null)}
                       className="rounded-lg px-4 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <div className="flex-1" />
-                    <span className="text-[10px] text-muted-foreground">{editAllowedTools.size} tools selected</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {t("toolsConfig.selectedCount", { count: editAllowedTools.size })}
+                    </span>
                   </div>
                 </div>
               )}
@@ -289,16 +290,15 @@ export function ToolsConfigPanel() {
         })}
       </div>
 
-      {/* Add new mode */}
       {addingMode ? (
         <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
           <input type="text" value={newModeName} onChange={e => setNewModeName(e.target.value)}
-            placeholder="Mode name (e.g. review, debug)"
+            placeholder={t("toolsConfig.addMode.placeholder")}
             onKeyDown={e => e.key === "Enter" && addMode()}
             className="flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
           <button onClick={addMode} disabled={!newModeName.trim() || saving}
             className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors">
-            <Check className="h-3 w-3" /> Add
+            <Check className="h-3 w-3" /> {t("toolsConfig.addMode.add")}
           </button>
           <button onClick={() => { setAddingMode(false); setNewModeName(""); }}
             className="rounded p-1.5 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
@@ -306,7 +306,7 @@ export function ToolsConfigPanel() {
       ) : (
         <button onClick={() => setAddingMode(true)}
           className="flex items-center gap-2 w-full rounded-lg border border-dashed border-border px-4 py-3 text-xs text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors">
-          <Plus className="h-3.5 w-3.5" /> Add New Mode
+          <Plus className="h-3.5 w-3.5" /> {t("toolsConfig.addMode.button")}
         </button>
       )}
     </div>

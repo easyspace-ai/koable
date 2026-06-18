@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription, DialogFooter,
@@ -55,6 +56,7 @@ export function DashboardDialogs({
   previewTemplate, setPreviewTemplate, remixTemplate, setRemixTemplate, onTemplateCreated,
   showImportGitHub, setShowImportGitHub,
 }: DashboardDialogsProps) {
+  const t = useTranslations("dashboard");
   const deleteName = projects.find((p) => p.id === deleteConfirmId)?.name
     ?? recentProjects.find((p) => p.id === deleteConfirmId)?.name;
 
@@ -64,14 +66,14 @@ export function DashboardDialogs({
       <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete project</DialogTitle>
+            <DialogTitle>{t("dashboard.dialogs.deleteProject")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{deleteName}&rdquo;? This action cannot be undone.
+              {t("dashboard.dialogs.deleteProjectConfirm", { name: deleteName ?? "" })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
-            <Button onClick={() => deleteConfirmId && onDelete(deleteConfirmId)} className="bg-red-600 text-white hover:bg-red-500">Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>{t("common.cancel")}</Button>
+            <Button onClick={() => deleteConfirmId && onDelete(deleteConfirmId)} className="bg-red-600 text-white hover:bg-red-500">{t("common.delete")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -80,14 +82,16 @@ export function DashboardDialogs({
       <Dialog open={bulkDeleteConfirm} onOpenChange={(open) => !open && setBulkDeleteConfirm(false)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete {selectedIds.size} projects</DialogTitle>
+            <DialogTitle>{t("dashboard.dialogs.deleteProjects", { count: selectedIds.size })}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {selectedIds.size} selected project{selectedIds.size !== 1 ? "s" : ""}? This action cannot be undone.
+              {t("dashboard.dialogs.deleteProjectsConfirm", { count: selectedIds.size })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)}>Cancel</Button>
-            <Button onClick={onBulkDelete} className="bg-red-600 text-white hover:bg-red-500">Delete {selectedIds.size} project{selectedIds.size !== 1 ? "s" : ""}</Button>
+            <Button variant="outline" onClick={() => setBulkDeleteConfirm(false)}>{t("common.cancel")}</Button>
+            <Button onClick={onBulkDelete} className="bg-red-600 text-white hover:bg-red-500">
+              {t("dashboard.dialogs.deleteProjectsButton", { count: selectedIds.size })}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -96,11 +100,11 @@ export function DashboardDialogs({
       <Dialog open={!!renamingProject} onOpenChange={(open) => !open && setRenamingProject(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Rename project</DialogTitle>
+            <DialogTitle>{t("dashboard.dialogs.renameProject")}</DialogTitle>
           </DialogHeader>
           <div>
             <Input
-              placeholder="Project name"
+              placeholder={t("dashboard.dialogs.projectNamePlaceholder")}
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && onRename()}
@@ -108,8 +112,8 @@ export function DashboardDialogs({
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenamingProject(null)}>Cancel</Button>
-            <Button onClick={onRename} disabled={!renameValue.trim()} className="bg-brand-600 text-white hover:bg-brand-500">Rename</Button>
+            <Button variant="outline" onClick={() => setRenamingProject(null)}>{t("common.cancel")}</Button>
+            <Button onClick={onRename} disabled={!renameValue.trim()} className="bg-brand-600 text-white hover:bg-brand-500">{t("common.rename")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -118,15 +122,15 @@ export function DashboardDialogs({
       <Dialog open={!!moveToFolderProject} onOpenChange={(open) => !open && setMoveToFolderProject(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Move to folder</DialogTitle>
-            <DialogDescription>Choose a folder for this project.</DialogDescription>
+            <DialogTitle>{t("dashboard.dialogs.moveToFolder")}</DialogTitle>
+            <DialogDescription>{t("dashboard.dialogs.moveToFolderDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-1 max-h-60 overflow-y-auto">
             <button
               onClick={() => moveToFolderProject && onMoveToFolder(moveToFolderProject, null)}
               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
             >
-              <FolderOpen className="h-4 w-4 text-muted-foreground" /> Root (no folder)
+              <FolderOpen className="h-4 w-4 text-muted-foreground" /> {t("dashboard.toolbar.rootNoFolder")}
             </button>
             {folders.map((f) => (
               <button
@@ -138,7 +142,7 @@ export function DashboardDialogs({
               </button>
             ))}
             {folders.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No folders yet. Create one in the sidebar.</p>
+              <p className="text-sm text-muted-foreground text-center py-4">{t("dashboard.dialogs.noFoldersHint")}</p>
             )}
           </div>
         </DialogContent>

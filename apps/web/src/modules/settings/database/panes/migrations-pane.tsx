@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, FileStack } from "lucide-react";
 import { SectionCard } from "@/modules/settings/components/project-settings-shared";
+import { useTranslations } from "next-intl";
 import { fetchMigrations, type MigrationRow } from "../api";
 
 interface MigrationsPaneProps {
@@ -10,6 +11,7 @@ interface MigrationsPaneProps {
 }
 
 export function MigrationsPane({ projectId }: MigrationsPaneProps) {
+  const t = useTranslations("settings");
   const [migrations, setMigrations] = useState<MigrationRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,9 +19,9 @@ export function MigrationsPane({ projectId }: MigrationsPaneProps) {
     let alive = true;
     fetchMigrations(projectId)
       .then((m) => { if (alive) { setMigrations(m); setError(null); } })
-      .catch((err) => { if (alive) setError(err instanceof Error ? err.message : "Failed to load migrations"); });
+      .catch((err) => { if (alive) setError(err instanceof Error ? err.message : t("database.failedLoadMigrations")); });
     return () => { alive = false; };
-  }, [projectId]);
+  }, [projectId, t]);
 
   if (!migrations && !error) {
     return (
@@ -31,7 +33,7 @@ export function MigrationsPane({ projectId }: MigrationsPaneProps) {
 
   if (error) {
     return (
-      <SectionCard title="Migrations">
+      <SectionCard title={t("database.migrationsTitle")}>
         <p className="text-sm text-destructive">{error}</p>
       </SectionCard>
     );
@@ -40,13 +42,13 @@ export function MigrationsPane({ projectId }: MigrationsPaneProps) {
   const rows = migrations ?? [];
 
   return (
-    <SectionCard title="Migrations" description="Applied migration history for your database.">
+    <SectionCard title={t("database.migrationsTitle")} description={t("database.migrationsDescription")}>
       {rows.length === 0 ? (
         <div className="rounded-lg border-2 border-dashed p-8 text-center">
           <FileStack className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium">No migrations yet</p>
+          <p className="text-sm font-medium">{t("database.noMigrationsTitle")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Migrations appear here once the AI applies schema changes via the built-in database.
+            {t("database.noMigrationsDescription")}
           </p>
         </div>
       ) : (
@@ -54,9 +56,9 @@ export function MigrationsPane({ projectId }: MigrationsPaneProps) {
           <table className="w-full text-xs">
             <thead className="bg-muted/50">
               <tr className="text-muted-foreground">
-                <th className="border-b px-3 py-2 text-left font-medium">Migration</th>
-                <th className="border-b px-3 py-2 text-left font-medium">Applied</th>
-                <th className="border-b px-3 py-2 text-left font-medium">Hash</th>
+                <th className="border-b px-3 py-2 text-left font-medium">{t("database.migrationColumn")}</th>
+                <th className="border-b px-3 py-2 text-left font-medium">{t("database.appliedColumn")}</th>
+                <th className="border-b px-3 py-2 text-left font-medium">{t("database.hashColumn")}</th>
               </tr>
             </thead>
             <tbody>

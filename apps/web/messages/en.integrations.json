@@ -1,0 +1,460 @@
+{
+  "panel": {
+    "title": "Integrations",
+    "refreshTitle": "Refresh",
+    "add": "Add",
+    "customMcpHeading": "Custom MCP Connectors",
+    "loading": "Loading integrations...",
+    "empty": {
+      "title": "No integrations yet",
+      "description": "Connect third-party services and AI tools to extend your project.",
+      "cta": "Add Integration"
+    },
+    "scopeSections": {
+      "workspace": "Everyone in this workspace",
+      "project": "Everyone on this project",
+      "user": "Only me (personal)"
+    },
+    "footer": {
+      "connectedCount": "{count, plural, one {# integration connected} other {# integrations connected}}"
+    }
+  },
+  "catalog": {
+    "searchPlaceholder": "Search integrations...",
+    "categoryAll": "All",
+    "sections": {
+      "connected": "Connected",
+      "available": "Available"
+    },
+    "loadMore": "Load more ({remaining} remaining)",
+    "empty": {
+      "noMatchTitle": "No integrations match your search",
+      "noMatchHint": "Try adjusting your search or filters.",
+      "noneAvailableTitle": "No integrations available",
+      "noneAvailableHint": "Native integrations will appear here once configured."
+    }
+  },
+  "card": {
+    "status": {
+      "connected": "Connected",
+      "available": "Available"
+    },
+    "actions": {
+      "manage": "Manage",
+      "connect": "Connect"
+    },
+    "noDescription": "No description available."
+  },
+  "detailSheet": {
+    "noDescription": "No description available.",
+    "sections": {
+      "activeConnections": "Active Connections",
+      "availableActions": "Available Actions"
+    },
+    "connection": {
+      "defaultName": "Connection",
+      "test": "Test",
+      "disconnect": "Disconnect",
+      "confirmDisconnect": "Confirm disconnect?",
+      "healthy": "Connection is healthy",
+      "failed": "Connection failed"
+    },
+    "actions": {
+      "loading": "Loading actions...",
+      "empty": "No actions discovered for this integration yet.",
+      "count": "({count})"
+    },
+    "footer": {
+      "connected": "Connected",
+      "addAnother": "Add Another Connection",
+      "connect": "Connect {name}"
+    },
+    "errors": {
+      "testFailed": "Test failed"
+    }
+  },
+  "connectFlow": {
+    "title": "Connect {name}",
+    "noAuth": {
+      "connecting": "Connecting to {name}...",
+      "tryAgain": "Try Again"
+    },
+    "enhancedAuth": {
+      "connecting": "Connecting…",
+      "connectDefault": "Connect {name}"
+    },
+    "errors": {
+      "connectionFailed": "Connection failed"
+    }
+  },
+  "connectFlowForms": {
+    "oauth": {
+      "description": "You'll be redirected to {name} to authorize access. A popup window will open for you to sign in.",
+      "cancel": "Cancel",
+      "connecting": "Connecting...",
+      "signIn": "Sign in with {name}"
+    },
+    "secretText": {
+      "apiKeyLabel": "API Key",
+      "apiKeyPlaceholder": "Enter your API key",
+      "labelOptional": "Label",
+      "optionalSuffix": "(optional)",
+      "labelPlaceholder": "My {name} connection",
+      "cancel": "Cancel",
+      "connecting": "Connecting...",
+      "connect": "Connect"
+    },
+    "basicAuth": {
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Enter username",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter password",
+      "labelOptional": "Label",
+      "optionalSuffix": "(optional)",
+      "labelPlaceholder": "My {name} connection",
+      "cancel": "Cancel",
+      "connecting": "Connecting...",
+      "connect": "Connect"
+    },
+    "customAuth": {
+      "optionalSuffix": "(optional)",
+      "selectPlaceholder": "Select...",
+      "enterFieldPlaceholder": "Enter {fieldName}",
+      "authTokenLabel": "Authentication Token",
+      "authTokenPlaceholder": "Enter your authentication token",
+      "labelOptional": "Label",
+      "labelPlaceholder": "My {name} connection",
+      "cancel": "Cancel",
+      "connecting": "Connecting...",
+      "connect": "Connect"
+    }
+  },
+  "panelCards": {
+    "builtInCard": {
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "customCard": {
+      "capability": "{count, plural, one {# capability} other {# capabilities}}",
+      "availableCapabilities": "Available Capabilities",
+      "noCapabilities": "No capabilities discovered yet. Test the connection to discover what's available.",
+      "testConnection": "Test Connection",
+      "remove": "Remove",
+      "confirmRemove": "Confirm Remove",
+      "testResults": {
+        "success": "Connection successful",
+        "failed": "Connection failed"
+      }
+    }
+  },
+  "addForm": {
+    "title": "New Integration",
+    "fields": {
+      "name": {
+        "label": "Name",
+        "placeholder": "e.g. Notion, Slack, My API"
+      },
+      "availability": {
+        "label": "Availability",
+        "workspace": {
+          "label": "Everyone",
+          "description": "All workspace members"
+        },
+        "project": {
+          "label": "This project",
+          "description": "Project members"
+        },
+        "user": {
+          "label": "Only me",
+          "description": "Personal"
+        }
+      },
+      "serverUrl": {
+        "label": "Server URL",
+        "placeholder": "https://api.example.com/mcp"
+      },
+      "command": {
+        "label": "Command",
+        "placeholder": "npx -y @modelcontextprotocol/server"
+      }
+    },
+    "advanced": {
+      "toggle": "Advanced options",
+      "connectionType": {
+        "label": "Connection Type",
+        "streamableHttp": "Web service (HTTP streaming)",
+        "httpSse": "Web service (HTTP SSE)"
+      },
+      "authentication": {
+        "label": "Authentication",
+        "none": "None",
+        "apiKey": "API Key",
+        "bearerToken": "Bearer Token"
+      },
+      "credential": {
+        "apiKeyLabel": "API Key",
+        "bearerTokenLabel": "Bearer Token",
+        "apiKeyPlaceholder": "sk-...",
+        "bearerTokenPlaceholder": "eyJhbGci..."
+      }
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "submit": "Add Integration"
+    },
+    "errors": {
+      "failedToCreate": "Failed to create"
+    }
+  },
+  "supabaseDialog": {
+    "title": "Connect Supabase",
+    "descriptionDefault": "Pick an existing Supabase project from your organization, or let Doable create a brand-new one. Either way the API keys are wired up automatically.",
+    "loadingOrgs": "Loading your Supabase organizations...",
+    "actions": {
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createProject": "Create project"
+    },
+    "errors": {
+      "failedToLoadOrgs": "Failed to load orgs ({status})",
+      "failedToListProjects": "Failed to list projects ({status})",
+      "failedToStartSignIn": "Failed to start Supabase sign-in ({status})",
+      "failedToConnect": "Failed to connect ({status})",
+      "provisioningFailed": "Provisioning failed",
+      "provisioningFailedWithStatus": "Provisioning failed ({status})",
+      "noResponseBody": "No response body"
+    }
+  },
+  "supabaseViews": {
+    "oauthRequired": {
+      "description": "Sign in with Supabase so Doable can create projects on your behalf. You'll be redirected briefly to Supabase to authorize, then come right back here.",
+      "waiting": "Waiting for Supabase…",
+      "signIn": "Sign in with Supabase"
+    },
+    "existingProjects": {
+      "hint": "Pick a project — Doable will fetch its API keys and wire them into this app automatically.",
+      "connect": "Connect"
+    },
+    "createNew": {
+      "noProjectsHint": "You don't have any Supabase projects yet — let's create your first one.",
+      "projectNameLabel": "Project name",
+      "projectNamePlaceholder": "e.g. My App",
+      "organizationLabel": "Supabase organization",
+      "regionLabel": "Region"
+    },
+    "modeToggle": {
+      "existing": "Connect existing project",
+      "new": "Create new"
+    }
+  },
+  "configForm": {
+    "noConfigNeeded": "{name} doesn't need configuration. Just enable it.",
+    "providerHelp": {
+      "genericOAuth": "Get your OAuth client_id + client_secret from the provider's developer console, then paste them below.",
+      "genericCredentials": "Get your credentials from the provider's developer console, then paste them below.",
+      "openConsole": "Open provider console",
+      "requiredScopes": "Required scopes:"
+    },
+    "oauth": {
+      "redirectUriHeading": "Set this Redirect URI in the provider console:",
+      "copied": "Copied",
+      "copy": "Copy",
+      "existingEnv": "Currently configured via {envSource} env var. Saving here will override that with a DB-stored credential.",
+      "existingReplace": "Currently configured{clientIdHint}. Submitting will replace the existing credential.",
+      "existingReplaceClientIdHint": " (Client ID: {hint})",
+      "clientIdLabel": "Client ID",
+      "clientIdPlaceholder": "OAuth Client ID from provider console",
+      "clientSecretLabel": "Client Secret",
+      "clientSecretPlaceholder": "OAuth Client Secret",
+      "clientIdRequired": "Client ID and Client Secret are required.",
+      "saving": "Saving",
+      "saveCredentials": "Save Credentials"
+    },
+    "nonOAuth": {
+      "existingReplace": "Currently configured{displayHint}. Submitting will replace the existing credential.",
+      "existingReplaceHint": " (…{hint})",
+      "apiKeyLabel": "API Key",
+      "apiKeyPlaceholder": "Paste your {name} API key",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "Username",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Password",
+      "authTokenLabel": "Authentication Token",
+      "authTokenPlaceholder": "Authentication token",
+      "enterFieldPlaceholder": "Enter {fieldName}",
+      "optionalSuffix": "(optional)",
+      "selectPlaceholder": "Select…",
+      "encryptionNote": "Secrets are encrypted at rest. Only platform admins can see configuration status.",
+      "workspaceScopedUnsupported": "Workspace-scoped non-OAuth credentials are not supported yet from this admin form.",
+      "saving": "Saving",
+      "saveCredentials": "Save Credentials"
+    },
+    "testConnection": {
+      "button": "Test connection",
+      "ok": "OK",
+      "failed": "Failed",
+      "testFailed": "Test failed"
+    },
+    "actions": {
+      "cancel": "Cancel"
+    }
+  },
+  "adminPanel": {
+    "platformModeBanner": "Integrations enabled here apply globally to all workspaces (existing and new). Users across the platform will see these integrations in their catalog.",
+    "summary": {
+      "enabled": "Enabled",
+      "configuredDb": "Configured (DB)",
+      "viaEnvVars": "Via Env Vars",
+      "needsConfig": "Enabled, Needs Config"
+    },
+    "warnings": {
+      "unconfigured": "{count} integration(s) are enabled but missing credentials. Users won't be able to connect until credentials are configured. Click Configure on a row below to fix.",
+      "envConfigured": "{count} integration(s) are pre-configured via server environment variables (e.g. GOOGLE_CLIENT_ID, OAUTH_*_CLIENT_ID). These work automatically without manual OAuth setup here."
+    },
+    "presets": {
+      "quickStart": "Quick start:",
+      "productivity": {
+        "label": "Productivity",
+        "description": "Email, calendar, docs, chat"
+      },
+      "dev": {
+        "label": "Dev",
+        "description": "Source, tickets, errors, on-call"
+      },
+      "marketing": {
+        "label": "Marketing",
+        "description": "Email, CRM, payments, booking"
+      },
+      "noneInCatalog": "None of this preset's integrations are in the catalog yet."
+    },
+    "bulk": {
+      "selected": "{count, plural, one {# integration selected} other {# integrations selected}}",
+      "enabling": "Enabling",
+      "disabling": "Disabling",
+      "progress": "· {kind} {done}/{total}…",
+      "enableSelected": "Enable selected",
+      "disableSelected": "Disable selected",
+      "clear": "Clear",
+      "partialFailure": "{failures} of {total} {kind} operations failed. The list has been refreshed."
+    },
+    "filters": {
+      "searchPlaceholder": "Search integrations...",
+      "allCategories": "All Categories",
+      "all": "All",
+      "enabled": "Enabled",
+      "envVars": "Env Vars",
+      "needsConfig": "Needs Config"
+    },
+    "list": {
+      "selectAllInCategory": "Select all in {category}",
+      "selectIntegration": "Select {name}",
+      "envBadge": "ENV",
+      "envBadgeTitle": "Configured via: {source}",
+      "dbBadge": "DB",
+      "dbBadgeTitle": "Platform credential configured",
+      "configure": "Configure",
+      "update": "Update",
+      "configureTitle": "Configure credentials",
+      "updateTitle": "Update credentials",
+      "enable": "Enable",
+      "enabled": "Enabled"
+    },
+    "statusChip": {
+      "oauth": "OAuth",
+      "apiKey": "API Key",
+      "userPass": "User/Pass",
+      "custom": "Custom"
+    },
+    "empty": "No integrations match your filters.",
+    "workspaceSelector": {
+      "label": "Workspace:"
+    },
+    "errors": {
+      "failedToLoad": "Failed to load integrations",
+      "failedToUpdate": "Failed to update"
+    }
+  },
+  "shared": {
+    "categories": {
+      "communication": "Communication",
+      "productivity": "Productivity",
+      "developer_tools": "Developer Tools",
+      "crm_sales": "CRM & Sales",
+      "marketing": "Marketing",
+      "finance_payments": "Finance & Payments",
+      "ai_ml": "AI & ML",
+      "data_storage": "Data & Storage",
+      "social_media": "Social Media",
+      "ecommerce": "E-Commerce",
+      "project_management": "Project Management",
+      "customer_support": "Customer Support",
+      "hr": "HR",
+      "analytics": "Analytics",
+      "content": "Content",
+      "automation": "Automation",
+      "other": "Other"
+    },
+    "authTypes": {
+      "oauth2": "Sign in",
+      "secret_text": "API Key",
+      "custom_auth": "Custom",
+      "basic_auth": "Username & Password",
+      "none": "No auth needed"
+    },
+    "transportTypes": {
+      "streamable_http": {
+        "friendly": "Web service",
+        "technical": "HTTP streaming"
+      },
+      "http_sse": {
+        "friendly": "Web service",
+        "technical": "HTTP SSE"
+      },
+      "stdio": {
+        "friendly": "Built-in app",
+        "technical": "managed"
+      }
+    },
+    "supabaseRegions": {
+      "us-east-1": "US East (N. Virginia)",
+      "us-west-1": "US West (N. California)",
+      "eu-west-1": "EU West (Ireland)",
+      "eu-central-1": "EU Central (Frankfurt)",
+      "ap-southeast-1": "Asia Pacific (Singapore)",
+      "ap-northeast-1": "Asia Pacific (Tokyo)",
+      "ap-south-1": "Asia Pacific (Mumbai)",
+      "sa-east-1": "South America (São Paulo)"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "manage": "Manage",
+      "optional": "(optional)",
+      "select": "Select…"
+    },
+    "errors": {
+      "connectionFailed": "Connection failed",
+      "testFailed": "Test failed",
+      "failedToLoadIntegrations": "Failed to load integrations",
+      "failedToUpdate": "Failed to update",
+      "failedToSaveCredentials": "Failed to save credentials",
+      "failedToCreate": "Failed to create"
+    },
+    "emptyDescription": "No description available.",
+    "oauthMessages": {
+      "popupBlocked": "Popup was blocked. Please allow popups for this site and try again.",
+      "failedToStartOAuth": "Failed to start OAuth flow",
+      "oauthNotSetUp": "OAuth is not set up for {name} yet. Ask your workspace admin to configure the OAuth credentials in Settings.",
+      "failedToStartEnhancedAuth": "Failed to start enhanced auth",
+      "enhancedAuthNotSetUp": "Enhanced auth is not set up for {name} yet. You can still connect manually below.",
+      "connectionFailedWithReason": "Connection failed: {error}"
+    },
+    "supabaseOauthMessages": {
+      "popupBlocked": "Popup blocked — please allow popups for this site and try again.",
+      "signInCancelled": "Supabase sign-in was cancelled or failed.",
+      "windowClosed": "Supabase sign-in window was closed.",
+      "timedOut": "Supabase sign-in timed out after 2 minutes."
+    }
+  }
+}

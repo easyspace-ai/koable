@@ -2,13 +2,18 @@
  * Reusable OAuth popup helpers for the Connect Flow dialog.
  */
 
+import type { IntegrationsTranslateFn } from "./use-integration-catalog";
+
+export type OAuthErrorVariant = "warning" | "error";
+
 /** Open a centered popup, fetch the auth URL, then poll for closure. */
 export async function runOAuthPopup(opts: {
   getUrl: () => Promise<string>;
   windowName: string;
   itemName: string;
+  t: IntegrationsTranslateFn;
   onDone: () => void;
-  onError: (msg: string) => void;
+  onError: (msg: string, variant?: OAuthErrorVariant) => void;
 }): Promise<void> {
   const width = 600, height = 700;
   const left = window.screenX + (window.outerWidth - width) / 2;
@@ -20,7 +25,7 @@ export async function runOAuthPopup(opts: {
   );
 
   if (!popup) {
-    opts.onError("Popup was blocked. Please allow popups for this site and try again.");
+    opts.onError(opts.t("shared.oauthMessages.popupBlocked"));
     return;
   }
 
@@ -36,9 +41,12 @@ export async function runOAuthPopup(opts: {
     }, 500);
   } catch (err) {
     try { popup.close(); } catch { /* already closed */ }
-    const msg = err instanceof Error ? err.message : "Failed to start OAuth flow";
+    const msg = err instanceof Error ? err.message : opts.t("shared.oauthMessages.failedToStartOAuth");
     if (msg.includes("not configured") || msg.includes("CLIENT_ID") || msg.includes("CLIENT_SECRET") || msg.includes("OAuth app")) {
-      opts.onError(`OAuth is not set up for ${opts.itemName} yet. Ask your workspace admin to configure the OAuth credentials in Settings.`);
+      opts.onError(
+        opts.t("shared.oauthMessages.oauthNotSetUp", { name: opts.itemName }),
+        "warning",
+      );
     } else {
       opts.onError(msg);
     }
@@ -50,8 +58,9 @@ export async function runEnhancedAuthPopup(opts: {
   getUrl: () => Promise<string>;
   integrationId: string;
   itemName: string;
+  t: IntegrationsTranslateFn;
   onDone: () => void;
-  onError: (msg: string) => void;
+  onError: (msg: string, variant?: OAuthErrorVariant) => void;
 }): Promise<void> {
   let popup: Window | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -71,7 +80,7 @@ export async function runEnhancedAuthPopup(opts: {
   );
 
   if (!popup) {
-    opts.onError("Popup was blocked. Please allow popups for this site and try again.");
+    opts.onError(opts.t("shared.oauthMessages.popupBlocked"));
     return;
   }
 
@@ -85,7 +94,9 @@ export async function runEnhancedAuthPopup(opts: {
       if (data.type !== "doable:enhanced-auth-complete") return;
       if (data.integrationId && data.integrationId !== opts.integrationId) return;
       if (data.status === "error" && typeof data.error === "string") {
-        opts.onError(`Connection failed: ${data.error}`);
+        opts.onError(
+          opts.t("shared.oauthMessages.connectionFailedWithReason", { error: data.error }),
+        );
       }
       cleanup();
       try { popup?.close(); } catch { /* may already be closed */ }
@@ -102,9 +113,12 @@ export async function runEnhancedAuthPopup(opts: {
   } catch (err) {
     cleanup();
     try { popup?.close(); } catch { /* popup may already be closed */ }
-    const msg = err instanceof Error ? err.message : "Failed to start enhanced auth";
+    const msg = err instanceof Error ? err.message : opts.t("shared.oauthMessages.failedToStartEnhancedAuth");
     if (msg.includes("not configured") || msg.includes("CLIENT_ID") || msg.includes("OAuth")) {
-      opts.onError(`Enhanced auth is not set up for ${opts.itemName} yet. You can still connect manually below.`);
+      opts.onError(
+        opts.t("shared.oauthMessages.enhancedAuthNotSetUp", { name: opts.itemName }),
+        "warning",
+      );
     } else {
       opts.onError(msg);
     }

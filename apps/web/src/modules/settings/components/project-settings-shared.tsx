@@ -1,6 +1,8 @@
 "use client";
 
 import type React from "react";
+import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import {
   Settings,
   Globe,
@@ -56,19 +58,27 @@ export interface ContextStats {
 
 // ─── Constants ──────────────────────────────────────────────
 
-export const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: "general", label: "General", icon: Settings },
-  { id: "database", label: "Database", icon: Database },
-  { id: "integrations", label: "Integrations", icon: Plug },
-  { id: "mcp", label: "MCP Servers", icon: Terminal },
-  { id: "skills", label: "Skills & Rules", icon: Brain },
-  { id: "context", label: "Knowledge", icon: Brain },
-  { id: "doable-ai", label: "Doable AI", icon: Sparkles },
-  { id: "security", label: "Security", icon: Shield },
-  { id: "domain", label: "Custom Domain", icon: Globe },
-  { id: "environments", label: "Environments", icon: Server },
-  { id: "danger", label: "Danger Zone", icon: AlertTriangle },
+export const TABS: { id: Tab; labelKey: string; icon: React.ElementType }[] = [
+  { id: "general", labelKey: "tabs.general", icon: Settings },
+  { id: "database", labelKey: "tabs.database", icon: Database },
+  { id: "integrations", labelKey: "tabs.integrations", icon: Plug },
+  { id: "mcp", labelKey: "tabs.mcp", icon: Terminal },
+  { id: "skills", labelKey: "tabs.skills", icon: Brain },
+  { id: "context", labelKey: "tabs.context", icon: Brain },
+  { id: "doable-ai", labelKey: "tabs.doableAi", icon: Sparkles },
+  { id: "security", labelKey: "tabs.security", icon: Shield },
+  { id: "domain", labelKey: "tabs.domain", icon: Globe },
+  { id: "environments", labelKey: "tabs.environments", icon: Server },
+  { id: "danger", labelKey: "tabs.danger", icon: AlertTriangle },
 ];
+
+export function useSettingsTabLabels() {
+  const t = useTranslations("settings");
+  return useMemo(
+    () => TABS.map((tab) => ({ ...tab, label: t(tab.labelKey) })),
+    [t],
+  );
+}
 
 export const FILE_ICONS: Record<string, typeof FileText> = {
   "identity.md": BookOpen,

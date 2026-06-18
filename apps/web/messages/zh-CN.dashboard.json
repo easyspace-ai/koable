@@ -74,7 +74,7 @@
       "passwordStrength": "密码强度：{label}",
       "passwordsDoNotMatch": "两次输入的密码不一致",
       "passwordsMatch": "密码一致",
-      "agreeToTerms": "我同意{terms}和{privacy}",
+      "agreeToTerms": "我同意<terms>服务条款</terms>和<privacy>隐私政策</privacy>",
       "termsOfService": "服务条款",
       "privacyPolicy": "隐私政策",
       "createAccount": "创建账户",
@@ -101,7 +101,56 @@
         "number": "数字",
         "special": "特殊字符"
       }
+    },
+    "forgotPassword": {
+      "title": "忘记密码？",
+      "description": "别担心。输入您的邮箱，我们将发送重置说明。",
+      "emailLabel": "邮箱地址",
+      "sending": "发送中...",
+      "sendButton": "发送重置说明",
+      "successTitle": "请查收邮件",
+      "successDescription": "如果 {email} 存在对应账户，我们已向您的收件箱发送密码重置说明。",
+      "successHintBefore": "没有收到邮件？请检查垃圾邮件文件夹或",
+      "tryAgainLink": "重试",
+      "requestFailed": "请求失败",
+      "genericError": "出了点问题，请重试。"
+    },
+    "resetPassword": {
+      "title": "设置新密码",
+      "description": "新密码必须与之前的密码不同。",
+      "invalidLinkTitle": "无效的重置链接",
+      "invalidLinkDescription": "此密码重置链接无效或已过期。请重新申请。",
+      "requestNewLink": "申请新的重置链接",
+      "successTitle": "密码重置成功",
+      "successDescription": "您的密码已更新。您现在可以使用新密码登录。",
+      "newPassword": "新密码",
+      "confirmNewPassword": "确认新密码",
+      "confirmPlaceholder": "再次输入密码",
+      "resetting": "重置密码中...",
+      "resetButton": "重置密码",
+      "passwordMismatch": "两次输入的密码不一致。",
+      "passwordTooWeak": "密码强度不足。请至少 8 个字符，并包含大小写字母和数字。",
+      "genericError": "出了点问题，请重试。",
+      "passwordStrength": "密码强度：{label}",
+      "passwordsDoNotMatch": "两次输入的密码不一致",
+      "passwordsMatch": "密码一致",
+      "strength": {
+        "weak": "弱",
+        "fair": "一般",
+        "good": "良好",
+        "strong": "强"
+      },
+      "criteria": {
+        "minLength": "至少 8 个字符",
+        "uppercase": "大写字母",
+        "lowercase": "小写字母",
+        "number": "数字",
+        "special": "特殊字符"
+      }
     }
+  },
+  "layout": {
+    "openMenu": "打开菜单"
   },
   "sidebar": {
     "recent": "最近",
@@ -110,7 +159,29 @@
     "noProjectsYet": "暂无项目",
     "noStarredProjects": "暂无收藏项目",
     "noFolders": "暂无文件夹",
-    "createFolder": "创建文件夹"
+    "createFolder": "创建文件夹",
+    "search": "搜索",
+    "templates": "模板",
+    "discover": "发现",
+    "marketplace": "市场",
+    "runningInstances": "运行实例",
+    "projects": "项目",
+    "allProjects": "全部项目",
+    "importProject": "导入项目",
+    "workspaceSettings": "工作区设置",
+    "projectsLimit": "（已达上限）",
+    "planMembers": "{plan} 套餐 · {count} 位成员",
+    "planOnly": "{plan} 套餐",
+    "deleteFolderConfirm": "确定要删除「{name}」吗？此文件夹内的项目将移至根目录。",
+    "upgradeToPro": "升级到 Pro",
+    "upgradeDescription": "获取无限项目数和优先 AI 生成。",
+    "upgradeNow": "立即升级",
+    "settings": "设置",
+    "aiSettings": "AI 设置",
+    "usage": "用量",
+    "billing": "计费",
+    "systemAdmin": "系统管理",
+    "signOut": "退出登录"
   },
   "dashboard": {
     "greetings": {
@@ -158,6 +229,16 @@
     "creatingProject": "正在创建项目…",
     "connectingToAi": "正在连接 AI…",
     "createProjectFailed": "创建项目失败，请重试。",
+    "createProjectFailedWithMessage": "创建项目失败：{message}",
+    "status": {
+      "creating": "创建中"
+    },
+    "projectActions": {
+      "shareToDiscover": "分享到 Discover",
+      "updateDiscoverListing": "更新 Discover 列表",
+      "sharedToDiscover": "已分享到 Discover",
+      "discover": "Discover"
+    },
     "toolbar": {
       "recentlyViewed": "最近查看",
       "myProjects": "我的项目",
@@ -202,7 +283,9 @@
     },
     "contextMenu": {
       "openInEditor": "在编辑器中打开",
+      "rename": "重命名",
       "duplicate": "复制",
+      "moveToFolder": "移动到文件夹",
       "star": "收藏",
       "unstar": "取消收藏"
     },
@@ -283,7 +366,40 @@
       "private": "私有",
       "public": "公开",
       "elapsed": "已用时 {time}",
-      "largeRepoHint": "大型仓库可能需要一些时间"
+      "largeRepoHint": "大型仓库可能需要一些时间",
+      "description": "导入现有仓库以在 Doable 中继续开发。",
+      "connectTitle": "连接您的 GitHub 账户",
+      "connectDescription": "授权 Doable 访问您的仓库。",
+      "connectWithGitHub": "使用 GitHub 连接",
+      "connectedAs": "已连接为 {username}",
+      "disconnecting": "断开连接中…",
+      "loadingRepos": "正在加载仓库...",
+      "import": "导入",
+      "cloning": "正在克隆 {repo}...",
+      "switchAccountConfirm": "断开 {username} 并连接其他账户？",
+      "switchAccountConfirmHint": "现有项目与仓库的关联不会被删除，但新的推送/拉取和导入将使用您下次登录的账户。"
+    },
+    "workspaceSetup": {
+      "environmentTitle": "设置工作区",
+      "environmentDescription": "每个工作区都需要一个环境 — 它定义 AI 助手所知所能。",
+      "icon": "图标",
+      "color": "颜色",
+      "envNamePlaceholder": "我的环境",
+      "createEnvFailed": "创建环境失败",
+      "skipSetup": "跳过设置",
+      "createAndContinue": "创建并继续",
+      "knowledgeTitle": "添加知识",
+      "knowledgeDescription": "告诉 AI 关于您项目应了解的内容。之后可随时添加更多。",
+      "knowledgePlaceholder": "例如：我们使用 React 与 TypeScript。\nAPI 遵循 REST 规范。\n样式统一使用 Tailwind。",
+      "knowledgeHint": "这些说明将指导此工作区所有项目中的 AI 助手。",
+      "skip": "跳过",
+      "saveAndContinue": "保存并继续",
+      "integrationsTitle": "连接工具",
+      "integrationsDescription": "连接外部工具以增强工作流。可随时在设置中配置。",
+      "integrationsHint": "可随时在工作区设置中连接集成。",
+      "doneTitle": "一切就绪！",
+      "doneDescription": "{name} 已准备就绪。开始创建项目，让 AI 助您构建。",
+      "goToWorkspace": "进入工作区"
     }
   },
   "setup": {
@@ -350,19 +466,133 @@
       "stripePriceHint": "Pro/Business 的价格 ID 可在 /admin/billing 中添加。",
       "saveStripe": "保存 Stripe",
       "planLimitsHint": "需要微调各套餐（free / pro / business / enterprise）的限制？可在 /admin/plan-limits 中设置每用户项目数、每日积分、文件大小、自定义域名等 — 在此之前将自动应用合理默认值。",
-      "finishSetup": "完成设置"
+      "finishSetup": "完成设置",
+      "billingSaveError": "保存失败"
+    },
+    "planDefaults": {
+      "loading": "正在加载套餐默认值…",
+      "loadError": "无法加载套餐默认值 — 您可以在设置完成后于 /admin/plans 中配置。",
+      "empty": "未配置套餐默认值。您在第 3 步设置的提供商应已应用到所有套餐。如果此列表为空，您可以在 /admin/plans 中稍后配置。",
+      "title": "各套餐的 AI 模型默认值",
+      "description": "您在第 3 步选择的提供商+模型已自动应用到所有套餐。可选地为各套餐单独覆盖模型（例如 Free 使用更便宜的模型，Enterprise 使用更强大的模型）。您可以随时在 /admin/plans 中更改。",
+      "planColumn": "套餐",
+      "providerColumn": "提供商",
+      "modelColumn": "默认模型",
+      "customProvider": "自定义提供商",
+      "githubCopilot": "GitHub Copilot",
+      "modelPlaceholder": "例如 MiniMax-M2.7、gpt-4o、claude-sonnet-4",
+      "saved": "已保存",
+      "saveError": "无法保存 {plan} 默认值 — 请在设置完成后于 /admin/plans 中验证。"
     },
     "cloudflare": {
       "title": "Cloudflare Tunnel",
+      "description": "强烈建议通过 Cloudflare Tunnel 运行 Doable。服务器无需将 80 或 443 端口暴露到公网 — 所有流量经 Cloudflare 边缘进入，内置 DDoS 防护与 TLS。",
       "active": "Cloudflare Tunnel 已启用",
       "notConfigured": "Cloudflare Tunnel 尚未配置",
       "nextSteps": "后续步骤",
       "openDashboard": "打开 Cloudflare 控制台",
       "skipDirectPorts": "跳过并使用直连端口？",
-      "waitingForTunnel": "等待隧道就绪…"
+      "waitingForTunnel": "等待隧道就绪…",
+      "binaryInstalled": "cloudflared 二进制：已安装",
+      "binaryNotInstalled": "cloudflared 二进制：未安装",
+      "tunnelPresent": "隧道配置：已存在",
+      "tunnelMissing": "隧道配置：缺失",
+      "serviceRunning": "cloudflared 服务：运行中",
+      "serviceStopped": "cloudflared 服务：已停止",
+      "publicHostname": "公网主机名：",
+      "installStep": "在服务器上安装 cloudflared：",
+      "loginStep": "登录 Cloudflare 并创建隧道：",
+      "loginStepThen": "然后创建并路由隧道：",
+      "startServiceStep": "启动 cloudflared 服务：",
+      "recheckStatus": "重新检查状态",
+      "allSetMessage": "一切就绪 — 您的安装可通过 Cloudflare 访问，无需暴露任何端口。",
+      "skipCloudflare": "跳过 Cloudflare",
+      "skipConfirmDescription": "不使用 Cloudflare 时，服务器需将 80 和 443 端口对公网开放。您需自行处理 DDoS、TLS 证书续期及源站 IP 暴露。之后可在 /admin 中添加 Cloudflare。",
+      "skipCloudflareAnyway": "仍要跳过 Cloudflare"
+    },
+    "aiProvider": {
+      "title": "连接 AI 提供商",
+      "description": "先选择一个即可 — 之后可在 /admin/ai-providers 中添加更多。",
+      "searchPlaceholder": "搜索提供商（如 minimax、groq、ollama）",
+      "showAll": "显示全部 {count} 个提供商",
+      "popularShown": "（当前显示 {count} 个热门）",
+      "noMatch": "没有匹配「{query}」的提供商。请清除搜索或勾选「显示全部」。",
+      "freeTier": "免费额度",
+      "saveError": "保存失败，请重试。",
+      "modelRequired": "请选择或输入模型 — 聊天需要模型才能调用引擎。",
+      "copilotConnectFirst": "请先点击「使用 GitHub 连接」— Copilot 需先连接账户才能保存。",
+      "copilotTimeout": "连接超时。若已在 GitHub 完成 OAuth，请刷新此页并查看 /admin/ai-settings。",
+      "noWorkspace": "尚无工作区。请刷新页面后重试。",
+      "popupBlocked": "弹窗被阻止 — 请允许本站弹窗后重试。",
+      "waitingForGitHub": "等待 GitHub…",
+      "connectWithGitHub": "使用 GitHub 连接",
+      "validateAndSave": "验证并保存",
+      "validating": "验证中…",
+      "setAsPlanDefault": "将此模型设为所有套餐（Free、Pro、Business、Enterprise）及建议模型的默认值。之后可在 /admin/plan-defaults 中按套餐微调。"
     }
   },
+  "templatesPage": {
+    "title": "模板",
+    "subtitle": "从模板开始构建您的下一个项目",
+    "searchPlaceholder": "搜索模板...",
+    "loading": "正在加载模板...",
+    "noResultsSearch": "没有匹配 \"{query}\" 的模板",
+    "noResultsCategory": "此分类下暂无模板。",
+    "categories": {
+      "all": "全部模板",
+      "starter": "入门",
+      "dashboard": "仪表盘",
+      "marketing": "营销",
+      "ecommerce": "电商",
+      "content": "内容",
+      "personal": "个人",
+      "productivity": "效率"
+    }
+  },
+  "templates": {
+    "official": "官方",
+    "file": "个文件",
+    "files": "个文件",
+    "previewAlt": "{name} 预览",
+    "byDoable": "由 Doable 提供",
+    "useTemplate": "使用模板",
+    "closePreview": "关闭预览",
+    "previewTitle": "{name} 预览",
+    "remixTitle": "Remix 项目",
+    "remixDescription": "Remix 项目后，您将创建一个属于自己的副本。",
+    "projectName": "项目名称",
+    "remixing": "Remix 中...",
+    "remix": "Remix",
+    "remixDefaultName": "{name} 的 Remix",
+    "createFailed": "创建项目失败，请重试。"
+  },
+  "marketplace": {
+    "noWorkspace": "未找到工作区"
+  },
   "billing": {
+    "page": {
+      "loading": "正在加载计费...",
+      "unableToLoad": "无法加载计费",
+      "signInPrompt": "请登录以管理您的订阅和积分。",
+      "signIn": "登录",
+      "title": "计费",
+      "subtitle": "管理您的订阅、积分和使用情况。",
+      "backToDashboard": "返回仪表盘",
+      "subscriptionUpdated": "订阅更新成功！",
+      "checkoutCanceled": "结账已取消，未做任何更改。",
+      "creditsAdded": "积分添加成功！",
+      "dismissError": "关闭错误",
+      "manageSubscription": "管理订阅",
+      "buyCredits": "购买 100 积分",
+      "plansTitle": "套餐",
+      "plansLoadFailed": "无法加载套餐，请稍后重试。",
+      "usageTitle": "使用记录",
+      "noUsage": "暂无使用记录。",
+      "noUsageHint": "开始使用 AI 功能后，积分使用情况将显示在此处。",
+      "tableAction": "操作",
+      "tableCredits": "积分",
+      "tableDate": "日期"
+    },
     "credits": {
       "title": "积分",
       "noInfo": "暂无积分信息。订阅套餐后即可开始使用。",
@@ -467,7 +697,12 @@
       "linkFailed": "生成链接失败",
       "copyFailed": "复制到剪贴板失败",
       "updateRoleFailed": "更新角色失败",
-      "revokeFailed": "撤销邀请失败"
+      "revokeFailed": "撤销邀请失败",
+      "roleUpdated": "已将 {name} 的角色更新为 {role}",
+      "revokedInvite": "已撤销对 {email} 的邀请",
+      "you": "你",
+      "generateLink": "生成链接",
+      "expires": "过期时间 {date}"
     }
   }
 }

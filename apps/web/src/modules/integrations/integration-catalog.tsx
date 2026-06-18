@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { Search, Filter, Plug, ChevronDown, Loader2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Search, Plug, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useIntegrationCatalog,
-  CATEGORY_LABELS,
+  getCategoryLabel,
   type CatalogItem,
 } from "./use-integration-catalog";
 import { IntegrationCard } from "./integration-card";
@@ -26,6 +27,7 @@ export function IntegrationCatalog({
   workspaceId,
   projectId,
 }: IntegrationCatalogProps) {
+  const t = useTranslations("integrations");
   const {
     catalog,
     categories,
@@ -47,16 +49,13 @@ export function IntegrationCatalog({
     refresh,
   } = useIntegrationCatalog(workspaceId);
 
-  // UI state
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [connectItem, setConnectItem] = useState<CatalogItem | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
-
-  // Pagination: show PAGE_SIZE at a time for available items
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Reset pagination when search or category changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [search, category]);
@@ -66,9 +65,6 @@ export function IntegrationCatalog({
     [availableItems, visibleCount]
   );
   const hasMore = visibleCount < availableItems.length;
-
-  // Category pill scroll container
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = useCallback((item: CatalogItem) => {
     setSelectedItem(item);
@@ -114,11 +110,9 @@ export function IntegrationCatalog({
 
   const handleSheetClose = useCallback(() => {
     setSheetOpen(false);
-    // Slight delay to allow animation
     setTimeout(() => setSelectedItem(null), 200);
   }, []);
 
-  // Search debounce
   const [searchInput, setSearchInput] = useState("");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -132,23 +126,21 @@ export function IntegrationCatalog({
     };
   }, [searchInput, setSearch]);
 
-  // All category pills
   const allCategories = [
-    { key: null, label: "All" },
+    { key: null, label: t("catalog.categoryAll") },
     ...categories.map((c) => ({
       key: c,
-      label: CATEGORY_LABELS[c] ?? c,
+      label: getCategoryLabel(t, c),
     })),
   ];
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search integrations..."
+          placeholder={t("catalog.searchPlaceholder")}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           className={cn(
@@ -171,7 +163,6 @@ export function IntegrationCatalog({
         )}
       </div>
 
-      {/* Category Pills */}
       {categories.length > 0 && (
         <div
           ref={scrollRef}
@@ -194,14 +185,12 @@ export function IntegrationCatalog({
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-600">
           {error}
         </div>
       )}
 
-      {/* Loading Skeleton */}
       {loading && catalog.length === 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -222,13 +211,12 @@ export function IntegrationCatalog({
         </div>
       )}
 
-      {/* Connected Section */}
       {!loading && connectedItems.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Connected
+              {t("catalog.sections.connected")}
             </h4>
             <span className="text-[10px] font-medium text-muted-foreground/60 bg-muted rounded-full px-1.5 py-0.5">
               {connectedItems.length}
@@ -247,12 +235,11 @@ export function IntegrationCatalog({
         </div>
       )}
 
-      {/* Available Section */}
       {!loading && availableItems.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-2.5">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Available
+              {t("catalog.sections.available")}
             </h4>
             <span className="text-[10px] font-medium text-muted-foreground/60 bg-muted rounded-full px-1.5 py-0.5">
               {availableItems.length}
@@ -277,31 +264,31 @@ export function IntegrationCatalog({
                   "border border-input text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                Load more ({availableItems.length - visibleCount} remaining)
+                {t("catalog.loadMore", {
+                  remaining: availableItems.length - visibleCount,
+                })}
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* Empty state */}
       {!loading && catalog.length === 0 && !error && (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <Plug className="h-8 w-8 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground mb-1">
             {search || category
-              ? "No integrations match your search"
-              : "No integrations available"}
+              ? t("catalog.empty.noMatchTitle")
+              : t("catalog.empty.noneAvailableTitle")}
           </p>
           <p className="text-xs text-muted-foreground/70 max-w-[240px]">
             {search || category
-              ? "Try adjusting your search or filters."
-              : "Native integrations will appear here once configured."}
+              ? t("catalog.empty.noMatchHint")
+              : t("catalog.empty.noneAvailableHint")}
           </p>
         </div>
       )}
 
-      {/* Detail Sheet */}
       <IntegrationDetailSheet
         item={selectedItem}
         connections={connections}
@@ -313,7 +300,6 @@ export function IntegrationCatalog({
         onGetActions={getActions}
       />
 
-      {/* Connect Flow */}
       <ConnectFlow
         item={connectItem}
         open={connectOpen}

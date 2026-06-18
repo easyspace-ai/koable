@@ -4,12 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Loader2, RotateCw, RefreshCw, FolderKanban, AlertTriangle,
+  ArrowLeft, Loader2, RotateCw, FolderKanban, AlertTriangle,
   MessageSquare, Search, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 interface Project {
   projectId: string;
@@ -42,6 +43,7 @@ function fmtAge(iso: string | null): string {
 }
 
 function StatusBadge({ status, runtimeState }: { status: string; runtimeState: string | null }) {
+  const { t } = useTranslation("admin");
   const live = runtimeState === "running";
   const cls = live
     ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
@@ -50,7 +52,7 @@ function StatusBadge({ status, runtimeState }: { status: string; runtimeState: s
     : status === "draft"
     ? "bg-zinc-500/15 text-zinc-300 border-zinc-500/30"
     : "bg-amber-500/15 text-amber-300 border-amber-500/30";
-  const label = live ? "running" : status;
+  const label = live ? t("projects.statusRunning") : status;
   return (
     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border ${cls}`}>
       {label}
@@ -60,6 +62,7 @@ function StatusBadge({ status, runtimeState }: { status: string; runtimeState: s
 
 export default function ProjectsAdminPage() {
   const router = useRouter();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
   const [projects, setProjects] = useState<Project[]>([]);
   const [total, setTotal] = useState(0);
@@ -81,11 +84,11 @@ export default function ProjectsAdminPage() {
       setTotal(r.data.total);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load projects");
+      setError(e instanceof Error ? e.message : t("projects.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, [offset, search]);
+  }, [offset, search, t]);
 
   useEffect(() => {
     if (isPlatformAdmin) load();
@@ -103,8 +106,8 @@ export default function ProjectsAdminPage() {
     return (
       <div className="max-w-2xl mx-auto p-8 text-center">
         <AlertTriangle className="h-8 w-8 text-amber-400 mx-auto mb-3" />
-        <h1 className="text-xl font-semibold mb-2">Platform admin required</h1>
-        <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
+        <h1 className="text-xl font-semibold mb-2">{t("projects.accessTitle")}</h1>
+        <Button onClick={() => router.push("/dashboard")}>{t("page.backToDashboard")}</Button>
       </div>
     );
   }
@@ -113,32 +116,31 @@ export default function ProjectsAdminPage() {
     <div className="max-w-7xl mx-auto p-6">
       <div className="mb-6">
         <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3">
-          <ArrowLeft className="h-4 w-4" /> Back to Admin
+          <ArrowLeft className="h-4 w-4" /> {t("runtime.backToAdmin")}
         </Link>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600/20">
             <FolderKanban className="h-5 w-5 text-brand-400" />
           </div>
           <div className="flex-1">
-            <h1 className="text-xl font-semibold">All Projects ({total})</h1>
+            <h1 className="text-xl font-semibold">{t("projects.title", { total })}</h1>
             <p className="text-sm text-muted-foreground">
-              Every project on the platform — drafts, published, and live runtime — with framework, owner, chat activity.
+              {t("projects.description")}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-1.5">
             <RotateCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            {t("common.refresh")}
           </Button>
         </div>
       </div>
 
-      {/* Search */}
       <div className="mb-4 flex items-center gap-2">
         <div className="relative flex-1 max-w-md">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Filter by name, slug, owner email, framework, workspace…"
+            placeholder={t("projects.searchPlaceholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {
@@ -158,7 +160,7 @@ export default function ProjectsAdminPage() {
             setSearch(searchInput);
           }}
         >
-          Search
+          {t("common.search")}
         </Button>
         {search && (
           <Button
@@ -170,7 +172,7 @@ export default function ProjectsAdminPage() {
               setOffset(0);
             }}
           >
-            Clear
+            {t("common.clear")}
           </Button>
         )}
       </div>
@@ -185,25 +187,25 @@ export default function ProjectsAdminPage() {
         <table className="w-full text-xs">
           <thead className="bg-muted/40 border-b border-border">
             <tr className="text-left text-muted-foreground">
-              <th className="px-3 py-2 font-medium">Project</th>
-              <th className="px-3 py-2 font-medium">Owner / Workspace</th>
-              <th className="px-3 py-2 font-medium">Framework</th>
-              <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 font-medium">Listen</th>
-              <th className="px-3 py-2 font-medium text-right">Sessions</th>
-              <th className="px-3 py-2 font-medium text-right">Messages</th>
-              <th className="px-3 py-2 font-medium">Updated</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnProject")}</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnOwnerWorkspace")}</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnFramework")}</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnStatus")}</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnListen")}</th>
+              <th className="px-3 py-2 font-medium text-right">{t("projects.columnSessions")}</th>
+              <th className="px-3 py-2 font-medium text-right">{t("projects.columnMessages")}</th>
+              <th className="px-3 py-2 font-medium">{t("projects.columnUpdated")}</th>
               <th className="px-3 py-2 font-medium text-right"></th>
             </tr>
           </thead>
           <tbody>
             {loading && projects.length === 0 ? (
               <tr><td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> Loading…
+                <Loader2 className="h-4 w-4 animate-spin inline mr-2" /> {t("common.loading")}
               </td></tr>
             ) : projects.length === 0 ? (
               <tr><td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
-                No projects match your filter.
+                {t("projects.empty")}
               </td></tr>
             ) : projects.map((p) => (
               <tr key={p.projectId} className="border-b border-border last:border-b-0 hover:bg-muted/20">
@@ -235,9 +237,9 @@ export default function ProjectsAdminPage() {
                     <Link
                       href={`/admin/chat?projectId=${p.projectId}`}
                       className="inline-flex items-center gap-1 text-[10px] text-brand-400 hover:text-brand-300"
-                      title="View chat sessions for this project"
+                      title={t("projects.chatLinkTitle")}
                     >
-                      <MessageSquare className="h-3 w-3" /> chat
+                      <MessageSquare className="h-3 w-3" /> {t("projects.chatLink")}
                     </Link>
                   )}
                 </td>
@@ -247,9 +249,14 @@ export default function ProjectsAdminPage() {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-        <span>Showing {offset + 1}-{offset + projects.length} of {total}</span>
+        <span>
+          {t("projects.paginationShowing", {
+            start: offset + 1,
+            end: offset + projects.length,
+            total,
+          })}
+        </span>
         <div className="flex items-center gap-1">
           <Button
             variant="outline"

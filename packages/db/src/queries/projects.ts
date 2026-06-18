@@ -28,6 +28,14 @@ export function projectQueries(sql: postgres.Sql) {
       return mapRowOut(project);
     },
 
+    async findByIds(ids: string[]): Promise<ProjectRow[]> {
+      if (ids.length === 0) return [];
+      const rows = await sql<ProjectRow[]>`
+        SELECT * FROM projects WHERE id = ANY(${ids}) AND deleted_at IS NULL
+      `;
+      return mapRowsOut(rows);
+    },
+
     async findByWorkspaceAndSlug(
       workspaceId: string,
       slug: string
@@ -189,6 +197,53 @@ export function projectQueries(sql: postgres.Sql) {
         WHERE project_id = ${projectId}
         ORDER BY version_number DESC
       `;
+    },
+
+    /**
+     * Single-query project access check: loads project visibility plus
+     * workspace membership and collaborator roles in one round-trip.
+     */
+    async checkUserAccess(
+      projectId: string,
+      userId: string,
+    ): Promise<
+      | {
+          visibility: ProjectVisibility;
+          workspaceRole: string | null;
+          collabRole: string | null;
+        }
+      | undefined
+    > {
+      const [row] = await sql<
+        {
+          visibility: ProjectVisibility | "restricted";
+          workspace_role: string | null;
+          collab_role: string | null;
+        }[]
+      >`
+        SELECT
+          p.visibility,
+          wm.role AS workspace_role,
+          pc.role AS collab_role
+        FROM projects p
+        LEFT JOIN workspace_members wm
+          ON wm.workspace_id = p.workspace_id AND wm.user_id = ${userId}
+        LEFT JOIN project_collaborators pc
+          ON pc.project_id = p.id AND pc.user_id = ${userId}
+        WHERE p.id = ${projectId} AND p.deleted_at IS NULL
+      `;
+      if (!row) return undefined;
+
+      const visibility =
+        row.visibility === ("restricted" as unknown as ProjectVisibility)
+          ? ("private" as ProjectVisibility)
+          : (row.visibility as ProjectVisibility);
+
+      return {
+        visibility,
+        workspaceRole: row.workspace_role,
+        collabRole: row.collab_role,
+      };
     },
   };
 }

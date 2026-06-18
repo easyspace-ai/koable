@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Play } from "lucide-react";
 import { SectionCard } from "@/modules/settings/components/project-settings-shared";
+import { useTranslations } from "next-intl";
 import type { DataTokenState } from "../hooks/use-data-token";
 import type { QueryResult } from "../api";
 
@@ -13,6 +14,7 @@ interface QueriesPaneProps {
 const SAMPLE = "SELECT * FROM information_schema.tables WHERE table_schema = 'public';";
 
 export function QueriesPane({ tokenState }: QueriesPaneProps) {
+  const t = useTranslations("settings");
   const { client, loading: tokenLoading, error: tokenError } = tokenState;
   const [sql, setSql] = useState("");
   const [result, setResult] = useState<QueryResult | null>(null);
@@ -27,7 +29,7 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
       setResult(await client.query(sql));
     } catch (err) {
       setResult(null);
-      setError(err instanceof Error ? err.message : "Query failed");
+      setError(err instanceof Error ? err.message : t("database.queryFailed"));
     } finally {
       setRunning(false);
     }
@@ -42,7 +44,7 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
   }
   if (tokenError) {
     return (
-      <SectionCard title="Queries">
+      <SectionCard title={t("database.queriesTitle")}>
         <p className="text-sm text-destructive">{tokenError}</p>
       </SectionCard>
     );
@@ -53,8 +55,8 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
 
   return (
     <SectionCard
-      title="Queries"
-      description="Run SELECT / INSERT / UPDATE / DELETE against your database. Queries respect row-level security."
+      title={t("database.queriesTitle")}
+      description={t("database.queriesDescription")}
     >
       <div className="space-y-3">
         <textarea
@@ -75,12 +77,14 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
-            Run
+            {t("database.run")}
           </button>
-          <span className="text-xs text-muted-foreground">⌘/Ctrl + Enter</span>
+          <span className="text-xs text-muted-foreground">{t("database.runShortcut")}</span>
           {result && !error && (
             <span className="ml-auto text-xs text-muted-foreground">
-              {result.rowCount} {result.rowCount === 1 ? "row" : "rows"}
+              {result.rowCount === 1
+                ? t("database.rowCount", { count: result.rowCount })
+                : t("database.rowCountPlural", { count: result.rowCount })}
             </span>
           )}
         </div>
@@ -89,7 +93,7 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
 
         {result && !error && (
           columns.length === 0 ? (
-            <p className="py-2 text-sm text-muted-foreground">Query OK — no rows returned.</p>
+            <p className="py-2 text-sm text-muted-foreground">{t("database.queryOkNoRows")}</p>
           ) : (
             <div className="overflow-x-auto rounded-md border">
               <table className="w-full text-xs">
@@ -108,7 +112,7 @@ export function QueriesPane({ tokenState }: QueriesPaneProps) {
                       {columns.map((col) => (
                         <td key={col} className="max-w-xs truncate px-3 py-1.5 font-mono">
                           {row[col] === null
-                            ? <span className="italic text-muted-foreground">null</span>
+                            ? <span className="italic text-muted-foreground">{t("database.nullValue")}</span>
                             : String(row[col])}
                         </td>
                       ))}

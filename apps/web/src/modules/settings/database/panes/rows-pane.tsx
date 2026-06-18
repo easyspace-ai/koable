@@ -3,20 +3,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { Loader2, RefreshCw, Pencil, Trash2, Check, X, Download, Plus } from "lucide-react";
 import { SectionCard } from "@/modules/settings/components/project-settings-shared";
+import { useTranslations } from "next-intl";
 import type { DataTokenState } from "../hooks/use-data-token";
 import type { SchemaResult, QueryResult, TableSchema, ColumnInfo } from "../api";
 
 const PAGE_SIZE = 50;
 const EXPORT_CAP = 10000;
-// Identity columns auto-filled from the signed-in user when left blank, so RLS
-// WITH CHECK (owner = current_setting('app.user_id')) lets the new row through.
 const IDENTITY_COLS = new Set(["owner_id", "created_by", "user_id"]);
 
 interface RowsPaneProps {
   tokenState: DataTokenState;
 }
 
-/** Detect a single-column primary key: parse the UNIQUE pkey index, else a column named "id". */
 function detectPrimaryKey(table: TableSchema | undefined): string | null {
   if (!table) return null;
   for (const indexdef of table.indexes) {
@@ -50,6 +48,7 @@ function toCsv(columns: string[], rows: Record<string, unknown>[]): string {
 }
 
 export function RowsPane({ tokenState }: RowsPaneProps) {
+  const t = useTranslations("settings");
   const { client, loading: tokenLoading, error: tokenError } = tokenState;
   const [schema, setSchema] = useState<SchemaResult | null>(null);
   const [selectedTable, setSelectedTable] = useState<string>("");
@@ -58,13 +57,9 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
   const [loadingRows, setLoadingRows] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  // Edit state: the pk value of the row being edited + its draft cell values.
   const [editingPk, setEditingPk] = useState<unknown>(null);
   const [editDraft, setEditDraft] = useState<Record<string, string>>({});
-  // Delete confirmation: the pk value of the row pending delete.
   const [confirmDeletePk, setConfirmDeletePk] = useState<unknown>(null);
-  // Add-row form: open flag + draft cell values.
   const [adding, setAdding] = useState(false);
   const [addDraft, setAddDraft] = useState<Record<string, string>>({});
 
@@ -94,12 +89,12 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
         setRows(result);
         setPage(pageNum);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Query failed");
+        setError(err instanceof Error ? err.message : t("database.queryFailed"));
       } finally {
         setLoadingRows(false);
       }
     },
-    [client],
+    [client, t],
   );
 
   useEffect(() => {
@@ -109,7 +104,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
   const tables = schema?.tables ?? [];
   const columns = rows?.columns ?? [];
   const rowData = rows?.rows ?? [];
-  const currentTable = tables.find((t) => t.name === selectedTable);
+  const currentTable = tables.find((tbl) => tbl.name === selectedTable);
   const totalRows = currentTable?.rowCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
   const pk = detectPrimaryKey(currentTable);
@@ -131,13 +126,12 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
     setError(null);
     try {
       const setClause = editable.map((c, i) => `"${c}"=$${i + 1}`).join(", ");
-      // Cast the pk to text so the string-bound param matches uuid/int/text pks alike.
       const params = [...editable.map((c) => editDraft[c] ?? ""), String(editingPk)];
       await client.query(`UPDATE "${selectedTable}" SET ${setClause} WHERE "${pk}"::text=$${editable.length + 1}`, params);
       setEditingPk(null);
       await fetchRows(selectedTable, page);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      setError(err instanceof Error ? err.message : t("database.updateFailed"));
     } finally {
       setBusy(false);
     }
@@ -152,7 +146,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
       setConfirmDeletePk(null);
       await fetchRows(selectedTable, page);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(err instanceof Error ? err.message : t("database.deleteFailed"));
     } finally {
       setBusy(false);
     }
@@ -170,7 +164,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
         downloadBlob(`${selectedTable}.csv`, "text/csv", toCsv(all.columns, all.rows));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Export failed");
+      setError(err instanceof Error ? err.message : t("database.exportFailed"));
     } finally {
       setBusy(false);
     }
@@ -184,8 +178,6 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
     setAdding(true);
   }
 
-  // Columns the user fills in the Add form: skip nothing, but mark which are
-  // optional (have a default / are identity-autofilled) so blanks are allowed.
   function isOptionalCol(col: ColumnInfo): boolean {
     return col.name === pk || /^(created_at|updated_at)$/.test(col.name) || IDENTITY_COLS.has(col.name) || col.nullable;
   }
@@ -200,18 +192,17 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
       const raw = addDraft[col.name];
       const filled = raw !== undefined && raw !== "";
       if (IDENTITY_COLS.has(col.name) && !filled) {
-        // Auto-fill identity from the session; cast to the column's type.
         const cast = /uuid/i.test(col.type) ? "::uuid" : "";
         cols.push(`"${col.name}"`);
         valExprs.push(`current_setting('app.user_id', true)${cast}`);
         continue;
       }
-      if (!filled) continue; // let the DB default / NULL apply (pk, created_at, optional)
+      if (!filled) continue;
       cols.push(`"${col.name}"`);
       valExprs.push(`$${p++}`);
       params.push(raw);
     }
-    if (cols.length === 0) { setError("Fill at least one field before adding the row."); return; }
+    if (cols.length === 0) { setError(t("database.fillOneField")); return; }
     setBusy(true);
     setError(null);
     try {
@@ -220,7 +211,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
       setAddDraft({});
       await fetchRows(selectedTable, page);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Insert failed");
+      setError(err instanceof Error ? err.message : t("database.insertFailed"));
     } finally {
       setBusy(false);
     }
@@ -235,24 +226,23 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
   }
   if (tokenError) {
     return (
-      <SectionCard title="Rows">
+      <SectionCard title={t("database.rowsTitle")}>
         <p className="text-sm text-destructive">{tokenError}</p>
       </SectionCard>
     );
   }
 
   return (
-    <SectionCard title="Rows" description="Browse, edit, delete, and export table data.">
+    <SectionCard title={t("database.rowsTitle")} description={t("database.rowsDescription")}>
       <div className="space-y-4">
-        {/* Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={selectedTable}
             onChange={(e) => setSelectedTable(e.target.value)}
             className="rounded-md border bg-background px-3 py-1.5 text-sm"
           >
-            {tables.map((t) => (
-              <option key={t.name} value={t.name}>{t.name} ({t.rowCount} rows)</option>
+            {tables.map((tbl) => (
+              <option key={tbl.name} value={tbl.name}>{t("database.tableRowCount", { name: tbl.name, count: tbl.rowCount })}</option>
             ))}
           </select>
           <button
@@ -260,7 +250,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
             disabled={loadingRows}
             className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loadingRows ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`h-3.5 w-3.5 ${loadingRows ? "animate-spin" : ""}`} /> {t("database.refresh")}
           </button>
           <button
             onClick={() => void exportData("csv")}
@@ -281,37 +271,34 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
             disabled={busy || adding || !selectedTable || columns.length === 0}
             className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
           >
-            <Plus className="h-3.5 w-3.5" /> Add row
+            <Plus className="h-3.5 w-3.5" /> {t("database.addRow")}
           </button>
           {totalRows > 0 && (
             <span className="ml-auto text-xs text-muted-foreground">
-              Page {page + 1} of {totalPages} &middot; {totalRows.toLocaleString()} rows total
+              {t("database.pageInfo", { page: page + 1, totalPages, totalRows: totalRows.toLocaleString() })}
             </span>
           )}
         </div>
 
         {!canMutate && columns.length > 0 && (
-          <p className="text-xs text-muted-foreground">
-            Editing and deleting are disabled — this table has no single-column primary key to target rows by.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("database.noPkHint")}</p>
         )}
         {error && <p className="text-sm text-destructive whitespace-pre-wrap">{error}</p>}
 
-        {/* Add-row form */}
         {adding && currentTable && (
           <div className="space-y-2 rounded-md border border-primary/30 bg-muted/20 p-3">
-            <p className="text-xs font-medium text-muted-foreground">New row in <span className="font-mono text-foreground">{selectedTable}</span></p>
+            <p className="text-xs font-medium text-muted-foreground">{t("database.newRowIn", { table: selectedTable })}</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {currentTable.columns.map((col) => (
                 <label key={col.name} className="flex flex-col gap-0.5 text-xs">
                   <span className="font-mono text-muted-foreground">
                     {col.name}
-                    {isOptionalCol(col) && <span className="ml-1 text-[10px] opacity-60">(optional)</span>}
+                    {isOptionalCol(col) && <span className="ml-1 text-[10px] opacity-60">{t("database.optional")}</span>}
                   </span>
                   <input
                     value={addDraft[col.name] ?? ""}
                     onChange={(e) => setAddDraft((d) => ({ ...d, [col.name]: e.target.value }))}
-                    placeholder={col.name === pk ? "auto" : IDENTITY_COLS.has(col.name) ? "you (auto)" : col.type}
+                    placeholder={col.name === pk ? t("database.autoPlaceholder") : IDENTITY_COLS.has(col.name) ? t("database.youAutoPlaceholder") : col.type}
                     className="rounded border bg-background px-2 py-1 font-mono text-xs"
                   />
                 </label>
@@ -323,20 +310,19 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
                 disabled={busy}
                 className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
-                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} Add
+                {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} {t("database.add")}
               </button>
-              <button onClick={() => { setAdding(false); setAddDraft({}); }} className="rounded-md border px-3 py-1 text-xs hover:bg-muted">Cancel</button>
+              <button onClick={() => { setAdding(false); setAddDraft({}); }} className="rounded-md border px-3 py-1 text-xs hover:bg-muted">{t("database.cancel")}</button>
             </div>
           </div>
         )}
 
-        {/* Table */}
         {loadingRows ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : columns.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">No data.</p>
+          <p className="py-4 text-sm text-muted-foreground">{t("database.noData")}</p>
         ) : (
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-xs">
@@ -345,7 +331,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
                   {columns.map((col) => (
                     <th key={col} className="border-b px-3 py-2 text-left font-medium text-muted-foreground">{col}</th>
                   ))}
-                  {canMutate && <th className="border-b px-3 py-2 text-right font-medium text-muted-foreground">Actions</th>}
+                  {canMutate && <th className="border-b px-3 py-2 text-right font-medium text-muted-foreground">{t("database.actions")}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -364,7 +350,7 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
                               className="w-full rounded border bg-background px-1 py-0.5 font-mono text-xs"
                             />
                           ) : row[col] === null ? (
-                            <span className="italic text-muted-foreground">null</span>
+                            <span className="italic text-muted-foreground">{t("database.nullValue")}</span>
                           ) : (
                             String(row[col])
                           )}
@@ -374,24 +360,24 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
                         <td className="whitespace-nowrap px-3 py-1.5 text-right">
                           {isEditing ? (
                             <span className="inline-flex gap-1">
-                              <button onClick={() => void saveEdit()} disabled={busy} title="Save"
+                              <button onClick={() => void saveEdit()} disabled={busy} title={t("database.save")}
                                 className="rounded p-1 text-green-600 hover:bg-muted disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setEditingPk(null)} title="Cancel"
+                              <button onClick={() => setEditingPk(null)} title={t("database.cancel")}
                                 className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
                             </span>
                           ) : isConfirming ? (
                             <span className="inline-flex items-center gap-1">
-                              <span className="text-[11px] text-muted-foreground">Delete?</span>
-                              <button onClick={() => void deleteRow(row[pk!])} disabled={busy} title="Confirm delete"
+                              <span className="text-[11px] text-muted-foreground">{t("database.deleteConfirm")}</span>
+                              <button onClick={() => void deleteRow(row[pk!])} disabled={busy} title={t("database.confirmDelete")}
                                 className="rounded p-1 text-destructive hover:bg-destructive/10 disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setConfirmDeletePk(null)} title="Cancel"
+                              <button onClick={() => setConfirmDeletePk(null)} title={t("database.cancel")}
                                 className="rounded p-1 text-muted-foreground hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
                             </span>
                           ) : (
                             <span className="inline-flex gap-1">
-                              <button onClick={() => startEdit(row)} title="Edit"
+                              <button onClick={() => startEdit(row)} title={t("database.edit")}
                                 className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></button>
-                              <button onClick={() => setConfirmDeletePk(row[pk!])} title="Delete"
+                              <button onClick={() => setConfirmDeletePk(row[pk!])} title={t("database.delete")}
                                 className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
                             </span>
                           )}
@@ -405,13 +391,12 @@ export function RowsPane({ tokenState }: RowsPaneProps) {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center gap-2">
             <button onClick={() => void fetchRows(selectedTable, page - 1)} disabled={page === 0 || loadingRows}
-              className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50">Prev</button>
+              className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50">{t("database.prev")}</button>
             <button onClick={() => void fetchRows(selectedTable, page + 1)} disabled={page >= totalPages - 1 || loadingRows}
-              className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50">Next</button>
+              className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50">{t("database.next")}</button>
           </div>
         )}
       </div>

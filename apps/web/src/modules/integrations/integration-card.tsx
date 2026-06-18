@@ -1,9 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_LABELS, type CatalogItem } from "./use-integration-catalog";
+import { getCategoryLabel, type CatalogItem } from "./use-integration-catalog";
 
 // ─── Integration Card ──────────────────────────────────────
 
@@ -14,7 +15,8 @@ interface IntegrationCardProps {
 }
 
 export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardProps) {
-  const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category;
+  const t = useTranslations("integrations");
+  const categoryLabel = getCategoryLabel(t, item.category);
 
   return (
     <div
@@ -24,7 +26,6 @@ export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardPr
       )}
       onClick={() => onSelect(item)}
     >
-      {/* Header: Logo + Status */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted shrink-0 overflow-hidden">
           {item.logoUrl ? (
@@ -33,7 +34,6 @@ export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardPr
               alt={item.displayName}
               className="h-6 w-6 object-contain"
               onError={(e) => {
-                // Fallback to first letter on image error
                 const target = e.currentTarget;
                 target.style.display = "none";
                 const parent = target.parentElement;
@@ -52,23 +52,24 @@ export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardPr
           )}
         </div>
 
-        {/* Status dot */}
         <span
           className={cn(
             "mt-1 h-2 w-2 rounded-full shrink-0",
             item.connected ? "bg-emerald-500" : "bg-muted-foreground/30"
           )}
-          title={item.connected ? "Connected" : "Available"}
+          title={
+            item.connected
+              ? t("card.status.connected")
+              : t("card.status.available")
+          }
         />
       </div>
 
-      {/* Name + Description */}
       <h3 className="text-sm font-semibold truncate mb-1">{item.displayName}</h3>
       <p className="text-xs text-muted-foreground line-clamp-2 mb-3 min-h-[2rem]">
-        {item.description || "No description available."}
+        {item.description || t("card.noDescription")}
       </p>
 
-      {/* Footer: Category + Actions */}
       <div className="mt-auto flex items-center justify-between gap-2">
         <Badge
           variant="secondary"
@@ -87,7 +88,6 @@ export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardPr
         </div>
       </div>
 
-      {/* Connect/Manage button overlay */}
       <div className="absolute inset-x-0 bottom-0 p-4 pt-8 bg-gradient-to-t from-background via-background/80 to-transparent rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => {
@@ -105,7 +105,7 @@ export function IntegrationCard({ item, onSelect, onConnect }: IntegrationCardPr
               : "bg-primary text-primary-foreground hover:bg-primary/90"
           )}
         >
-          {item.connected ? "Manage" : "Connect"}
+          {item.connected ? t("card.actions.manage") : t("card.actions.connect")}
         </button>
       </div>
     </div>

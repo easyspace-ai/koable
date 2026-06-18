@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import type { Project, Folder } from "@doable/shared";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +84,7 @@ export function Sidebar({
   workspaceId,
   onCreateFolder,
 }: SidebarProps) {
+  const t = useTranslations("dashboard");
   const [folders, setFolders] = useState<Folder[]>([]);
   const [foldersLoading, setFoldersLoading] = useState(false);
 
@@ -113,7 +115,7 @@ export function Sidebar({
         <div className="mb-2">
           <h3 className="mb-1 flex items-center gap-1.5 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
-            Recent
+            {t("sidebar.recent")}
           </h3>
           {loading ? (
             <div className="space-y-1.5 px-2">
@@ -122,7 +124,7 @@ export function Sidebar({
               ))}
             </div>
           ) : recentProjects.length === 0 ? (
-            <p className="px-2 text-xs text-muted-foreground">No projects yet</p>
+            <p className="px-2 text-xs text-muted-foreground">{t("sidebar.noProjectsYet")}</p>
           ) : (
             recentProjects.map((p) => (
               <a
@@ -140,7 +142,7 @@ export function Sidebar({
         <div className="mb-2">
           <h3 className="mb-1 flex items-center gap-1.5 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <Star className="h-3.5 w-3.5" />
-            Starred
+            {t("sidebar.starred")}
           </h3>
           {loading ? (
             <div className="space-y-1.5 px-2">
@@ -150,7 +152,7 @@ export function Sidebar({
             </div>
           ) : starredProjects.length === 0 ? (
             <p className="px-2 text-xs text-muted-foreground">
-              No starred projects
+              {t("sidebar.noStarredProjects")}
             </p>
           ) : (
             starredProjects.map((p) => (
@@ -171,13 +173,13 @@ export function Sidebar({
           <div className="mb-1 flex items-center justify-between px-2">
             <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <FolderIcon className="h-3.5 w-3.5" />
-              Folders
+              {t("sidebar.folders")}
             </h3>
             {onCreateFolder && (
               <button
                 onClick={onCreateFolder}
                 className="rounded p-0.5 text-muted-foreground hover:text-foreground"
-                aria-label="Create folder"
+                aria-label={t("sidebar.createFolder")}
               >
                 <FolderPlus className="h-3.5 w-3.5" />
               </button>
@@ -190,7 +192,7 @@ export function Sidebar({
               ))}
             </div>
           ) : folderTree.length === 0 ? (
-            <p className="px-2 text-xs text-muted-foreground">No folders</p>
+            <p className="px-2 text-xs text-muted-foreground">{t("sidebar.noFolders")}</p>
           ) : (
             folderTree.map((f) => <FolderNode key={f.id} folder={f} />)
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   X,
   Zap,
@@ -9,14 +10,13 @@ import {
   RefreshCw,
   Loader2,
   Unplug,
-  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  CATEGORY_LABELS,
-  AUTH_LABELS,
+  getCategoryLabel,
+  getAuthLabel,
   type CatalogItem,
   type IntegrationAction,
   type NativeConnection,
@@ -31,7 +31,7 @@ interface IntegrationDetailSheetProps {
   onClose: () => void;
   onConnect: (item: CatalogItem) => void;
   onDisconnect: (connectionId: string) => void;
-  onTestConnection: (connectionId: string) => Promise<{ valid: boolean; error?: string }>;
+  onTestConnection: (connectionId: string) => Promise<{ valid: boolean; error?: string; message?: string }>;
   onGetActions: (integrationId: string) => Promise<IntegrationAction[]>;
 }
 
@@ -45,6 +45,7 @@ export function IntegrationDetailSheet({
   onTestConnection,
   onGetActions,
 }: IntegrationDetailSheetProps) {
+  const t = useTranslations("integrations");
   const [actions, setActions] = useState<IntegrationAction[]>([]);
   const [loadingActions, setLoadingActions] = useState(false);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -52,10 +53,10 @@ export function IntegrationDetailSheet({
     id: string;
     valid: boolean;
     error?: string;
+    message?: string;
   } | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState<string | null>(null);
 
-  // Load actions when the sheet opens for a specific item
   useEffect(() => {
     if (!item || !open) {
       setActions([]);
@@ -80,7 +81,6 @@ export function IntegrationDetailSheet({
     };
   }, [item?.id, open, onGetActions]);
 
-  // Reset state on close
   useEffect(() => {
     if (!open) {
       setTestResult(null);
@@ -96,12 +96,16 @@ export function IntegrationDetailSheet({
         const result = await onTestConnection(connectionId);
         setTestResult({ id: connectionId, ...result });
       } catch {
-        setTestResult({ id: connectionId, valid: false, error: "Test failed" });
+        setTestResult({
+          id: connectionId,
+          valid: false,
+          error: t("detailSheet.errors.testFailed"),
+        });
       } finally {
         setTestingId(null);
       }
     },
-    [onTestConnection]
+    [onTestConnection, t]
   );
 
   const handleDisconnect = useCallback(
@@ -121,12 +125,11 @@ export function IntegrationDetailSheet({
   const itemConnections = connections.filter(
     (c) => c.integrationId === item.id
   );
-  const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category;
-  const authLabel = AUTH_LABELS[item.authType] ?? item.authType;
+  const categoryLabel = getCategoryLabel(t, item.category);
+  const authLabel = getAuthLabel(t, item.authType);
 
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-40 bg-black/50 animate-in fade-in-0"
@@ -134,7 +137,6 @@ export function IntegrationDetailSheet({
         />
       )}
 
-      {/* Sheet */}
       <div
         className={cn(
           "fixed inset-y-0 right-0 z-50 w-full max-w-md border-l bg-background shadow-xl",
@@ -143,7 +145,6 @@ export function IntegrationDetailSheet({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="flex items-start justify-between p-5 border-b">
             <div className="flex items-start gap-3 min-w-0">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted shrink-0 overflow-hidden">
@@ -192,20 +193,17 @@ export function IntegrationDetailSheet({
             </button>
           </div>
 
-          {/* Scrollable body */}
           <div className="flex-1 overflow-auto">
-            {/* Description */}
             <div className="p-5 border-b">
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {item.description || "No description available."}
+                {item.description || t("detailSheet.noDescription")}
               </p>
             </div>
 
-            {/* Connections */}
             {itemConnections.length > 0 && (
               <div className="p-5 border-b">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                  Active Connections
+                  {t("detailSheet.sections.activeConnections")}
                 </h3>
                 <div className="space-y-2">
                   {itemConnections.map((conn) => (
@@ -226,7 +224,7 @@ export function IntegrationDetailSheet({
                             )}
                           />
                           <span className="text-sm font-medium truncate">
-                            {conn.displayName || "Connection"}
+                            {conn.displayName || t("detailSheet.connection.defaultName")}
                           </span>
                         </div>
                         <span className="text-[10px] text-muted-foreground uppercase">
@@ -234,7 +232,6 @@ export function IntegrationDetailSheet({
                         </span>
                       </div>
 
-                      {/* Error message (hide if we have a fresh test result for this connection) */}
                       {conn.errorMessage && !(testResult && testResult.id === conn.id) && (
                         <div className="flex items-center gap-1.5 text-xs text-red-600 mb-2">
                           <AlertCircle className="h-3 w-3 shrink-0" />
@@ -242,7 +239,6 @@ export function IntegrationDetailSheet({
                         </div>
                       )}
 
-                      {/* Test result */}
                       {testResult && testResult.id === conn.id && (
                         <div
                           className={cn(
@@ -258,12 +254,11 @@ export function IntegrationDetailSheet({
                             <AlertCircle className="h-3 w-3 shrink-0" />
                           )}
                           {testResult.valid
-                            ? (testResult as any).message || "Connection is healthy"
-                            : testResult.error || "Connection failed"}
+                            ? testResult.message || t("detailSheet.connection.healthy")
+                            : testResult.error || t("detailSheet.connection.failed")}
                         </div>
                       )}
 
-                      {/* Actions */}
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => void handleTest(conn.id)}
@@ -275,7 +270,7 @@ export function IntegrationDetailSheet({
                           ) : (
                             <RefreshCw className="h-3 w-3" />
                           )}
-                          Test
+                          {t("detailSheet.connection.test")}
                         </button>
                         <span className="text-muted-foreground/30">|</span>
                         <button
@@ -290,8 +285,8 @@ export function IntegrationDetailSheet({
                         >
                           <Unplug className="h-3 w-3" />
                           {confirmDisconnect === conn.id
-                            ? "Confirm disconnect?"
-                            : "Disconnect"}
+                            ? t("detailSheet.connection.confirmDisconnect")
+                            : t("detailSheet.connection.disconnect")}
                         </button>
                       </div>
                     </div>
@@ -300,13 +295,12 @@ export function IntegrationDetailSheet({
               </div>
             )}
 
-            {/* Available Actions */}
             <div className="p-5">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Available Actions
+                {t("detailSheet.sections.availableActions")}
                 {!loadingActions && actions.length > 0 && (
                   <span className="ml-1.5 text-muted-foreground/60 normal-case font-normal">
-                    ({actions.length})
+                    {t("detailSheet.actions.count", { count: actions.length })}
                   </span>
                 )}
               </h3>
@@ -314,13 +308,13 @@ export function IntegrationDetailSheet({
               {loadingActions && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Loading actions...
+                  {t("detailSheet.actions.loading")}
                 </div>
               )}
 
               {!loadingActions && actions.length === 0 && (
                 <p className="text-xs text-muted-foreground/70 py-2">
-                  No actions discovered for this integration yet.
+                  {t("detailSheet.actions.empty")}
                 </p>
               )}
 
@@ -349,13 +343,12 @@ export function IntegrationDetailSheet({
             </div>
           </div>
 
-          {/* Footer */}
           <div className="p-4 border-t">
             {item.connected ? (
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-xs text-emerald-600">
                   <Check className="h-3.5 w-3.5" />
-                  Connected
+                  {t("detailSheet.footer.connected")}
                 </span>
                 <Button
                   variant="outline"
@@ -363,7 +356,7 @@ export function IntegrationDetailSheet({
                   onClick={() => onConnect(item)}
                   className="text-xs"
                 >
-                  Add Another Connection
+                  {t("detailSheet.footer.addAnother")}
                 </Button>
               </div>
             ) : (
@@ -372,7 +365,7 @@ export function IntegrationDetailSheet({
                 size="sm"
                 onClick={() => onConnect(item)}
               >
-                Connect {item.displayName}
+                {t("detailSheet.footer.connect", { name: item.displayName })}
               </Button>
             )}
           </div>

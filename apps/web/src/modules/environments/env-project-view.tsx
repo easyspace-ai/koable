@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { Boxes, Loader2, AlertCircle, RefreshCw, Maximize2, Minimize2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -14,13 +15,15 @@ import {
   type ContextRule,
   type Connector,
 } from "./use-environments";
-import { ScopeBadge, ENV_TABS, ENV_PANEL_MODE_KEY } from "./env-shared";
+import { ScopeBadge, useEnvTabs, ENV_PANEL_MODE_KEY } from "./env-shared";
 import { KnowledgeTab, SkillsTab, SettingsTab } from "./env-tabs";
 import { VariablesTab } from "./env-variables-tab";
 import { IntegrationsPanel } from "@/modules/integrations/integrations-panel";
 import type { EnvTab } from "./env-shared";
 
 export function ProjectEnvironmentView({ workspaceId, projectId }: { workspaceId: string; projectId: string }) {
+  const t = useTranslations("environments");
+  const envTabs = useEnvTabs();
   const hooks = useEnvironments(workspaceId, { projectId });
   const { environments, loading, error, refresh } = hooks;
   const [activeTab, setActiveTab] = useState<EnvTab>("integrations");
@@ -74,25 +77,25 @@ export function ProjectEnvironmentView({ workspaceId, projectId }: { workspaceId
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <Boxes className="h-4 w-4" />
-          <h2 className="text-sm font-semibold">Environment</h2>
+          <h2 className="text-sm font-semibold">{t("projectView.title")}</h2>
           {projectEnv && <ScopeBadge scope={projectEnv.scope} />}
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => { void refresh(); setDetail(null); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title="Refresh">
+          <button onClick={() => { void refresh(); setDetail(null); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title={t("projectView.refreshTitle")}>
             <RefreshCw className="h-3.5 w-3.5" />
           </button>
-          <button onClick={toggleDetached} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title={detached ? "Dock to sidebar" : "Open as popup"}>
+          <button onClick={toggleDetached} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title={detached ? t("projectView.dockToSidebarTitle") : t("projectView.openAsPopupTitle")}>
             {detached ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
           </button>
           {detached && (
-            <button onClick={toggleDetached} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title="Close">
+            <button onClick={toggleDetached} className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground" title={t("projectView.closeTitle")}>
               <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
       </div>
       <div className="flex border-b px-1 overflow-x-auto">
-        {ENV_TABS.map((tab) => (
+        {envTabs.map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={cn("flex items-center gap-1.5 px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap",
               activeTab === tab.key ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted-foreground/30")}>
@@ -122,7 +125,7 @@ export function ProjectEnvironmentView({ workspaceId, projectId }: { workspaceId
           </>
         ) : !loading && (
           <div className="flex flex-col items-center py-8 text-center">
-            <Boxes className="h-8 w-8 text-muted-foreground/30 mb-2" /><p className="text-xs text-muted-foreground">No environment loaded</p>
+            <Boxes className="h-8 w-8 text-muted-foreground/30 mb-2" /><p className="text-xs text-muted-foreground">{t("projectView.empty")}</p>
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import { type AuthEnv } from "../../middleware/auth.js";
 import { authMiddlewareWithRls as authMiddleware } from "../../middleware/rls.js";
 import { getProjectPath } from "../../ai/project-files.js";
 import { requireProjectAccess } from "../projects/helpers.js";
+import { githubErrorResponse } from "./error-responses.js";
 
 const db = githubQueries(sql);
 
@@ -94,9 +95,7 @@ githubProjectRoutes.post("/:projectId/github/connect", async (c) => {
 
     return c.json({ data: result }, 201);
   } catch (err) {
-    console.error(`[GitHub] connect error for ${projectId}: ${err instanceof Error ? err.message : err}`);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to connect GitHub", message }, 500);
+    return githubErrorResponse(c, "Failed to connect GitHub", err);
   }
 });
 
@@ -133,12 +132,12 @@ githubProjectRoutes.post("/:projectId/github/push", async (c) => {
 
     return c.json({ data: result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    const isConflict = message.includes("Conflict detected");
-    return c.json(
-      { error: isConflict ? "Conflict detected" : "Failed to push to GitHub", message },
-      isConflict ? 409 : 500
-    );
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Conflict detected")) {
+      console.error(`[GitHub] push conflict for ${projectId}:`, msg);
+      return c.json({ error: "Conflict detected", code: "GITHUB_CONFLICT" }, 409);
+    }
+    return githubErrorResponse(c, "Failed to push to GitHub", err);
   }
 });
 
@@ -168,8 +167,7 @@ githubProjectRoutes.post("/:projectId/github/pull", async (c) => {
 
     return c.json({ data: result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to pull from GitHub", message }, 500);
+    return githubErrorResponse(c, "Failed to pull from GitHub", err);
   }
 });
 
@@ -181,8 +179,7 @@ githubProjectRoutes.get("/:projectId/github/status", async (c) => {
     const status = await githubSync.syncStatus(projectId);
     return c.json({ data: status });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to get sync status", message }, 500);
+    return githubErrorResponse(c, "Failed to get sync status", err);
   }
 });
 
@@ -196,8 +193,7 @@ githubProjectRoutes.get("/:projectId/github/commits", async (c) => {
     const result = await githubSync.getCommitHistory(projectId, { page, pageSize });
     return c.json({ data: result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to get commit history", message }, 500);
+    return githubErrorResponse(c, "Failed to get commit history", err);
   }
 });
 
@@ -246,8 +242,7 @@ githubProjectRoutes.post("/:projectId/github/import", async (c) => {
 
     return c.json({ data: result }, 201);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to import from GitHub", message }, 500);
+    return githubErrorResponse(c, "Failed to import from GitHub", err);
   }
 });
 
@@ -278,8 +273,7 @@ githubProjectRoutes.post("/:projectId/github/resolve", async (c) => {
 
     return c.json({ data: { resolved: true, strategy: body.strategy } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to resolve conflicts", message }, 500);
+    return githubErrorResponse(c, "Failed to resolve conflicts", err);
   }
 });
 
@@ -295,8 +289,7 @@ githubProjectRoutes.post("/:projectId/github/abort-merge", async (c) => {
     await githubSync.abortMerge(body.projectPath);
     return c.json({ data: { aborted: true } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to abort merge", message }, 500);
+    return githubErrorResponse(c, "Failed to abort merge", err);
   }
 });
 
@@ -308,8 +301,7 @@ githubProjectRoutes.delete("/:projectId/github/connect", async (c) => {
     const deleted = await githubSync.disconnectGitHub(projectId);
     return c.json({ data: { disconnected: deleted } });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Failed to disconnect GitHub", message }, 500);
+    return githubErrorResponse(c, "Failed to disconnect GitHub", err);
   }
 });
 
@@ -328,7 +320,6 @@ githubProjectRoutes.post("/github/webhook", async (c) => {
 
     return c.json({ data: result }, result.handled ? 200 : 202);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return c.json({ error: "Webhook processing failed", message }, 500);
+    return githubErrorResponse(c, "Webhook processing failed", err);
   }
 });

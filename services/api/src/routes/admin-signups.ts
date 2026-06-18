@@ -13,8 +13,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { sql } from "../db/index.js";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
+import { usePlatformAdminGuards } from "../middleware/admin-guards.js";
 import { signupApprovalQueries, DEFAULT_PENDING_MESSAGE } from "@doable/db/queries/signup-approval.js";
 import { ensureWorkspace } from "./auth/helpers.js";
 
@@ -22,8 +22,7 @@ const signupApproval = signupApprovalQueries(sql);
 
 export const adminSignupRoutes = new Hono<AuthEnv>({ strict: false });
 
-adminSignupRoutes.use("*", authMiddleware);
-adminSignupRoutes.use("*", platformAdminMiddleware);
+usePlatformAdminGuards(adminSignupRoutes);
 
 // ─── Config ────────────────────────────────────────────────
 

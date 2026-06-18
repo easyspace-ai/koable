@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +10,7 @@ import type {
   ProvisionPhase,
   DialogMode,
 } from "./supabase-provision-types";
-import { SUPABASE_REGIONS } from "./supabase-provision-types";
-
-// ─── OAuth required section ─────────────────────────────────
+import { SUPABASE_REGION_VALUES } from "./supabase-provision-types";
 
 export function OAuthRequiredSection({
   signingIn,
@@ -22,24 +21,22 @@ export function OAuthRequiredSection({
   signInError: string | null;
   onSignIn: () => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="flex flex-col items-start gap-3 py-4">
       <div className="flex items-start gap-2">
         <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
-        <p className="text-sm">
-          Sign in with Supabase so Doable can create projects on your behalf.
-          You&apos;ll be redirected briefly to Supabase to authorize, then come
-          right back here.
-        </p>
+        <p className="text-sm">{t("supabaseViews.oauthRequired.description")}</p>
       </div>
       <Button onClick={onSignIn} disabled={signingIn} className="w-full">
         {signingIn ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Waiting for Supabase…
+            {t("supabaseViews.oauthRequired.waiting")}
           </>
         ) : (
-          "Sign in with Supabase"
+          t("supabaseViews.oauthRequired.signIn")
         )}
       </Button>
       {signInError ? (
@@ -52,8 +49,6 @@ export function OAuthRequiredSection({
   );
 }
 
-// ─── Existing projects list ─────────────────────────────────
-
 export function ExistingProjectsSection({
   existingProjects,
   connectingExistingRef,
@@ -65,11 +60,12 @@ export function ExistingProjectsSection({
   connectExistingError: string | null;
   onConnect: (p: ExistingSupabaseProject) => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="flex flex-col gap-2">
       <p className="text-xs text-muted-foreground">
-        Pick a project — Doable will fetch its API keys and wire them into this
-        app automatically.
+        {t("supabaseViews.existingProjects.hint")}
       </p>
       <div className="flex max-h-80 flex-col gap-1.5 overflow-y-auto">
         {existingProjects.map((p) => {
@@ -95,7 +91,9 @@ export function ExistingProjectsSection({
               {busy ? (
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
               ) : (
-                <span className="text-xs text-muted-foreground">Connect</span>
+                <span className="text-xs text-muted-foreground">
+                  {t("supabaseViews.existingProjects.connect")}
+                </span>
               )}
             </button>
           );
@@ -110,8 +108,6 @@ export function ExistingProjectsSection({
     </div>
   );
 }
-
-// ─── Create-new form ────────────────────────────────────────
 
 export function CreateNewFormSection({
   name,
@@ -138,26 +134,31 @@ export function CreateNewFormSection({
   onOrgChange: (v: string) => void;
   onRegionChange: (v: string) => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <>
       {existingProjects && existingProjects.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          You don&apos;t have any Supabase projects yet — let&apos;s create your
-          first one.
+          {t("supabaseViews.createNew.noProjectsHint")}
         </p>
       ) : null}
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium">Project name</label>
+        <label className="text-xs font-medium">
+          {t("supabaseViews.createNew.projectNameLabel")}
+        </label>
         <Input
           value={name}
-          placeholder="e.g. My App"
+          placeholder={t("supabaseViews.createNew.projectNamePlaceholder")}
           onChange={(e) => onNameChange(e.target.value)}
           disabled={submitting}
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium">Supabase organization</label>
+        <label className="text-xs font-medium">
+          {t("supabaseViews.createNew.organizationLabel")}
+        </label>
         <select
           className="h-9 rounded-md border bg-background px-3 text-sm"
           value={orgId}
@@ -173,16 +174,18 @@ export function CreateNewFormSection({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-medium">Region</label>
+        <label className="text-xs font-medium">
+          {t("supabaseViews.createNew.regionLabel")}
+        </label>
         <select
           className="h-9 rounded-md border bg-background px-3 text-sm"
           value={region}
           disabled={submitting}
           onChange={(e) => onRegionChange(e.target.value)}
         >
-          {SUPABASE_REGIONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
+          {SUPABASE_REGION_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {t(`shared.supabaseRegions.${value}`)}
             </option>
           ))}
         </select>
@@ -219,8 +222,6 @@ export function CreateNewFormSection({
   );
 }
 
-// ─── Mode toggle ────────────────────────────────────────────
-
 export function ModeToggle({
   mode,
   submitting,
@@ -232,6 +233,8 @@ export function ModeToggle({
   connectingExistingRef: string | null;
   onModeChange: (m: DialogMode) => void;
 }) {
+  const t = useTranslations("integrations");
+
   return (
     <div className="flex gap-1 rounded-md bg-muted/40 p-1 text-xs">
       <button
@@ -244,7 +247,7 @@ export function ModeToggle({
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        Connect existing project
+        {t("supabaseViews.modeToggle.existing")}
       </button>
       <button
         type="button"
@@ -256,7 +259,7 @@ export function ModeToggle({
             : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        Create new
+        {t("supabaseViews.modeToggle.new")}
       </button>
     </div>
   );

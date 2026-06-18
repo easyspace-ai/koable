@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 
 // ─── Types (mirror actual DB row types) ─────────────────
@@ -105,6 +106,7 @@ export interface DefaultItems {
 // ─── Hook ───────────────────────────────────────────────
 
 export function useEnvironments(workspaceId: string, opts?: { scope?: 'workspace' | 'project' | 'user'; projectId?: string }) {
+  const t = useTranslations("environments");
   const [environments, setEnvironments] = useState<Environment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -123,11 +125,11 @@ export function useEnvironments(workspaceId: string, opts?: { scope?: 'workspace
       );
       setEnvironments(res.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load environments");
+      setError(err instanceof Error ? err.message : t("errors.failedToLoad"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, opts?.scope, opts?.projectId]);
+  }, [workspaceId, opts?.scope, opts?.projectId, t]);
 
   useEffect(() => { void refresh(); }, [refresh]);
 

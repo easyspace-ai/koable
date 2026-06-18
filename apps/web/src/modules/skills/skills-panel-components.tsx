@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import {
   Trash2,
   AlertCircle,
@@ -16,8 +17,6 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { Skill, Rule } from "./use-skills";
 
-// ─── Types ──────────────────────────────────────────────────
-
 export type ScopeType = "workspace" | "project" | "user";
 
 const SCOPE_VARIANTS: Record<ScopeType, "default" | "secondary" | "outline"> = {
@@ -26,26 +25,25 @@ const SCOPE_VARIANTS: Record<ScopeType, "default" | "secondary" | "outline"> = {
   user: "outline",
 };
 
-// ─── Inline Create Form ─────────────────────────────────────
-
 export function InlineCreateForm({
-  label,
-  placeholder,
+  type,
   onSubmit,
   onCancel,
 }: {
-  label: string;
-  placeholder: string;
+  type: "skill" | "rule";
   onSubmit: (name: string, content: string, scope: ScopeType, description?: string, autoInvoke?: boolean) => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("skills");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
   const [scope, setScope] = useState<ScopeType>("workspace");
   const [autoInvoke, setAutoInvoke] = useState(true);
   const [saving, setSaving] = useState(false);
-  const isSkill = label === "Skill";
+  const isSkill = type === "skill";
+  const label = t(`inlineCreate.labels.${type}`);
+  const placeholder = t(`inlineCreate.placeholders.${type}`);
 
   const handleSubmit = useCallback(async () => {
     if (!name.trim()) return;
@@ -60,7 +58,7 @@ export function InlineCreateForm({
   return (
     <div className="border rounded-md bg-muted/30">
       <div className="flex items-center justify-between px-3 py-2 border-b">
-        <span className="text-xs font-semibold">New {label}</span>
+        <span className="text-xs font-semibold">{t("inlineCreate.title", { label })}</span>
         <button
           onClick={onCancel}
           className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -71,41 +69,41 @@ export function InlineCreateForm({
       <div className="p-3 space-y-3">
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1">
-            Name
+            {t("inlineCreate.nameLabel")}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={`My ${label}`}
+            placeholder={t("inlineCreate.namePlaceholder", { label })}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1">
-            Scope
+            {t("inlineCreate.scopeLabel")}
           </label>
           <select
             value={scope}
             onChange={(e) => setScope(e.target.value as ScopeType)}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
           >
-            <option value="workspace">Workspace</option>
-            <option value="project">Project</option>
-            <option value="user">User</option>
+            <option value="workspace">{t("inlineCreate.scope.workspace")}</option>
+            <option value="project">{t("inlineCreate.scope.project")}</option>
+            <option value="user">{t("inlineCreate.scope.user")}</option>
           </select>
         </div>
         {isSkill && (
           <>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Description <span className="text-muted-foreground/50">(when to use this skill)</span>
+                {t("inlineCreate.descriptionLabel")} <span className="text-muted-foreground/50">{t("inlineCreate.descriptionHint")}</span>
               </label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Use when building React components with accessibility..."
+                placeholder={t("inlineCreate.descriptionPlaceholder")}
                 className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
               />
             </div>
@@ -118,14 +116,14 @@ export function InlineCreateForm({
                 className="rounded border-input"
               />
               <label htmlFor="auto-invoke-create" className="text-xs text-muted-foreground">
-                Auto-invoke when prompt matches
+                {t("inlineCreate.autoInvoke")}
               </label>
             </div>
           </>
         )}
         <div>
           <label className="block text-xs font-medium text-muted-foreground mb-1">
-            Content
+            {t("inlineCreate.contentLabel")}
           </label>
           <textarea
             value={content}
@@ -140,7 +138,7 @@ export function InlineCreateForm({
             onClick={onCancel}
             className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
-            Cancel
+            {t("inlineCreate.cancel")}
           </button>
           <button
             onClick={() => void handleSubmit()}
@@ -152,15 +150,13 @@ export function InlineCreateForm({
             )}
           >
             {saving && <Loader2 className="h-3 w-3 animate-spin" />}
-            Create
+            {t("inlineCreate.create")}
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-// ─── Skill Card ─────────────────────────────────────────────
 
 export function SkillCard({
   item,
@@ -177,6 +173,7 @@ export function SkillCard({
   onUpdate: (content: string, description?: string, autoInvoke?: boolean) => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("skills");
   const itemName = type === "skill" ? (item as Skill).skill_name : (item as Rule).rule_name;
   const itemContent = type === "skill" ? (item as Skill).skill_content : (item as Rule).content;
   const itemDescription = type === "skill" ? (item as Skill).description ?? "" : "";
@@ -187,6 +184,10 @@ export function SkillCard({
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [dirty, setDirty] = useState(false);
+
+  const scopeLabel = item.scope === "workspace" || item.scope === "project" || item.scope === "user"
+    ? t(`inlineCreate.scope.${item.scope}`)
+    : item.scope;
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -219,7 +220,6 @@ export function SkillCard({
 
   return (
     <div className="border rounded-md overflow-hidden">
-      {/* Card header */}
       <button
         onClick={onToggle}
         className="flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
@@ -236,24 +236,23 @@ export function SkillCard({
             {type === "skill" && itemDescription
               ? itemDescription
               : itemContent
-                ? `${itemContent.length} chars`
-                : "Empty -- click to edit"}
+                ? t("skillCard.chars", { count: itemContent.length })
+                : t("skillCard.emptyClickToEdit")}
           </p>
         </div>
         {type === "skill" && !itemAutoInvoke && (
           <Badge variant="outline" className="text-[10px] shrink-0 mr-1">
-            manual
+            {t("skillCard.badgeManual")}
           </Badge>
         )}
         <Badge
           variant={SCOPE_VARIANTS[item.scope]}
           className="text-[10px] shrink-0"
         >
-          {item.scope}
+          {scopeLabel}
         </Badge>
       </button>
 
-      {/* Expanded editor */}
       {expanded && (
         <div className="border-t bg-muted/20">
           <div className="p-3 space-y-3">
@@ -261,7 +260,7 @@ export function SkillCard({
               <>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
-                    Description
+                    {t("skillCard.descriptionLabel")}
                   </label>
                   <input
                     type="text"
@@ -270,7 +269,7 @@ export function SkillCard({
                       setEditDescription(e.target.value);
                       setDirty(editContent !== itemContent || e.target.value !== itemDescription || editAutoInvoke !== itemAutoInvoke);
                     }}
-                    placeholder="When to use this skill..."
+                    placeholder={t("skillCard.descriptionPlaceholder")}
                     className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 placeholder:text-muted-foreground"
                   />
                 </div>
@@ -286,7 +285,7 @@ export function SkillCard({
                     className="rounded border-input"
                   />
                   <label htmlFor={`auto-invoke-${item.id}`} className="text-xs text-muted-foreground">
-                    Auto-invoke when prompt matches
+                    {t("skillCard.autoInvoke")}
                   </label>
                 </div>
               </>
@@ -298,13 +297,12 @@ export function SkillCard({
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 resize-y placeholder:text-muted-foreground"
               placeholder={
                 type === "skill"
-                  ? "---\nname: my-skill\ntrigger: auto\n---\n\nSkill content in markdown..."
-                  : "Rule content..."
+                  ? t("skillCard.contentPlaceholderSkill")
+                  : t("skillCard.contentPlaceholderRule")
               }
             />
           </div>
 
-          {/* Actions */}
           <div className="flex items-center justify-between px-3 py-2 border-t">
             <button
               onClick={() => void handleSave()}
@@ -322,7 +320,7 @@ export function SkillCard({
               ) : (
                 <Save className="h-3 w-3" />
               )}
-              Save
+              {t("skillCard.save")}
             </button>
             <button
               onClick={handleDelete}
@@ -337,12 +335,12 @@ export function SkillCard({
               {confirmDelete ? (
                 <>
                   <AlertCircle className="h-3 w-3" />
-                  Confirm
+                  {t("skillCard.confirm")}
                 </>
               ) : (
                 <>
                   <Trash2 className="h-3 w-3" />
-                  Delete
+                  {t("skillCard.delete")}
                 </>
               )}
             </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle2 } from "lucide-react";
@@ -13,22 +14,16 @@ import { Step4Integrations } from "./steps/Step4Integrations";
 
 const TOTAL_STEPS = 5;
 
-// Admin-installer wizard — no "create first app" step (that belongs in the dashboard, not setup).
-// Sign-in MUST come before AI Provider so the operator's GitHub OAuth App is
-// registered before they have the option to pick GitHub Copilot as the AI
-// provider (the Copilot tile triggers an OAuth handshake that uses the
-// GITHUB_CLIENT_ID/SECRET saved in this step). Re-ordering the other way
-// produced a dead-end where Copilot's authorize redirect went to GitHub with
-// an empty client_id and bounced with "Application not found".
-const STEP_LABELS = [
-  "Welcome",
-  "Sign-in",
-  "AI Provider",
-  "Cloudflare",
-  "Plans & Billing",
-];
+const STEP_KEYS = [
+  "welcome",
+  "signIn",
+  "aiProvider",
+  "cloudflare",
+  "plansBilling",
+] as const;
 
 export function WizardShell() {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
@@ -110,15 +105,16 @@ export function WizardShell() {
         <div className="flex items-center gap-2.5">
           {/* Simple wordmark — matches the app's existing brand pattern */}
           <span className="text-lg font-semibold tracking-tight text-foreground">Doable</span>
-          <span className="text-xs text-muted-foreground font-medium">Setup</span>
+          <span className="text-xs text-muted-foreground font-medium">{t("setup.brandSetup")}</span>
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">
-            Step {step} of {TOTAL_STEPS}
+            {t("setup.stepOf", { current: step, total: TOTAL_STEPS })}
           </span>
           <div className="flex items-center gap-1">
-            {STEP_LABELS.map((label, i) => {
+            {STEP_KEYS.map((stepKey, i) => {
               const n = i + 1;
+              const label = t(`setup.steps.${stepKey}`);
               const done = n < step;
               const active = n === step;
               return (

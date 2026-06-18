@@ -10,6 +10,7 @@
     "prebuild": "node scripts/check-integration-pieces.mjs --check-resolve",
     "start": "node --env-file=../../.env dist/index.js",
     "type-check": "tsc --noEmit",
+    "generate:openapi": "tsx scripts/generate-openapi.ts",
     "check:pieces": "node scripts/check-integration-pieces.mjs --check-resolve",
     "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "clean": "rm -rf dist .turbo node_modules"

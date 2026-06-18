@@ -1,18 +1,17 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Users, UserPlus } from "lucide-react";
 import {
   useWorkspaceMembers,
   type WorkspaceMemberData,
-  type WorkspaceInviteData,
 } from "../hooks/use-workspace-members";
 import {
   ToastContainer,
   useToasts,
   SectionCard,
-  MemberAvatar,
   MemberRow,
   InviteRow,
   InviteLinkSection,
@@ -20,20 +19,18 @@ import {
 } from "./members-components";
 import { InviteDialog, RemoveConfirmDialog } from "./members-dialogs";
 
-// ─── Types ──────────────────────────────────────────────────
-
 interface MembersPageProps {
   workspaceId: string;
   currentUserId: string;
   currentUserRole: "owner" | "admin" | "member" | "viewer";
 }
 
-// ─── Main Component ─────────────────────────────────────────
 export function MembersPage({
   workspaceId,
   currentUserId,
   currentUserRole,
 }: MembersPageProps) {
+  const t = useTranslations("dashboard");
   const {
     members,
     invites,
@@ -62,7 +59,7 @@ export function MembersPage({
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Users className="mb-3 h-10 w-10 text-muted-foreground" />
-        <p className="text-lg font-medium">Failed to load members</p>
+        <p className="text-lg font-medium">{t("workspace.members.loadFailed")}</p>
         <p className="mt-1 text-sm text-muted-foreground">{error}</p>
       </div>
     );
@@ -72,10 +69,9 @@ export function MembersPage({
     <div className="space-y-6">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
-      {/* Members Section */}
       <SectionCard
-        title={`Members (${members.length})`}
-        description="People who have access to this workspace and its projects."
+        title={t("workspace.members.membersTitle", { count: members.length })}
+        description={t("workspace.members.membersDescription")}
         action={
           isAdmin ? (
             <button
@@ -83,7 +79,7 @@ export function MembersPage({
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <UserPlus className="h-4 w-4" />
-              Invite
+              {t("workspace.members.invite")}
             </button>
           ) : undefined
         }
@@ -103,11 +99,10 @@ export function MembersPage({
         </div>
       </SectionCard>
 
-      {/* Pending Invites */}
       {isAdmin && invites.length > 0 && (
         <SectionCard
-          title={`Pending Invites (${invites.length})`}
-          description="Invites that have been sent but not yet accepted."
+          title={t("workspace.members.pendingTitle", { count: invites.length })}
+          description={t("workspace.members.pendingDescription")}
         >
           <div className="space-y-2">
             {invites.map((invite) => (
@@ -122,11 +117,10 @@ export function MembersPage({
         </SectionCard>
       )}
 
-      {/* Invite Link */}
       {isAdmin && (
         <SectionCard
-          title="Invite Link"
-          description="Generate a shareable link to invite people to this workspace."
+          title={t("workspace.members.inviteLinkTitle")}
+          description={t("workspace.members.inviteLinkDescription")}
         >
           <InviteLinkSection
             onGenerate={generateInviteLink}
@@ -135,17 +129,15 @@ export function MembersPage({
         </SectionCard>
       )}
 
-      {/* Invite Dialog */}
       <InviteDialog
         open={inviteDialogOpen}
         onClose={() => setInviteDialogOpen(false)}
         onInvite={async (email, role) => {
           await inviteMember(email, role);
-          addToast("success", `Invite sent to ${email}`);
+          addToast("success", t("workspace.members.inviteSent", { email }));
         }}
       />
 
-      {/* Remove Confirmation Dialog */}
       {removingMember && (
         <RemoveConfirmDialog
           member={removingMember}
@@ -155,7 +147,7 @@ export function MembersPage({
               removingMember.display_name ||
               removingMember.email.split("@")[0];
             await removeMember(removingMember.user_id);
-            addToast("success", `${name} has been removed`);
+            addToast("success", t("workspace.members.memberRemoved", { name: name ?? removingMember.email }));
           }}
         />
       )}

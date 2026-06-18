@@ -6,9 +6,12 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:local": "turbo run dev --filter=@doable/web --filter=@doable/api",
+    "dev:stop": "pkill -f 'next dev|tsx watch|turbo run dev' 2>/dev/null; for p in 3000 4000; do lsof -ti:$p | xargs kill -9 2>/dev/null; done; echo 'Stopped dev servers (ports 3000/4000)'",
     "dev:web": "turbo run dev --filter=@doable/web",
     "dev:api": "turbo run dev --filter=@doable/api",
     "dev:ws": "turbo run dev --filter=@doable/ws",
+    "setup:local": "bash scripts/setup-local.sh",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "test:contracts": "node scripts/run-contract-tests.mjs",

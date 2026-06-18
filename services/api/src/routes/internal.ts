@@ -7,6 +7,7 @@
 import { Hono } from "hono";
 import { hasProjectAccess } from "../middleware/project-access.js";
 import { INTERNAL_SECRET } from "../lib/secrets.js";
+import { isUuid } from "../lib/uuid.js";
 
 export const internalRoutes = new Hono({ strict: false });
 
@@ -23,15 +24,13 @@ internalRoutes.use("*", async (c, next) => {
  * Returns 200 { allowed: true, role: "..." } when granted, 403 when denied.
  * Used by ws to gate room:join.
  */
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 internalRoutes.get("/project-access", async (c) => {
   const userId = c.req.query("userId");
   const projectId = c.req.query("projectId");
   if (!userId || !projectId) {
     return c.json({ allowed: false, error: "userId and projectId required" }, 400);
   }
-  if (!UUID_RE.test(userId) || !UUID_RE.test(projectId)) {
+  if (!isUuid(userId) || !isUuid(projectId)) {
     return c.json({ allowed: false, error: "userId and projectId must be UUIDs" }, 400);
   }
   try {

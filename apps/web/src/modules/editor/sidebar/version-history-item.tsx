@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatTime } from "./version-history-types";
 import type { VersionEntry } from "./version-history-types";
+import { useTranslation } from "@/lib/i18n";
 
 interface VersionItemProps {
   version: VersionEntry;
@@ -39,6 +40,8 @@ export function VersionItem({
   handleRestoreClick,
   handleViewDiff,
 }: VersionItemProps) {
+  const { t } = useTranslation("editor");
+
   return (
     <div className="relative flex gap-3 pb-1 group">
       {/* Timeline dot — color/icon varies by version type */}
@@ -90,7 +93,7 @@ export function VersionItem({
             <div className="flex items-center gap-1.5">
               {isCurrent && (
                 <span className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1 py-0.5 text-[10px] font-semibold text-primary leading-none">
-                  CURRENT
+                  {t("versionHistory.current")}
                 </span>
               )}
               <p
@@ -101,7 +104,7 @@ export function VersionItem({
                 }`}
               >
                 {version.description ??
-                  `Version ${version.version_number}`}
+                  t("versionHistory.versionNumber", { number: version.version_number })}
               </p>
             </div>
           </div>
@@ -119,8 +122,8 @@ export function VersionItem({
             }`}
             title={
               version.bookmarked
-                ? "Remove bookmark"
-                : "Bookmark this version"
+                ? t("versionHistory.removeBookmark")
+                : t("versionHistory.bookmarkVersion")
             }
             disabled={bookmarkingIds.has(version.id)}
           >
@@ -155,7 +158,10 @@ export function VersionItem({
               <span className="text-muted-foreground/30">|</span>
               <span className="flex items-center gap-1">
                 <FileDiff className="h-2.5 w-2.5" />
-                {version.filesChanged} file{version.filesChanged !== 1 ? "s" : ""}
+                {version.filesChanged}{" "}
+                {version.filesChanged !== 1
+                  ? t("versionHistory.filePlural")
+                  : t("versionHistory.fileSingular")}
                 {(version.insertions || version.deletions) && (
                   <span className="text-[10px]">
                     {version.insertions ? <span className="text-green-600">+{version.insertions}</span> : null}
@@ -178,13 +184,13 @@ export function VersionItem({
           ) : (
             <ChevronRight className="h-3 w-3" />
           )}
-          Details
+          {t("versionHistory.details")}
         </button>
 
         {isExpanded && (
           <div className="mt-1.5 rounded border border-border/50 bg-muted/20 p-2 text-[11px] space-y-1.5">
             <div className="flex items-center justify-between text-muted-foreground">
-              <span>Created</span>
+              <span>{t("versionHistory.created")}</span>
               <span>
                 {new Date(
                   version.created_at
@@ -192,13 +198,13 @@ export function VersionItem({
               </span>
             </div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span>Author</span>
+              <span>{t("versionHistory.author")}</span>
               <span className="font-medium text-foreground">
                 {version.created_by}
               </span>
             </div>
             <div className="flex items-center justify-between text-muted-foreground">
-              <span>Version</span>
+              <span>{t("versionHistory.version")}</span>
               <span className="font-mono font-medium text-foreground">
                 v{version.version_number}
               </span>
@@ -224,7 +230,7 @@ export function VersionItem({
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <RotateCcw className="h-3 w-3" />
-              Restore
+              {t("versionHistory.restore")}
             </button>
           )}
           {!isFirstVersion && (
@@ -236,7 +242,7 @@ export function VersionItem({
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <FileDiff className="h-3 w-3" />
-              View diff
+              {t("versionHistory.viewDiff")}
             </button>
           )}
         </div>

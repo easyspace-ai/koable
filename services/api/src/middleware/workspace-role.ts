@@ -3,16 +3,9 @@ import type { AuthEnv } from "./auth.js";
 import { sql } from "../db/index.js";
 import { workspaceQueries } from "@doable/db";
 import { WORKSPACE_ROLES, type WorkspaceRole } from "@doable/shared";
+import { isUuid } from "../lib/uuid.js";
 
 const workspaces = workspaceQueries(sql);
-
-/**
- * RFC 4122 UUID shape (any version, any variant). We validate at the route
- * boundary so callers passing malformed ids get a clean 400 instead of the
- * driver throwing `invalid input syntax for type uuid` and surfacing as 500.
- */
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Role hierarchy for workspace access.
@@ -51,7 +44,7 @@ export function requireRole(minRole: WorkspaceRole, paramName: string = "id") {
       return c.json({ error: "Workspace ID required" }, 400);
     }
 
-    if (!UUID_REGEX.test(workspaceId)) {
+    if (!isUuid(workspaceId)) {
       return c.json({ error: "Invalid workspace id" }, 400);
     }
 

@@ -232,6 +232,14 @@ const topupBodySchema = z.object({
   workspaceId: z.string().uuid(),
   packageId: z.enum(["small", "medium", "large", "xlarge"]),
 });
+
+const portalBodySchema = z.object({
+  workspaceId: z.string().uuid(),
+});
+
+const cancelBodySchema = z.object({
+  workspaceId: z.string().uuid(),
+});
 billingRoutes.post("/topup", async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const parsed = topupBodySchema.safeParse(body);
@@ -521,11 +529,15 @@ billingRoutes.post("/portal", async (c) => {
   }
 
   // Tolerate empty/missing body — only workspaceId matters here.
-  const body = await c.req.json().catch(() => ({} as Record<string, unknown>));
-  const workspaceId = (body as { workspaceId?: string }).workspaceId;
-  if (!workspaceId) {
-    return c.json({ error: "workspaceId required" }, 400);
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = portalBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: "Invalid request", details: parsed.error.flatten().fieldErrors },
+      400,
+    );
   }
+  const { workspaceId } = parsed.data;
 
   // BUG-BILLING-002 audit: a Stripe portal session lets the holder edit
   // payment methods, view invoices, cancel — strictly members only.
@@ -626,8 +638,14 @@ billingRoutes.get("/limits", authMiddleware, async (c) => {
 // ─── POST /billing/cancel ──────────────────────────────────
 billingRoutes.post("/cancel", authMiddleware, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const workspaceId = (body as { workspaceId?: string }).workspaceId;
-  if (!workspaceId) return c.json({ error: "workspaceId required" }, 400);
+  const parsed = cancelBodySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json(
+      { error: "Invalid request", details: parsed.error.flatten().fieldErrors },
+      400,
+    );
+  }
+  const { workspaceId } = parsed.data;
   const userId = c.get("userId");
   // BUG-BILLING-002 audit: cancelling a subscription is workspace-owner
   // territory. Require workspace membership at minimum; richer role checks

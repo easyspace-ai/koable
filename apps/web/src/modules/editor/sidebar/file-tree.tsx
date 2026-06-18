@@ -6,6 +6,7 @@ import { useProjectFiles } from "../hooks/use-project-files";
 import { File, Folder, Search, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStoredTokens } from "@/lib/api";
+import { useTranslation } from "@/lib/i18n";
 import {
   getFileIcon,
   DeleteConfirmation,
@@ -30,6 +31,7 @@ function flattenTree(nodes: FileNode[]): FileNode[] {
 // ─── Delete Confirmation Dialog ─────────────────────────────
 
 export function FileTree() {
+  const { t } = useTranslation("editor");
   const { fileTree, activeFilePath } = useEditorStore();
   const projectId = useEditorStore((s) => s.projectId);
   const { readFile, deleteFile, fetchFileTree } = useProjectFiles(projectId);
@@ -208,7 +210,7 @@ export function FileTree() {
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          Explorer
+          {t("sidebar.explorer")}
         </h3>
         <div className="flex items-center gap-1">
           <button
@@ -219,14 +221,14 @@ export function FileTree() {
                 ? "text-foreground bg-accent"
                 : "text-muted-foreground hover:text-foreground"
             )}
-            title="Search files"
+            title={t("sidebar.searchFiles")}
           >
             <Search className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={handleNewFileAtRoot}
             className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
-            title="New file"
+            title={t("sidebar.newFile")}
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -242,7 +244,7 @@ export function FileTree() {
               autoFocus
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search files..."
+              placeholder={t("sidebar.searchPlaceholder")}
               className="w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             {searchQuery && (
@@ -277,7 +279,7 @@ export function FileTree() {
           // Search results
           searchResults.length === 0 ? (
             <p className="px-3 py-4 text-xs text-muted-foreground text-center">
-              No files matching &ldquo;{searchQuery}&rdquo;
+              {t("sidebar.noFilesMatch", { query: searchQuery })}
             </p>
           ) : (
             <div className="py-1">
@@ -312,7 +314,7 @@ export function FileTree() {
           )
         ) : fileTree.length === 0 ? (
           <p className="px-3 py-4 text-xs text-muted-foreground text-center">
-            No files yet. Start chatting to generate code.
+            {t("sidebar.noFilesYet")}
           </p>
         ) : (
           <div className="py-1">

@@ -1,0 +1,134 @@
+{
+  "importDialog": {
+    "tabs": {
+      "json": "JSON",
+      "zip": "Zip",
+      "githubUrl": "GitHub URL"
+    },
+    "title": "Import from outside Doable",
+    "description": "Bring in an environment from a JSON manifest, Standards Zip, or public GitHub repo.",
+    "jsonPlaceholder": "{\"schemaVersion\":\"1.0.0\",\"format\":\"doable.json.v1\",...}",
+    "jsonHint": "Paste a {format} manifest. Anything that fails schema validation is rejected.",
+    "jsonFormatLabel": "doable.json.v1",
+    "zipDropPrompt": "Drop a Standards Zip here, or click to browse",
+    "zipCompatibility": "Compatible with Anthropic Skills, Cursor Rules, MCP, and Claude Code plugin layouts.",
+    "urlPlaceholder": "https://github.com/owner/repo or https://github.com/owner/repo/tree/main/skills/foo",
+    "urlHint": "Public repos only. The import will tarball the path and decode it as a Standards Zip.",
+    "trustNote": "Imports land as a draft environment in your workspace. They never run code or call external services until you authorise each connector individually.",
+    "errors": {
+      "pickZip": "Pick a .zip file first",
+      "pasteUrl": "Paste a GitHub URL first",
+      "importFailed": "Import failed"
+    },
+    "success": {
+      "imported": "Imported."
+    },
+    "cancel": "Cancel",
+    "importing": "Importing...",
+    "imported": "Imported",
+    "importToWorkspace": "Import to workspace"
+  },
+  "installDialog": {
+    "title": "Install \"{title}\"?",
+    "description": "Review what this bundle will add to your workspace.",
+    "warningBanner": "Includes {dangerPart}{warnCount, plural, one {# item} other {# items}} that need your attention.",
+    "warningBannerDangerPart": "{count} high-impact and ",
+    "emptyBundle": "This bundle is empty.",
+    "permissions": {
+      "skills": {
+        "label": "Add {count, plural, one {# skill} other {# skills}} to your AI",
+        "detail": "Skills are reusable system prompts the AI can invoke automatically."
+      },
+      "rules": {
+        "label": "Add {count, plural, one {# rule} other {# rules}} that auto-attach to matching files",
+        "detail": "Rules are scoped to file globs (e.g. *.tsx). They never run code on their own."
+      },
+      "knowledge": {
+        "label": "Add {count, plural, one {# knowledge file} other {# knowledge files}} to your context",
+        "detail": "Knowledge files are read by the AI when relevant — they don't execute or fetch anything."
+      },
+      "connectors": {
+        "label": "{count, plural, one {# MCP connector} other {# MCP connectors}} can talk to external services",
+        "detail": "You'll be asked to authorise each connector individually after install."
+      },
+      "credentials": {
+        "label": "You may be asked to provide credentials (API keys, OAuth)",
+        "detail": "Credentials are stored in your workspace — never shared with the publisher."
+      }
+    },
+    "isolationNote": "Install creates an isolated copy in your workspace. The original publisher cannot modify it after install.",
+    "errors": {
+      "installFailed": "Install failed"
+    },
+    "success": {
+      "installed": "Installed."
+    },
+    "cancel": "Cancel",
+    "installing": "Installing...",
+    "installed": "Installed",
+    "installToWorkspace": "Install to workspace"
+  },
+  "reportDialog": {
+    "title": "Report this listing",
+    "description": "Tell us what's wrong with \"{title}\". Reports are reviewed by moderators.",
+    "reasonLabel": "Reason",
+    "reasons": {
+      "spam": "Spam or low effort",
+      "malware": "Malware / malicious behaviour",
+      "broken": "Broken or non-functional",
+      "inappropriate": "Inappropriate content",
+      "copyright": "Copyright / trademark violation",
+      "other": "Other"
+    },
+    "detailsLabel": "Details",
+    "detailsOptional": "(optional)",
+    "detailsPlaceholder": "Anything that helps moderators triage…",
+    "errors": {
+      "failed": "Failed to file report"
+    },
+    "success": {
+      "received": "Report received — thanks."
+    },
+    "cancel": "Cancel",
+    "sending": "Sending...",
+    "sent": "Sent",
+    "submitReport": "Submit report"
+  },
+  "listingCard": {
+    "byPublisher": "by {publisher}",
+    "featured": "Featured",
+    "noDescription": "No description",
+    "skillCount": "{count, plural, one {# skill} other {# skills}}",
+    "ruleCount": "{count, plural, one {# rule} other {# rules}}",
+    "fileCount": "{count, plural, one {# file} other {# files}}",
+    "version": "v{version}",
+    "installed": "Installed",
+    "install": "Install"
+  },
+  "panel": {
+    "title": "Marketplace",
+    "discoverVsMarketplace": "Discover vs Marketplace",
+    "discoverHelpTitle": "What's the difference between Discover and Marketplace?",
+    "import": "Import",
+    "importTitle": "Import a bundle from JSON, a Standards Zip, or a public GitHub URL",
+    "myListings": "My listings",
+    "myListingsTitle": "Manage listings you've published",
+    "listOnMarketplace": "List on Marketplace",
+    "listOnMarketplaceTitle": "Package one of your environments and list it",
+    "subtitle": "Install AI environments — skills, rules, knowledge, and MCP connectors — created by the community.",
+    "searchPlaceholder": "Search environments, skills, tags...",
+    "sort": {
+      "popular": "Popular",
+      "newest": "newest",
+      "rating": "rating"
+    },
+    "categoryAll": "All",
+    "categoryAllIcon": "🔥",
+    "empty": {
+      "title": "No listings found",
+      "searchHint": "Try a different search term",
+      "publishHint": "Be the first to publish an environment!"
+    },
+    "resultCount": "{count, plural, one {# environment} other {# environments}}"
+  }
+}

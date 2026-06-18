@@ -1,9 +1,22 @@
 import type { NextConfig } from "next";
+import path from "path";
+import { fileURLToPath } from "url";
 import createNextIntlPlugin from "next-intl/plugin";
+
+const appDir = path.dirname(fileURLToPath(import.meta.url));
+const monorepoRoot = path.join(appDir, "../..");
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  // Turbopack infers workspace root from lockfiles; a ~/pnpm-lock.yaml can win
+  // over this repo and break next-intl's dev alias (`next-intl/config` → request.ts).
+  // Pin root to the monorepo (where next is hoisted) and fix the alias below.
+  // For day-to-day dev we default to Webpack (`next dev --webpack`) — Turbopack
+  // with this root scans the whole repo and can spike RAM >1GB on 16GB machines.
+  turbopack: {
+    root: monorepoRoot,
+  },
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
@@ -190,4 +203,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withNextIntl(nextConfig);
+/** next-intl alias path is relative to turbopack.root; webpack build uses app cwd. */
+function withDoableIntl(config: NextConfig): NextConfig {
+  const merged = withNextIntl(config);
+  if (merged.turbopack) {
+    merged.turbopack = {
+      ...merged.turbopack,
+      resolveAlias: {
+        ...merged.turbopack.resolveAlias,
+        "next-intl/config": "./apps/web/src/i18n/request.ts",
+      },
+    };
+  }
+  return merged;
+}
+
+export default withDoableIntl(nextConfig);

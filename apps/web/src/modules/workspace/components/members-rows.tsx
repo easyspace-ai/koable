@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Users,
@@ -18,14 +19,9 @@ import {
 import { cn } from "@/lib/utils";
 import {
   WORKSPACE_ROLES,
-  ROLE_LABELS as SHARED_ROLE_LABELS,
   ROLE_META,
 } from "@doable/shared";
 import type { WorkspaceMemberData, WorkspaceInviteData } from "../hooks/use-workspace-members";
-
-// ─── Role Helpers ───────────────────────────────────────────
-
-const ROLE_LABELS = SHARED_ROLE_LABELS;
 
 const ROLE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   owner: Crown,
@@ -39,8 +35,6 @@ const ROLE_COLORS: Record<string, string> = Object.fromEntries(
 );
 
 const ASSIGNABLE_ROLES = ["admin", "member", "viewer"] as const;
-
-// ─── MemberRow ──────────────────────────────────────────────
 
 export function MemberRow({
   member,
@@ -57,6 +51,8 @@ export function MemberRow({
   onRemove: (member: WorkspaceMemberData) => void;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [roleOpen, setRoleOpen] = useState(false);
   const [updatingRole, setUpdatingRole] = useState(false);
 
@@ -69,15 +65,19 @@ export function MemberRow({
     (currentUserRole === "owner" || (currentUserRole === "admin" && member.role !== "admin"));
 
   const RoleIcon = ROLE_ICONS[member.role] ?? Users;
+  const roleLabel = (role: string) => t(`workspace.members.roles.${role}` as "workspace.members.roles.owner");
 
   const handleRoleChange = async (newRole: string) => {
     setUpdatingRole(true);
     setRoleOpen(false);
     try {
       await onUpdateRole(member.user_id, newRole);
-      addToast("success", `Updated ${displayName}'s role to ${ROLE_LABELS[newRole]}`);
+      addToast("success", t("workspace.members.roleUpdated", {
+        name: displayName,
+        role: roleLabel(newRole),
+      }));
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to update role");
+      addToast("error", err instanceof Error ? err.message : t("workspace.members.updateRoleFailed"));
     } finally {
       setUpdatingRole(false);
     }
@@ -93,7 +93,9 @@ export function MemberRow({
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium truncate">{displayName}</p>
           {isCurrentUser && (
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">You</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              {t("workspace.members.you")}
+            </span>
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{member.email}</p>
@@ -101,7 +103,7 @@ export function MemberRow({
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
-        {new Date(member.joined_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        {new Date(member.joined_at).toLocaleDateString(locale, { month: "short", day: "numeric", year: "numeric" })}
       </div>
 
       <div className="relative">
@@ -115,12 +117,12 @@ export function MemberRow({
             )}
           >
             {updatingRole ? <Loader2 className="h-3 w-3 animate-spin" /> : <RoleIcon className="h-3 w-3" />}
-            {ROLE_LABELS[member.role]}
+            {roleLabel(member.role)}
           </button>
         ) : (
           <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", ROLE_COLORS[member.role])}>
             <RoleIcon className="h-3 w-3" />
-            {ROLE_LABELS[member.role]}
+            {roleLabel(member.role)}
           </span>
         )}
 
@@ -140,7 +142,7 @@ export function MemberRow({
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />
-                    {ROLE_LABELS[r]}
+                    {roleLabel(r)}
                   </button>
                 );
               })}
@@ -153,7 +155,7 @@ export function MemberRow({
         <button
           onClick={() => onRemove(member)}
           className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-          title="Remove member"
+          title={t("workspace.members.removeMember")}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -164,8 +166,6 @@ export function MemberRow({
   );
 }
 
-// ─── InviteRow ──────────────────────────────────────────────
-
 export function InviteRow({
   invite,
   onRevoke,
@@ -175,20 +175,23 @@ export function InviteRow({
   onRevoke: (inviteId: string) => Promise<void>;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [revoking, setRevoking] = useState(false);
 
   const handleRevoke = async () => {
     setRevoking(true);
     try {
       await onRevoke(invite.id);
-      addToast("success", `Revoked invite for ${invite.email}`);
+      addToast("success", t("workspace.members.revokedInvite", { email: invite.email }));
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to revoke invite");
+      addToast("error", err instanceof Error ? err.message : t("workspace.members.revokeFailed"));
       setRevoking(false);
     }
   };
 
   const isLinkInvite = invite.email === "__invite_link__";
+  const roleLabel = t(`workspace.members.roles.${invite.role}` as "workspace.members.roles.member");
 
   return (
     <div className="flex items-center gap-4 rounded-lg border border-dashed p-4">
@@ -196,27 +199,33 @@ export function InviteRow({
         {isLinkInvite ? <Link2 className="h-4 w-4 text-muted-foreground" /> : <Mail className="h-4 w-4 text-muted-foreground" />}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{isLinkInvite ? "Invite link" : invite.email}</p>
+        <p className="text-sm font-medium truncate">
+          {isLinkInvite ? t("workspace.members.inviteLink") : invite.email}
+        </p>
         <p className="text-xs text-muted-foreground">
-          Expires {new Date(invite.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          {t("workspace.members.expires", {
+            date: new Date(invite.expires_at).toLocaleDateString(locale, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }),
+          })}
         </p>
       </div>
       <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", ROLE_COLORS[invite.role] ?? ROLE_COLORS.member)}>
-        {ROLE_LABELS[invite.role] ?? invite.role}
+        {roleLabel}
       </span>
       <button
         onClick={() => void handleRevoke()}
         disabled={revoking}
         className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-        title="Revoke invite"
+        title={t("workspace.members.revokeInvite")}
       >
         {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
       </button>
     </div>
   );
 }
-
-// ─── InviteLinkSection ──────────────────────────────────────
 
 export function InviteLinkSection({
   onGenerate,
@@ -225,6 +234,7 @@ export function InviteLinkSection({
   onGenerate: (role: string) => Promise<string>;
   addToast: (type: "success" | "error", msg: string) => void;
 }) {
+  const t = useTranslations("dashboard");
   const [linkRole, setLinkRole] = useState<string>("member");
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -235,9 +245,9 @@ export function InviteLinkSection({
     try {
       const link = await onGenerate(linkRole);
       setGeneratedLink(link);
-      addToast("success", "Invite link generated");
+      addToast("success", t("workspace.members.linkGenerated"));
     } catch (err) {
-      addToast("error", err instanceof Error ? err.message : "Failed to generate link");
+      addToast("error", err instanceof Error ? err.message : t("workspace.members.linkFailed"));
     } finally {
       setGenerating(false);
     }
@@ -250,7 +260,7 @@ export function InviteLinkSection({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      addToast("error", "Failed to copy to clipboard");
+      addToast("error", t("workspace.members.copyFailed"));
     }
   };
 
@@ -269,7 +279,7 @@ export function InviteLinkSection({
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
-              {ROLE_LABELS[r]}
+              {t(`workspace.members.roles.${r}`)}
             </button>
           ))}
         </div>
@@ -279,7 +289,7 @@ export function InviteLinkSection({
           className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
         >
           {generating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Link2 className="h-3 w-3" />}
-          Generate Link
+          {t("workspace.members.generateLink")}
         </button>
       </div>
 
@@ -295,7 +305,11 @@ export function InviteLinkSection({
             onClick={() => void handleCopy()}
             className="inline-flex items-center gap-1 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
           >
-            {copied ? <><Check className="h-3 w-3 text-green-600" /> Copied</> : <><Copy className="h-3 w-3" /> Copy</>}
+            {copied ? (
+              <><Check className="h-3 w-3 text-green-600" /> {t("common.copied")}</>
+            ) : (
+              <><Copy className="h-3 w-3" /> {t("common.copy")}</>
+            )}
           </button>
         </div>
       )}

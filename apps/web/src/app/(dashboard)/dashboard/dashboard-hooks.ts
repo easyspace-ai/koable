@@ -1,32 +1,50 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { GREETINGS, DASHBOARD_SUGGESTIONS } from "./dashboard-constants";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
+
+const GREETING_KEYS = [
+  "dashboard.greetings.letsMakeItDoable",
+  "dashboard.greetings.whatsDoableToday",
+  "dashboard.greetings.readyToGetItDone",
+  "dashboard.greetings.dreamItDoIt",
+  "dashboard.greetings.whatWillYouShip",
+] as const;
 
 // ─── Rotating Greeting Hook ─────────────────────────────────
 
 export function useRotatingGreeting(name: string) {
+  const t = useTranslations("dashboard");
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % GREETINGS.length);
+      setIndex((prev) => (prev + 1) % GREETING_KEYS.length);
     }, 6000);
     return () => clearInterval(interval);
   }, []);
 
-  return `${GREETINGS[index]}, ${name}?`;
+  return t("dashboard.greetings.withName", {
+    greeting: t(GREETING_KEYS[index]!),
+    name,
+  });
 }
 
 // ─── Typing Placeholder Hook ────────────────────────────────
 
 export function useTypingPlaceholder(): string {
+  const t = useTranslations("dashboard");
+  const suggestions = useMemo(
+    () => t.raw("dashboard.suggestions") as string[],
+    [t],
+  );
+  const defaultPlaceholder = t("dashboard.chatInput.defaultPlaceholder");
   const [index, setIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [phase, setPhase] = useState<"typing" | "holding" | "erasing">("typing");
 
   useEffect(() => {
-    const target = DASHBOARD_SUGGESTIONS[index]!;
+    const target = suggestions[index]!;
     let timeout: ReturnType<typeof setTimeout>;
 
     if (phase === "typing") {
@@ -45,15 +63,15 @@ export function useTypingPlaceholder(): string {
           setDisplayText(displayText.slice(0, -1));
         }, 18);
       } else {
-        setIndex((prev) => (prev + 1) % DASHBOARD_SUGGESTIONS.length);
+        setIndex((prev) => (prev + 1) % suggestions.length);
         setPhase("typing");
       }
     }
 
     return () => clearTimeout(timeout);
-  }, [displayText, phase, index]);
+  }, [displayText, phase, index, suggestions]);
 
-  return displayText || "Ask Doable to create...";
+  return displayText || defaultPlaceholder;
 }
 
 // ─── Context Menu Hook ──────────────────────────────────────

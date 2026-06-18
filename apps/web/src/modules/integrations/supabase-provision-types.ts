@@ -2,18 +2,25 @@
  * Shared types and constants for the Supabase provision dialog.
  */
 
+import type { IntegrationsTranslateFn } from "./use-integration-catalog";
+
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-export const SUPABASE_REGIONS: Array<{ value: string; label: string }> = [
-  { value: "us-east-1", label: "US East (N. Virginia)" },
-  { value: "us-west-1", label: "US West (N. California)" },
-  { value: "eu-west-1", label: "EU West (Ireland)" },
-  { value: "eu-central-1", label: "EU Central (Frankfurt)" },
-  { value: "ap-southeast-1", label: "Asia Pacific (Singapore)" },
-  { value: "ap-northeast-1", label: "Asia Pacific (Tokyo)" },
-  { value: "ap-south-1", label: "Asia Pacific (Mumbai)" },
-  { value: "sa-east-1", label: "South America (São Paulo)" },
-];
+export const SUPABASE_REGION_VALUES = [
+  "us-east-1",
+  "us-west-1",
+  "eu-west-1",
+  "eu-central-1",
+  "ap-southeast-1",
+  "ap-northeast-1",
+  "ap-south-1",
+  "sa-east-1",
+] as const;
+
+/** @deprecated Use SUPABASE_REGION_VALUES with translated labels from integrations.shared.supabaseRegions */
+export const SUPABASE_REGIONS: Array<{ value: string; label: string }> = SUPABASE_REGION_VALUES.map(
+  (value) => ({ value, label: value }),
+);
 
 export interface SupabaseOrganization {
   id: string;
@@ -59,6 +66,7 @@ export async function getAccessToken(): Promise<string | undefined> {
 export function openSupabaseOAuthPopup(
   authorizationUrl: string,
   fetchOrgs: () => Promise<boolean>,
+  t: IntegrationsTranslateFn,
 ): Promise<void> {
   const popup = window.open(
     authorizationUrl,
@@ -66,7 +74,7 @@ export function openSupabaseOAuthPopup(
     "width=540,height=720,scrollbars=yes,resizable=yes",
   );
   if (!popup) {
-    return Promise.reject(new Error("Popup blocked — please allow popups for this site and try again."));
+    return Promise.reject(new Error(t("shared.supabaseOauthMessages.popupBlocked")));
   }
 
   try {
@@ -98,7 +106,7 @@ export function openSupabaseOAuthPopup(
       if (!data || data.type !== "doable:enhanced-auth-complete") return;
       if (data.integrationId !== "supabase") return;
       if (data.status === "success") markSuccess();
-      else markCancel("Supabase sign-in was cancelled or failed.");
+      else markCancel(t("shared.supabaseOauthMessages.signInCancelled"));
     };
     window.addEventListener("message", onMessage);
 
@@ -108,7 +116,7 @@ export function openSupabaseOAuthPopup(
         const parsed = JSON.parse(ev.newValue) as { integrationId?: string; status?: string };
         if (parsed.integrationId !== "supabase") return;
         if (parsed.status === "success") markSuccess();
-        else markCancel("Supabase sign-in was cancelled or failed.");
+        else markCancel(t("shared.supabaseOauthMessages.signInCancelled"));
       } catch { /* ignore malformed */ }
     };
     window.addEventListener("storage", onStorage);
@@ -123,12 +131,12 @@ export function openSupabaseOAuthPopup(
             const ok = await fetchOrgs();
             if (settled) return;
             if (ok) markSuccess();
-            else markCancel("Supabase sign-in window was closed.");
+            else markCancel(t("shared.supabaseOauthMessages.windowClosed"));
           }, 600);
         }
       } catch { /* cross-origin while on provider's domain */ }
       if (Date.now() - startedAt > 120_000) {
-        markCancel("Supabase sign-in timed out after 2 minutes.");
+        markCancel(t("shared.supabaseOauthMessages.timedOut"));
       }
     }, 500);
   });

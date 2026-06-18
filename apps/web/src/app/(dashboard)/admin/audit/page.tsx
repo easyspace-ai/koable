@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { usePlatformAdmin } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -55,6 +56,7 @@ type AuditStats = {
 function AdminAuditPageInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation("admin");
   const { isPlatformAdmin, loading: adminLoading } = usePlatformAdmin();
 
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
@@ -88,14 +90,12 @@ function AdminAuditPageInner() {
         }
       } catch (e) {
         if (!cancelled) {
-          // Surface HTTP status when available so a 404 can be distinguished
-          // from a transient/network failure in the empty-state UI below.
           const status =
             e && typeof e === "object" && "status" in e && typeof (e as { status?: unknown }).status === "number"
               ? ((e as { status: number }).status)
               : null;
           setErrorStatus(status);
-          setError(e instanceof Error ? e.message : "Failed to load audit data");
+          setError(e instanceof Error ? e.message : t("audit.loadFailed"));
           setConversations([]);
           setStats(null);
         }
@@ -107,7 +107,7 @@ function AdminAuditPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [isPlatformAdmin, queryString, reloadTick]);
+  }, [isPlatformAdmin, queryString, reloadTick, t]);
 
   if (adminLoading) {
     return (
@@ -120,9 +120,9 @@ function AdminAuditPageInner() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
         <ShieldCheck className="h-12 w-12" />
-        <p className="font-medium text-foreground">Platform admin access required</p>
+        <p className="font-medium text-foreground">{t("page.accessRequired")}</p>
         <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
-          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> Back
+          <ArrowLeft className="mr-2 h-3.5 w-3.5" /> {t("page.backToDashboard")}
         </Button>
       </div>
     );
@@ -136,26 +136,25 @@ function AdminAuditPageInner() {
             href="/admin"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Admin
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("trace.adminBreadcrumb")}
           </Link>
         </div>
         <div className="mb-1 flex items-center justify-between gap-4">
           <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
             <MessageSquare className="h-6 w-6 text-brand-400" />
-            Prompt &amp; conversation audit
+            {t("audit.title")}
           </h1>
           <Link
             href="/admin/audit/actions"
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-            title="History of admin actions taken on the audit surface"
+            title={t("audit.adminActionLogTitle")}
           >
             <History className="h-3.5 w-3.5 text-brand-400" />
-            Admin action log
+            {t("audit.adminActionLog")}
           </Link>
         </div>
         <p className="mb-6 text-sm text-muted-foreground">
-          Search every AI conversation on the platform. Every search and view
-          you perform is recorded for compliance.
+          {t("audit.description")}
         </p>
 
         <StatsRow stats={stats} />
@@ -170,19 +169,19 @@ function AdminAuditPageInner() {
               <div className="flex-1">
                 <div className="font-medium text-red-300">
                   {errorStatus === 404
-                    ? "Audit log is not yet enabled on this platform"
+                    ? t("audit.notEnabled")
                     : errorStatus
-                    ? `Audit endpoint is unavailable (HTTP ${errorStatus})`
-                    : "Could not load audit data"}
+                    ? t("audit.unavailable", { status: errorStatus })
+                    : t("audit.couldNotLoad")}
                 </div>
                 <div className="mt-0.5 text-xs text-red-400/80">{error}</div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setReloadTick((t) => t + 1)}
+                onClick={() => setReloadTick((tick) => tick + 1)}
               >
-                Retry
+                {t("audit.retry")}
               </Button>
             </div>
           </div>
@@ -202,17 +201,32 @@ export default function AdminAuditPage() {
   );
 }
 
-// ─── Stats row ────────────────────────────────────────────────────────
-
 function StatsRow({ stats }: { stats: AuditStats | null }) {
+  const { t } = useTranslation("admin");
   const items = useMemo(
     () => [
-      { label: "Sessions", value: stats?.total_sessions, sub: `${stats?.sessions_24h ?? 0} in last 24h` },
-      { label: "Messages", value: stats?.total_messages, sub: `${stats?.messages_24h ?? 0} in last 24h` },
-      { label: "Messages (7d)", value: stats?.messages_7d, sub: "rolling window" },
-      { label: "Distinct users", value: stats?.total_users, sub: "with at least one session" },
+      {
+        label: t("audit.statsSessions"),
+        value: stats?.total_sessions,
+        sub: t("audit.statsSessionsSub", { count: stats?.sessions_24h ?? 0 }),
+      },
+      {
+        label: t("audit.statsMessages"),
+        value: stats?.total_messages,
+        sub: t("audit.statsMessagesSub", { count: stats?.messages_24h ?? 0 }),
+      },
+      {
+        label: t("audit.statsMessages7d"),
+        value: stats?.messages_7d,
+        sub: t("audit.statsMessages7dSub"),
+      },
+      {
+        label: t("audit.statsDistinctUsers"),
+        value: stats?.total_users,
+        sub: t("audit.statsDistinctUsersSub"),
+      },
     ],
-    [stats],
+    [stats, t],
   );
   return (
     <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -231,11 +245,10 @@ function StatsRow({ stats }: { stats: AuditStats | null }) {
   );
 }
 
-// ─── Search form ──────────────────────────────────────────────────────
-
 function SearchForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useTranslation("admin");
   const [userId, setUserId] = useState(params.get("user_id") ?? "");
   const [workspaceId, setWorkspaceId] = useState(params.get("workspace_id") ?? "");
   const [projectId, setProjectId] = useState(params.get("project_id") ?? "");
@@ -263,31 +276,47 @@ function SearchForm() {
   return (
     <form onSubmit={submit} className="rounded-lg border border-border bg-card p-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="User ID">
-          <Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="uuid" />
+        <Field label={t("audit.searchUserId")}>
+          <Input
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder={t("trace.placeholderUuid")}
+          />
         </Field>
-        <Field label="Workspace ID">
-          <Input value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} placeholder="uuid" />
+        <Field label={t("audit.searchWorkspaceId")}>
+          <Input
+            value={workspaceId}
+            onChange={(e) => setWorkspaceId(e.target.value)}
+            placeholder={t("trace.placeholderUuid")}
+          />
         </Field>
-        <Field label="Project ID">
-          <Input value={projectId} onChange={(e) => setProjectId(e.target.value)} placeholder="uuid" />
+        <Field label={t("audit.searchProjectId")}>
+          <Input
+            value={projectId}
+            onChange={(e) => setProjectId(e.target.value)}
+            placeholder={t("trace.placeholderUuid")}
+          />
         </Field>
-        <Field label="From">
+        <Field label={t("audit.searchFrom")}>
           <Input type="datetime-local" value={from} onChange={(e) => setFrom(e.target.value)} />
         </Field>
-        <Field label="To">
+        <Field label={t("audit.searchTo")}>
           <Input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
         </Field>
-        <Field label="Message contains">
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="prompt or response substring" />
+        <Field label={t("audit.messageContains")}>
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={t("audit.messagePlaceholder")}
+          />
         </Field>
       </div>
       <div className="mt-3 flex items-center gap-2">
         <Button type="submit" size="sm">
-          <Search className="mr-1.5 h-3.5 w-3.5" /> Search
+          <Search className="mr-1.5 h-3.5 w-3.5" /> {t("audit.search")}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={clear}>
-          <X className="mr-1.5 h-3.5 w-3.5" /> Reset
+          <X className="mr-1.5 h-3.5 w-3.5" /> {t("audit.reset")}
         </Button>
       </div>
     </form>
@@ -305,9 +334,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// ─── Results table ───────────────────────────────────────────────────
-
 function ConversationTable({ rows, loading }: { rows: ConversationRow[]; loading: boolean }) {
+  const { t } = useTranslation("admin");
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -318,7 +347,7 @@ function ConversationTable({ rows, loading }: { rows: ConversationRow[]; loading
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
-        No conversations match the current filters.
+        {t("audit.noResults")}
       </div>
     );
   }
@@ -327,11 +356,11 @@ function ConversationTable({ rows, loading }: { rows: ConversationRow[]; loading
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
           <tr>
-            <th className="px-3 py-2">When</th>
-            <th className="px-3 py-2">User</th>
-            <th className="px-3 py-2">Workspace / Project</th>
-            <th className="px-3 py-2">Messages</th>
-            <th className="px-3 py-2">Last excerpt</th>
+            <th className="px-3 py-2">{t("audit.colWhen")}</th>
+            <th className="px-3 py-2">{t("audit.colUser")}</th>
+            <th className="px-3 py-2">{t("audit.colWorkspaceProject")}</th>
+            <th className="px-3 py-2">{t("audit.colMessages")}</th>
+            <th className="px-3 py-2">{t("audit.colLastExcerpt")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -361,12 +390,14 @@ function ConversationTable({ rows, loading }: { rows: ConversationRow[]; loading
               <td className="px-3 py-2 align-top max-w-md">
                 {r.last_user_excerpt && (
                   <div className="text-xs text-muted-foreground line-clamp-2">
-                    <span className="font-medium text-foreground/80">U:</span> {r.last_user_excerpt}
+                    <span className="font-medium text-foreground/80">{t("audit.userPrefix")}</span>{" "}
+                    {r.last_user_excerpt}
                   </div>
                 )}
                 {r.last_assistant_excerpt && (
                   <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
-                    <span className="font-medium text-foreground/80">A:</span> {r.last_assistant_excerpt}
+                    <span className="font-medium text-foreground/80">{t("audit.assistantPrefix")}</span>{" "}
+                    {r.last_assistant_excerpt}
                   </div>
                 )}
               </td>

@@ -1,0 +1,67 @@
+{
+  "inlineCreate": {
+    "title": "新建{label}",
+    "nameLabel": "名称",
+    "namePlaceholder": "我的{label}",
+    "scopeLabel": "范围",
+    "scope": {
+      "workspace": "工作区",
+      "project": "项目",
+      "user": "用户"
+    },
+    "descriptionLabel": "描述",
+    "descriptionHint": "（何时使用此技能）",
+    "descriptionPlaceholder": "在构建具有无障碍性的 React 组件时使用...",
+    "autoInvoke": "提示匹配时自动调用",
+    "contentLabel": "内容",
+    "cancel": "取消",
+    "create": "创建",
+    "labels": {
+      "skill": "技能",
+      "rule": "规则"
+    },
+    "placeholders": {
+      "skill": "---\nname: my-skill\ntrigger: auto\n---\n\nMarkdown 格式的技能内容...",
+      "rule": "始终以友好的语气回复。\n不要在回复中包含原始 SQL。"
+    }
+  },
+  "skillCard": {
+    "chars": "{count} 字符",
+    "emptyClickToEdit": "空 — 点击编辑",
+    "badgeManual": "手动",
+    "descriptionLabel": "描述",
+    "descriptionPlaceholder": "何时使用此技能...",
+    "autoInvoke": "提示匹配时自动调用",
+    "contentPlaceholderSkill": "---\nname: my-skill\ntrigger: auto\n---\n\nMarkdown 格式的技能内容...",
+    "contentPlaceholderRule": "规则内容...",
+    "save": "保存",
+    "delete": "删除",
+    "confirm": "确认"
+  },
+  "sectionHeader": {
+    "count": "（{count}）",
+    "addItemTitle": "添加{itemType}"
+  },
+  "panel": {
+    "title": "技能与规则",
+    "refreshTitle": "刷新",
+    "loading": "加载中...",
+    "sectionSkills": "技能",
+    "sectionRules": "规则",
+    "createPlaceholderSkill": "---\nname: my-skill\ntrigger: auto\n---\n\n技能内容...",
+    "createPlaceholderRule": "始终以友好的语气回复。\n不要在回复中包含原始 SQL。",
+    "emptySkills": "暂无技能。技能为 AI 提供可复用的能力。",
+    "emptyRules": "暂无规则。规则指导 AI 的行为方式。"
+  },
+  "picker": {
+    "title": "技能",
+    "header": "技能",
+    "searchPlaceholder": "搜索技能...",
+    "emptyNoMatch": "没有匹配的技能",
+    "emptyNoneConfigured": "未配置技能",
+    "badgeManual": "手动"
+  },
+  "errors": {
+    "failedToLoad": "加载技能失败"
+  }
+}

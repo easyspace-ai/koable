@@ -15,8 +15,8 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.js";
-import { platformAdminMiddleware } from "../middleware/platform-admin.js";
+import { type AuthEnv } from "../middleware/auth.js";
+import { usePlatformAdminGuards } from "../middleware/admin-guards.js";
 import {
   getConfig,
   setConfig,
@@ -31,8 +31,7 @@ import { DOABLE_APP_AI_DEFAULT_EMBED_DIMS } from "../ai/runtime-config.js";
 export const setupRoutes = new Hono<AuthEnv>({ strict: false });
 
 // ─── Auth + admin guard on all setup routes ────────────────────────────────
-setupRoutes.use("*", authMiddleware);
-setupRoutes.use("*", platformAdminMiddleware);
+usePlatformAdminGuards(setupRoutes);
 
 // ─── Schemas ───────────────────────────────────────────────────────────────
 

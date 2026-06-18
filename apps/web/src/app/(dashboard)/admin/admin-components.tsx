@@ -21,6 +21,7 @@ import {
 } from "@doable/shared";
 import type { ApiGitHubCopilotAccount, ApiAiProvider } from "@/lib/api";
 import type { FeatureFlag } from "@/hooks/use-platform-admin";
+import { useTranslation } from "@/lib/i18n";
 import {
   type UserAiAllocation,
   rowActiveSide,
@@ -31,6 +32,22 @@ import {
   ROLE_COLORS,
   PLAN_COLORS,
 } from "./admin-shared";
+
+function planOptionLabel(value: string, t: ReturnType<typeof useTranslation>["t"]): string {
+  if (!value) return t("features.allPlans");
+  const idx = WORKSPACE_PLANS.indexOf(value as (typeof WORKSPACE_PLANS)[number]);
+  const plan = PLAN_LABELS[value] ?? value;
+  if (idx === WORKSPACE_PLANS.length - 1) return t("features.planOnly", { plan });
+  return t("features.planPlus", { plan });
+}
+
+function roleOptionLabel(value: string, t: ReturnType<typeof useTranslation>["t"]): string {
+  if (!value) return t("features.anyRole");
+  const idx = WORKSPACE_ROLES.indexOf(value as (typeof WORKSPACE_ROLES)[number]);
+  const role = ROLE_LABELS[value] ?? value;
+  if (idx === WORKSPACE_ROLES.length - 1) return t("features.roleOnly", { role });
+  return t("features.rolePlus", { role });
+}
 
 // ─── Feature Row ────────────────────────────────────────────
 
@@ -43,6 +60,7 @@ export function FeatureRow({
   onToggle: (key: string, enabled: boolean) => void;
   onUpdate: (key: string, data: Partial<Pick<FeatureFlag, "enabled" | "min_plan" | "min_role">>) => void;
 }) {
+  const { t } = useTranslation("admin");
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -59,8 +77,8 @@ export function FeatureRow({
           {feature.description && <p className="text-xs text-muted-foreground mt-0.5">{feature.description}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {feature.min_plan && <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-100 border border-brand-600 text-brand-700 font-semibold dark:bg-brand-600/20 dark:border-transparent dark:text-brand-400 dark:font-medium">{PLAN_LABELS[feature.min_plan]}+</span>}
-          {feature.min_role && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 border border-amber-600 text-amber-800 font-semibold dark:bg-amber-600/20 dark:border-transparent dark:text-amber-400 dark:font-medium">{ROLE_LABELS[feature.min_role]}+</span>}
+          {feature.min_plan && <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-100 border border-brand-600 text-brand-700 font-semibold dark:bg-brand-600/20 dark:border-transparent dark:text-brand-400 dark:font-medium">{t("features.planPlus", { plan: PLAN_LABELS[feature.min_plan] ?? feature.min_plan })}</span>}
+          {feature.min_role && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 border border-amber-600 text-amber-800 font-semibold dark:bg-amber-600/20 dark:border-transparent dark:text-amber-400 dark:font-medium">{t("features.rolePlus", { role: ROLE_LABELS[feature.min_role] ?? feature.min_role })}</span>}
         </div>
         <button onClick={() => setExpanded(!expanded)} className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
           <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
@@ -69,15 +87,15 @@ export function FeatureRow({
       {expanded && (
         <div className="border-t border-border px-4 py-3 flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Min Plan:</label>
+            <label className="text-xs text-muted-foreground">{t("features.minPlan")}</label>
             <select value={feature.min_plan ?? ""} onChange={(e) => onUpdate(feature.feature_key, { min_plan: e.target.value || null })} className="rounded-md bg-background border border-input text-xs text-foreground px-2 py-1 outline-none focus:border-brand-500">
-              {PLAN_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {PLAN_OPTIONS.map((o) => <option key={o.value} value={o.value}>{planOptionLabel(o.value, t)}</option>)}
             </select>
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground">Min Role:</label>
+            <label className="text-xs text-muted-foreground">{t("features.minRole")}</label>
             <select value={feature.min_role ?? ""} onChange={(e) => onUpdate(feature.feature_key, { min_role: e.target.value || null })} className="rounded-md bg-background border border-input text-xs text-foreground px-2 py-1 outline-none focus:border-brand-500">
-              {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+              {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{roleOptionLabel(o.value, t)}</option>)}
             </select>
           </div>
         </div>
@@ -89,27 +107,28 @@ export function FeatureRow({
 // ─── AI Allocation Status Badge ─────────────────────────────
 
 export function AiStatusBadge({ row }: { row: UserAiAllocation }) {
+  const { t } = useTranslation("admin");
   if (!rowHasAllocation(row)) {
-    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">No AI configured</span>;
+    return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{t("adminComponents.noAiConfigured")}</span>;
   }
   const side = rowActiveSide(row);
   const activeModel = rowActiveModel(row);
   if (side === "copilot" && row.copilot_account_id) {
     return (
       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600/15 text-emerald-400">
-        Copilot: {row.copilot_account_label ?? "Unknown"}{activeModel ? ` / ${activeModel}` : ""}
+        Copilot: {row.copilot_account_label ?? t("adminComponents.unknown")}{activeModel ? ` / ${activeModel}` : ""}
       </span>
     );
   }
   if (side === "custom" && row.provider_id) {
-    const typeName = row.provider_type ? row.provider_type.charAt(0).toUpperCase() + row.provider_type.slice(1) : "Provider";
+    const typeName = row.provider_type ? row.provider_type.charAt(0).toUpperCase() + row.provider_type.slice(1) : t("adminComponents.provider");
     return (
       <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600/15 text-blue-400">
-        {typeName}: {row.provider_label ?? "Unknown"}{activeModel ? ` / ${activeModel}` : ""}
+        {typeName}: {row.provider_label ?? t("adminComponents.unknown")}{activeModel ? ` / ${activeModel}` : ""}
       </span>
     );
   }
-  return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">Configured</span>;
+  return <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{t("adminComponents.configured")}</span>;
 }
 
 // ─── User Row with AI allocation ────────────────────────────
@@ -143,6 +162,7 @@ export function UserRow({
   onGetCredits: (userId: string) => Promise<{ daily_total: number; daily_remaining: number; monthly_total: number; monthly_remaining: number; rollover_credits: number }>;
   onSetCredits: (userId: string, data: { dailyCredits?: number; monthlyCredits?: number; rolloverCredits?: number; resetUsage?: boolean }) => Promise<void>;
 }) {
+  const { t } = useTranslation("admin");
   const [editing, setEditing] = useState(false);
   const [source, setSource] = useState<"copilot" | "custom">("copilot");
   const [copilotAccountId, setCopilotAccountId] = useState("");
@@ -221,7 +241,7 @@ export function UserRow({
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-foreground truncate">{u.display_name ?? u.email.split("@")[0]}</p>
             {u.is_platform_admin && <Crown className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
-            {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">You</span>}
+            {isSelf && <span className="text-[10px] px-1.5 py-0.5 rounded bg-secondary text-muted-foreground">{t("userManagement.you")}</span>}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
@@ -229,10 +249,10 @@ export function UserRow({
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <button onClick={startEditCredits} className="rounded p-1.5 text-muted-foreground hover:text-emerald-400 hover:bg-accent transition-colors" title="Manage credits"><Zap className="h-4 w-4" /></button>
-          <button onClick={startEdit} className="rounded p-1.5 text-muted-foreground hover:text-brand-400 hover:bg-accent transition-colors" title="Configure AI for this user"><Bot className="h-4 w-4" /></button>
+          <button onClick={startEditCredits} className="rounded p-1.5 text-muted-foreground hover:text-emerald-400 hover:bg-accent transition-colors" title={t("adminComponents.manageCredits")}><Zap className="h-4 w-4" /></button>
+          <button onClick={startEdit} className="rounded p-1.5 text-muted-foreground hover:text-brand-400 hover:bg-accent transition-colors" title={t("adminComponents.configureAi")}><Bot className="h-4 w-4" /></button>
           {hasAllocation && (
-            <button onClick={() => onReset(u.user_id)} className="rounded p-1.5 text-muted-foreground hover:text-amber-400 hover:bg-accent transition-colors" title="Reset AI allocation"><RotateCcw className="h-3.5 w-3.5" /></button>
+            <button onClick={() => onReset(u.user_id)} className="rounded p-1.5 text-muted-foreground hover:text-amber-400 hover:bg-accent transition-colors" title={t("adminComponents.resetAllocation")}><RotateCcw className="h-3.5 w-3.5" /></button>
           )}
         </div>
         <select value={u.platform_role ?? "member"} onChange={(e) => onChangeRole(u.user_id, e.target.value)} disabled={isSelf} className={`shrink-0 rounded-md bg-background border border-input text-xs font-medium px-2 py-1.5 outline-none focus:border-brand-500 disabled:opacity-40 disabled:cursor-not-allowed ${ROLE_COLORS[u.platform_role ?? "member"] ?? "text-foreground"}`}>
@@ -247,52 +267,52 @@ export function UserRow({
       {editing && (
         <div className="border-t border-border px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-foreground">Configure AI for {u.display_name ?? u.email}</p>
+            <p className="text-xs font-medium text-foreground">{t("adminComponents.configureAiFor", { name: u.display_name ?? u.email })}</p>
             <button onClick={() => setEditing(false)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
           </div>
           <div className="mb-3">
             <div className="flex rounded-lg border border-border overflow-hidden w-fit">
-              <button onClick={() => setSource("copilot")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${source === "copilot" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>GitHub Copilot</button>
-              <button onClick={() => setSource("custom")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${source === "custom" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>Custom Provider</button>
+              <button onClick={() => setSource("copilot")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${source === "copilot" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>{t("adminComponents.githubCopilot")}</button>
+              <button onClick={() => setSource("custom")} className={`px-3 py-1.5 text-xs font-medium transition-colors ${source === "custom" ? "bg-brand-600 text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>{t("adminComponents.customProvider")}</button>
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1">Both configurations are saved. The selected tab is what this user will use.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t("adminComponents.bothConfigsSaved")}</p>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
             {source === "copilot" ? (
               <>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Account</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("adminComponents.account")}</label>
                   <select value={copilotAccountId} onChange={(e) => setCopilotAccountId(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-500">
-                    <option value="">Default (gh CLI)</option>
+                    <option value="">{t("adminComponents.defaultGhCli")}</option>
                     {validAccounts.map((a) => <option key={a.id} value={a.id}>{a.label} (@{a.github_login})</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Model</label>
-                  <input type="text" value={copilotModel} onChange={(e) => setCopilotModel(e.target.value)} placeholder="e.g. claude-sonnet-4 (blank = auto)" className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("adminComponents.model")}</label>
+                  <input type="text" value={copilotModel} onChange={(e) => setCopilotModel(e.target.value)} placeholder={t("adminComponents.modelPlaceholderCopilot")} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
                 </div>
               </>
             ) : (
               <>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Provider</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("adminComponents.provider")}</label>
                   <select value={providerId} onChange={(e) => setProviderId(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-500">
-                    <option value="">Select a provider...</option>
+                    <option value="">{t("adminComponents.selectProvider")}</option>
                     {validProviders.map((p) => <option key={p.id} value={p.id}>{p.label} ({p.provider_type})</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Model</label>
-                  <input type="text" value={providerModel} onChange={(e) => setProviderModel(e.target.value)} placeholder="e.g. gpt-4o" className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("adminComponents.model")}</label>
+                  <input type="text" value={providerModel} onChange={(e) => setProviderModel(e.target.value)} placeholder={t("adminComponents.modelPlaceholderCustom")} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none focus:border-brand-500" />
                 </div>
               </>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={save} disabled={saving} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-500 disabled:opacity-50 transition-colors">
-              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Save
+              {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} {t("common.save")}
             </button>
-            <button onClick={() => setEditing(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">Cancel</button>
+            <button onClick={() => setEditing(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">{t("common.cancel")}</button>
           </div>
         </div>
       )}
@@ -301,7 +321,7 @@ export function UserRow({
       {editingCredits && (
         <div className="border-t border-border px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-foreground"><Zap className="inline h-3.5 w-3.5 text-emerald-400 mr-1" />Credits for {u.display_name ?? u.email}</p>
+            <p className="text-xs font-medium text-foreground"><Zap className="inline h-3.5 w-3.5 text-emerald-400 mr-1" />{t("adminComponents.creditsFor", { name: u.display_name ?? u.email })}</p>
             <button onClick={() => setEditingCredits(false)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
           </div>
           {creditLoading ? (
@@ -309,32 +329,32 @@ export function UserRow({
           ) : (
             <>
               <div className="flex gap-3 mb-3 text-[11px]">
-                <span className="text-muted-foreground">Daily used: <span className="text-foreground">{creditDailyUsed}/{creditDaily}</span></span>
-                <span className="text-muted-foreground">Monthly used: <span className="text-foreground">{creditMonthlyUsed}/{creditMonthly}</span></span>
-                <span className="text-muted-foreground">Rollover: <span className="text-foreground">{creditRollover}</span></span>
+                <span className="text-muted-foreground">{t("adminComponents.dailyUsed")} <span className="text-foreground">{creditDailyUsed}/{creditDaily}</span></span>
+                <span className="text-muted-foreground">{t("adminComponents.monthlyUsed")} <span className="text-foreground">{creditMonthlyUsed}/{creditMonthly}</span></span>
+                <span className="text-muted-foreground">{t("adminComponents.rolloverLabel")} <span className="text-foreground">{creditRollover}</span></span>
               </div>
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Daily Credits</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("userManagement.dailyCredits")}</label>
                   <input type="number" min={0} value={creditDaily} onChange={(e) => setCreditDaily(Number(e.target.value))} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-500" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Monthly Credits</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("userManagement.monthlyCredits")}</label>
                   <input type="number" min={0} value={creditMonthly} onChange={(e) => setCreditMonthly(Number(e.target.value))} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-500" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Rollover Credits</label>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">{t("userManagement.rolloverCredits")}</label>
                   <input type="number" min={0} value={creditRollover} onChange={(e) => setCreditRollover(Number(e.target.value))} className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-brand-500" />
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => saveCredits(false)} disabled={creditSaving} className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors">
-                  {creditSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} Save Credits
+                  {creditSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />} {t("adminComponents.saveCredits")}
                 </button>
-                <button onClick={() => saveCredits(true)} disabled={creditSaving} className="flex items-center gap-1.5 rounded-lg bg-amber-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors" title="Save credits and reset daily/monthly usage to 0">
-                  <RotateCcw className="h-3 w-3" /> Save &amp; Reset Usage
+                <button onClick={() => saveCredits(true)} disabled={creditSaving} className="flex items-center gap-1.5 rounded-lg bg-amber-600/80 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-500 disabled:opacity-50 transition-colors" title={t("adminComponents.saveResetUsageTitle")}>
+                  <RotateCcw className="h-3 w-3" /> {t("adminComponents.saveResetUsage")}
                 </button>
-                <button onClick={() => setEditingCredits(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">Cancel</button>
+                <button onClick={() => setEditingCredits(false)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">{t("common.cancel")}</button>
               </div>
             </>
           )}

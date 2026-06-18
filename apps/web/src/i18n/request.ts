@@ -20,8 +20,40 @@ export default getRequestConfig(async () => {
     locale = negotiateLocale(headerStore.get("accept-language"));
   }
 
+  const [
+    base,
+    admin,
+    editor,
+    dashboard,
+    settings,
+    integrations,
+    environments,
+    marketplace,
+    skills,
+  ] = await Promise.all([
+    import(`../../messages/${locale}.json`),
+    import(`../../messages/${locale}.admin.json`),
+    import(`../../messages/${locale}.editor.json`),
+    import(`../../messages/${locale}.dashboard.json`),
+    import(`../../messages/${locale}.settings.json`),
+    import(`../../messages/${locale}.integrations.json`),
+    import(`../../messages/${locale}.environments.json`),
+    import(`../../messages/${locale}.marketplace.json`),
+    import(`../../messages/${locale}.skills.json`),
+  ]);
+
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: {
+      ...base.default,
+      admin: admin.default,
+      editor: editor.default,
+      dashboard: dashboard.default,
+      settings: settings.default,
+      integrations: integrations.default,
+      environments: environments.default,
+      marketplace: marketplace.default,
+      skills: skills.default,
+    },
   };
 });

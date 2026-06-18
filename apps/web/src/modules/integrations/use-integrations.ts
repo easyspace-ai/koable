@@ -1,10 +1,15 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import type { useTranslations } from "next-intl";
 import { apiFetch } from "@/lib/api";
 import type { WorkspaceRole } from "@doable/shared";
 
 // ─── Types ──────────────────────────────────────────────────
+
+export type IntegrationsTranslateFn = ReturnType<
+  typeof useTranslations<"integrations">
+>;
 
 export interface IntegrationTool {
   name: string;
@@ -43,21 +48,15 @@ export interface CreateIntegrationPayload {
   authType: "none" | "api_key" | "bearer_token";
 }
 
-// ─── Transport Labels ───────────────────────────────────────
-
-export const TRANSPORT_LABELS: Record<CustomIntegration["transport_type"], { friendly: string; technical: string }> = {
-  streamable_http: { friendly: "Web service", technical: "HTTP streaming" },
-  http_sse: { friendly: "Web service", technical: "HTTP SSE" },
-  // stdio kept for display of existing builtin connectors but hidden from the
-  // "add" form — user-created stdio connectors are blocked server-side.
-  stdio: { friendly: "Built-in app", technical: "managed" },
-};
-
-export const SCOPE_LABELS: Record<CustomIntegration["scope"], string> = {
-  workspace: "Everyone in this workspace",
-  project: "Everyone on this project",
-  user: "Only me (personal)",
-};
+export function getTransportLabel(
+  t: IntegrationsTranslateFn,
+  transportType: CustomIntegration["transport_type"],
+): { friendly: string; technical: string } {
+  return {
+    friendly: t(`shared.transportTypes.${transportType}.friendly`),
+    technical: t(`shared.transportTypes.${transportType}.technical`),
+  };
+}
 
 export type { WorkspaceRole } from "@doable/shared";
 

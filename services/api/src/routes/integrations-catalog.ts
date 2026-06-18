@@ -4,6 +4,7 @@ import type { AuthEnv } from "../middleware/auth.js";
 import { listIntegrations, getIntegration, getCategories } from "../integrations/registry/index.js";
 import { getIntegrationActions } from "../integrations/runner.js";
 import type { IntegrationCategory } from "../integrations/types.js";
+import { operationFailed } from "../lib/api-error.js";
 
 export const integrationCatalogRoutes = new Hono<AuthEnv>({ strict: false });
 
@@ -152,8 +153,6 @@ integrationCatalogRoutes.get("/integrations/catalog/:id/actions", async (c) => {
     const actions = await getIntegrationActions(id);
     return c.json({ data: actions });
   } catch (err) {
-    return c.json({
-      error: `Failed to load actions: ${err instanceof Error ? err.message : String(err)}`,
-    }, 500);
+    return operationFailed(c, "integrations/catalog/actions", err, "Failed to load actions");
   }
 });

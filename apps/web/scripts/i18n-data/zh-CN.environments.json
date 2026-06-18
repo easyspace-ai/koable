@@ -1,0 +1,182 @@
+{
+  "tabs": {
+    "integrations": "集成",
+    "knowledge": "知识库",
+    "skills": "技能",
+    "variables": "变量",
+    "settings": "设置"
+  },
+  "shared": {
+    "clickToEdit": "点击编辑",
+    "empty": "空",
+    "scope": {
+      "workspace": "工作区",
+      "project": "项目",
+      "user": "用户"
+    },
+    "itemList": {
+      "count": "（{count}）",
+      "defaultEmpty": "未配置",
+      "removeTitle": "移除"
+    },
+    "refPicker": {
+      "count": "（{count}）",
+      "edit": "编辑",
+      "done": "完成",
+      "noneSelected": "未选择",
+      "emptyWorkspace": "工作区中没有 {titleLower}。请先在 {title} 面板中创建。"
+    },
+    "cancel": "取消",
+    "save": "保存",
+    "add": "添加",
+    "update": "更新",
+    "delete": "删除",
+    "refresh": "刷新",
+    "create": "创建"
+  },
+  "knowledgeTab": {
+    "fileCount": "{count, plural, one {# 个文件} other {# 个文件}}",
+    "addFile": "添加文件",
+    "filenamePlaceholder": "knowledge.md",
+    "contentPlaceholder": "# 知识库\n\n添加关于您项目的上下文...",
+    "emptyTitle": "暂无知识文件",
+    "emptyDescription": "添加文件以为 AI 提供项目上下文。",
+    "chars": "{count} 字符",
+    "editTitle": "编辑",
+    "removeTitle": "移除"
+  },
+  "skillsTab": {
+    "skillsTitle": "技能",
+    "rulesTitle": "规则"
+  },
+  "settingsTab": {
+    "activeEnvironment": "活跃环境",
+    "change": "更改",
+    "customLoading": "自定义环境（加载中...）",
+    "workspaceDefault": "工作区默认",
+    "badgeAuto": "自动",
+    "inheritingDescription": "继承工作区技能、规则和连接器",
+    "inheritAllItems": "继承所有工作区项目",
+    "noCustomEnvironments": "暂无自定义环境。请从工作区设置创建一个。",
+    "workspaceDefaults": "工作区默认"
+  },
+  "variablesTab": {
+    "targets": {
+      "all": "全部",
+      "development": "开发",
+      "preview": "预览",
+      "production": "生产"
+    },
+    "addVariable": "添加变量",
+    "keyPlaceholder": "KEY_NAME",
+    "valuePlaceholder": "值",
+    "descriptionOptionalPlaceholder": "描述（可选）",
+    "secretMasked": "密钥（保存后掩码）",
+    "plaintext": "明文",
+    "emptyTitle": "无环境变量",
+    "emptyDescription": "变量注入到开发服务器和构建中",
+    "newValuePlaceholder": "新值（留空则保留）",
+    "descriptionPlaceholder": "描述",
+    "maskedValue": "••••••••",
+    "toggleValueTitle": "切换值可见性",
+    "editTitle": "编辑",
+    "deleteTitle": "删除",
+    "inheritedFromWorkspace": "继承自工作区（{count}）",
+    "badgeInherited": "继承"
+  },
+  "forms": {
+    "create": {
+      "title": "新环境",
+      "iconLabel": "图标",
+      "nameLabel": "名称",
+      "namePlaceholder": "例如 React + Supabase",
+      "descriptionLabel": "描述",
+      "descriptionPlaceholder": "包含 React、Tailwind 和 Supabase 工具的全栈环境",
+      "colorLabel": "颜色"
+    },
+    "editMeta": {
+      "title": "编辑环境",
+      "descriptionPlaceholder": "描述"
+    },
+    "instructions": {
+      "title": "自定义指令",
+      "count": "（{count}）",
+      "add": "添加",
+      "empty": "无自定义指令",
+      "filenamePlaceholder": "coding-standards.md",
+      "contentPlaceholder": "# 指令\n\n始终..."
+    }
+  },
+  "cards": {
+    "default": {
+      "title": "工作区默认",
+      "badgeAuto": "自动",
+      "subtitle": "所有环境可用的项目",
+      "itemCount": "{count} 项",
+      "description": "工作区级别项目自动包含在所有项目中，除非被项目环境覆盖。",
+      "skillsTitle": "技能",
+      "rulesTitle": "规则",
+      "knowledgeTitle": "知识库",
+      "knowledgeEmpty": "无 — 在工作区设置中添加工作区知识",
+      "connectorsTitle": "连接器"
+    },
+    "environment": {
+      "badgeDefault": "默认",
+      "badgeTemplate": "模板",
+      "itemCount": "{count} 项",
+      "editMeta": "编辑名称、图标和颜色",
+      "skillsTitle": "技能",
+      "rulesTitle": "规则",
+      "knowledgeTitle": "知识库",
+      "knowledgeEmpty": "无知识文件",
+      "knowledgeChars": "{count} 字符",
+      "connectorsTitle": "连接器",
+      "setAsDefault": "设为默认",
+      "clone": "克隆",
+      "export": "导出",
+      "delete": "删除",
+      "confirmDelete": "确定？",
+      "confirmYes": "是",
+      "confirmNo": "否"
+    }
+  },
+  "panel": {
+    "installedMarketplace": {
+      "title": "从市场安装",
+      "fallbackListingTitle": "市场列表",
+      "installedMeta": "v{version} · 安装于 {date}",
+      "modified": "· 已修改",
+      "uninstallTitle": "卸载 — 从工作区移除克隆的环境",
+      "uninstall": "卸载"
+    },
+    "templates": {
+      "title": "环境模板",
+      "emptyTitle": "暂无可用模板",
+      "emptyDescription": "团队创建模板后将显示在此处。",
+      "useTemplate": "使用模板"
+    },
+    "workspace": {
+      "title": "环境",
+      "refreshTitle": "刷新",
+      "templates": "模板",
+      "import": "导入",
+      "new": "新建",
+      "description": "环境将工作区技能、规则、知识和连接器打包为可复用预设。",
+      "descriptionStrong": "默认",
+      "descriptionSuffix": "环境自动包含所有工作区项目。",
+      "emptyDescription": "创建自定义环境以打包工作区项目的特定子集。",
+      "createEnvironment": "创建环境"
+    }
+  },
+  "projectView": {
+    "title": "环境",
+    "refreshTitle": "刷新",
+    "dockToSidebarTitle": "停靠到侧边栏",
+    "openAsPopupTitle": "以弹窗打开",
+    "closeTitle": "关闭",
+    "empty": "未加载环境"
+  },
+  "errors": {
+    "failedToLoad": "加载环境失败"
+  }
+}
