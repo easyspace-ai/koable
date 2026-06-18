@@ -341,4 +341,4 @@ export {
   type StripThinkingResult,
   type ThinkingStripper,
   type ThinkingTagName,
-} from "./thinking.js";
+} from "./thinking";

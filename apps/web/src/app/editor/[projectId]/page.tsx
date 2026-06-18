@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, memo, Suspense } from "react";
+import { createPortal } from "react-dom";
+import { stripThinking } from "@doable/ai";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getStoredTokens, apiFetch, apiUpdateProject, apiDeleteProject, apiDuplicateProject, apiGetProject, apiGetEffectiveAiConfig, apiRecordProjectView, apiListAiProviders, apiGetShareStats, apiListCollaborators, apiRemoveCollaborator, type ApiEffectiveAiConfig, type ApiAiProvider, type ApiCollaborator } from "@/lib/api";
@@ -1927,6 +1929,8 @@ function EditorPageInner() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [pinnedItems, setPinnedItems] = useState<ActiveTab[]>(() => loadPinnedItems());
   const moreMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuTriggerRef = useRef<HTMLButtonElement>(null);
+  const moreMenuPortalRef = useRef<HTMLDivElement>(null);
 
   // ─── Toolbar dialog/modal state ────────────────────────────
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -2880,16 +2884,12 @@ function EditorPageInner() {
                   isRemote: true,
                 };
               }
-              // Extract <think>...</think> tags from stored content into thinkingContent
+              // Extract thinking/reasoning blocks from stored content into thinkingContent
               let displayContent = m.content || "";
-              let thinkingFromContent = "";
-              const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
-              let thinkMatch: RegExpExecArray | null;
-              while ((thinkMatch = thinkRegex.exec(displayContent)) !== null) {
-                thinkingFromContent += (thinkMatch[1] ?? "").trim() + "\n";
-              }
-              displayContent = displayContent.replace(thinkRegex, "").trim();
-              // Also strip <|channel>thought...<channel> markers
+              const split = stripThinking(displayContent);
+              displayContent = split.visible;
+              let thinkingFromContent = split.thinking.join("\n\n");
+              // Also strip <|channel>thought...<channel> markers (Gemma-style)
               const channelRegex = /<\|?channel\|?>thought([\s\S]*?)<\|?channel\|?>/gi;
               let channelMatch: RegExpExecArray | null;
               while ((channelMatch = channelRegex.exec(displayContent)) !== null) {
@@ -3648,16 +3648,25 @@ function EditorPageInner() {
     };
   }, [isDragging]);
 
-  // Close "More" menu when clicking outside
+  // Close "More" menu when clicking outside (portal lives on document.body)
   useEffect(() => {
     if (!showMoreMenu) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+
+    let handler: ((e: MouseEvent) => void) | null = null;
+    const timeout = setTimeout(() => {
+      handler = (e: MouseEvent) => {
+        const target = e.target as Node;
+        if (moreMenuRef.current?.contains(target)) return;
+        if (moreMenuPortalRef.current?.contains(target)) return;
         setShowMoreMenu(false);
-      }
+      };
+      document.addEventListener("mousedown", handler);
+    }, 10);
+
+    return () => {
+      clearTimeout(timeout);
+      if (handler) document.removeEventListener("mousedown", handler);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showMoreMenu]);
 
   // Toggle pin for a toolbar item
@@ -5028,7 +5037,7 @@ function EditorPageInner() {
     />
     <div className="flex h-screen flex-col bg-card text-foreground">
       {/* ─── Top Bar ──────────────────────────────────────────── */}
-      <header className="flex h-12 flex-shrink-0 items-center justify-between border-b border-border bg-card px-2 md:px-3">
+      <header className="relative z-20 flex h-12 flex-shrink-0 items-center justify-between border-b border-border bg-card px-2 md:px-3">
         {/* Left: Logo + Back arrow + Project name with dropdown */}
         <div className="flex items-center gap-2.5 min-w-0">
           {/* Doable logo icon */}
@@ -5178,6 +5187,7 @@ function EditorPageInner() {
           {/* More menu (triple-dots) */}
           <div className="relative" ref={moreMenuRef}>
             <button
+              ref={moreMenuTriggerRef}
               onClick={() => setShowMoreMenu((v) => !v)}
               className={`flex items-center justify-center text-[13px] font-medium transition-all rounded-md p-1.5 ${
                 showMoreMenu
@@ -5189,9 +5199,29 @@ function EditorPageInner() {
               <MoreHorizontal className="h-4 w-4" />
             </button>
 
-            {/* Dropdown */}
-            {showMoreMenu && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-52 rounded-lg border border-border bg-muted shadow-xl shadow-md py-1 z-50">
+            {/* Dropdown — portaled so sidebar content cannot paint over it */}
+            {showMoreMenu && typeof document !== "undefined" && createPortal(
+              <div
+                ref={(node) => {
+                  moreMenuPortalRef.current = node;
+                  if (!node || !moreMenuTriggerRef.current) return;
+                  const rect = moreMenuTriggerRef.current.getBoundingClientRect();
+                  const menuHeight = node.scrollHeight;
+                  const spaceBelow = window.innerHeight - rect.bottom;
+                  const flipAbove = spaceBelow < menuHeight + 8 && rect.top > menuHeight + 8;
+                  node.style.position = "fixed";
+                  node.style.zIndex = "9999";
+                  node.style.top = flipAbove
+                    ? `${rect.top - menuHeight - 4}px`
+                    : `${rect.bottom + 4}px`;
+                  node.style.left = `${rect.left + rect.width / 2}px`;
+                  node.style.transform = "translateX(-50%)";
+                  node.style.visibility = "visible";
+                }}
+                data-more-menu-portal=""
+                className="w-52 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-xl py-1"
+                style={{ visibility: "hidden" }}
+              >
                 {/* View tabs with pin/unpin */}
                 <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{t("chrome.views")}</div>
                 {MORE_MENU_TABS.map(({ key, icon: MenuIcon, labelKey }) => {
@@ -5282,7 +5312,8 @@ function EditorPageInner() {
                   <Trash2 className="h-4 w-4 flex-shrink-0" />
                   <span>{t("chrome.deleteProject")}</span>
                 </button>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>
@@ -5761,7 +5792,7 @@ function EditorPageInner() {
                             ) : msg.content && (
                               extractFunctionSteps(msg.content).length > 0 && stripFunctionMarkup(msg.content).length === 0
                                 ? renderFunctionStepList(msg.content)
-                                : <MemoizedMessageContent content={stripFunctionMarkup(msg.content)} />
+                                : <MemoizedMessageContent content={stripThinking(stripFunctionMarkup(msg.content)).visible} />
                             )}
                             
                             {/* Live Streaming Glowing Orb - visible while streaming, and
@@ -5935,7 +5966,7 @@ function EditorPageInner() {
                               </button>
                               {/* Dropdown menu */}
                               {moreMenuMsgId === msg.id && (
-                                <div className="absolute left-0 top-full mt-1 z-50 w-48 rounded-lg border border-border bg-popover py-1 shadow-md">
+                                <div className="absolute left-0 top-full mt-1 z-[9999] w-48 rounded-lg border border-border bg-popover text-popover-foreground py-1 shadow-xl">
                                   <button
                                     onClick={() => {
                                       setMoreMenuMsgId(null);

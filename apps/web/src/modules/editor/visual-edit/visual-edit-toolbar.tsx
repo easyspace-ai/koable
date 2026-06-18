@@ -106,7 +106,7 @@ export function VisualEditToolbar({
 
   return (
     <div
-      className="fixed z-[9999] flex items-center gap-1 rounded-xl border border-border bg-popover px-1.5 shadow-md backdrop-blur-md transition-all duration-150 ease-out"
+      className="fixed z-[9999] flex items-center gap-1 rounded-xl border border-border bg-popover px-1.5 shadow-md transition-all duration-150 ease-out"
       style={{
         top: position.top,
         left: position.left,

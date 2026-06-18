@@ -129,7 +129,7 @@ export function MemberRow({
         {roleOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setRoleOpen(false)} />
-            <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-lg border bg-background py-1 shadow-lg">
+            <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-lg border border-border bg-popover text-popover-foreground py-1 shadow-lg">
               {ASSIGNABLE_ROLES.map((r) => {
                 const Icon = ROLE_ICONS[r] ?? Users;
                 return (

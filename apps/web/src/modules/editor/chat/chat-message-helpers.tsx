@@ -2,10 +2,12 @@
 
 import { useCallback, useState } from "react";
 import { Copy, Check, Wrench } from "lucide-react";
+import { stripThinking } from "@doable/ai";
 
 // ─── Simple Markdown Renderer ───────────────────────────────
 export function renderMarkdown(text: string): string {
-  let html = text
+  const { visible } = stripThinking(text);
+  let html = visible
     // Escape HTML
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")

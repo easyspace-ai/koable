@@ -70,7 +70,7 @@ export function ChatMessageToasts() {
         <div
           key={toast.id}
           onClick={handleClick}
-          className="flex items-center gap-3 rounded-lg border border-border bg-popover backdrop-blur-sm px-4 py-3 shadow-xl animate-in slide-in-from-right duration-300 cursor-pointer hover:bg-secondary transition-colors"
+          className="flex items-center gap-3 rounded-lg border border-border bg-popover px-4 py-3 shadow-xl animate-in slide-in-from-right duration-300 cursor-pointer hover:bg-secondary transition-colors"
         >
           <div className="flex-1 min-w-0">
             <p className="text-sm text-foreground truncate">

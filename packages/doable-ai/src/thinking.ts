@@ -27,6 +27,7 @@
  */
 
 export type ThinkingTagName =
+  | "redacted_thinking"
   | "think"
   | "thinking"
   | "analysis"
@@ -46,6 +47,7 @@ export type ThinkingTagName =
   | "planner";
 
 export const THINKING_TAGS: readonly string[] = [
+  "redacted_thinking",
   "think",
   "thinking",
   "analysis",
@@ -110,6 +112,42 @@ function unmaskCodeFences(input: string, fences: string[]): string {
   return input.replace(/\u0000FENCE(\d+)\u0000/g, (_m, idx) => fences[Number(idx)] ?? _m);
 }
 
+/** Strip the opening tag from an unclosed tail block (no closer present). */
+function stripOpenerTail(block: string): string {
+  const xml = block.match(/^<([A-Za-z_][\w]*)\b[^>]*>([\s\S]*)$/i);
+  if (xml) return xml[2] ?? "";
+  const brk = block.match(/^\[([A-Za-z_][\w]*)\b[^\]]*\]([\s\S]*)$/i);
+  if (brk) return brk[2] ?? "";
+  return block;
+}
+
+/**
+ * Pull any trailing thinking-tag opener that never received a closer into
+ * the thinking array so generated chat UIs don't render raw XML-like tags.
+ */
+function extractUnclosedThinking(input: string): { visible: string; thinking: string[] } {
+  const { masked, fences } = maskCodeFences(input);
+  const thinking: string[] = [];
+  let work = masked;
+  let guard = 0;
+  while (guard++ < THINKING_TAGS.length + 2) {
+    const info = trailingUnclosedOpener(work);
+    if (!info) break;
+    const openerRe = info.style === "xml"
+      ? new RegExp(`<${info.tag}\\b[^>]*>`, "i")
+      : new RegExp(`\\[${info.tag}\\b[^\\]]*\\]`, "i");
+    const openerMatch = work.slice(info.index).match(openerRe);
+    const openerLen = openerMatch?.[0]?.length ?? 0;
+    const tail = work.slice(info.index + openerLen);
+    if (tail.trim()) thinking.push(stripOpenerTail(work.slice(info.index)));
+    work = work.slice(0, info.index);
+  }
+  return {
+    visible: unmaskCodeFences(work, fences).trim(),
+    thinking: thinking.map((t) => t.trim()).filter((t) => t.length > 0),
+  };
+}
+
 /** Strip the outer XML- or bracket-style envelope from a captured block. */
 function stripEnvelope(block: string): string {
   // XML form: <tag …> body </tag>. The `i` flag also covers the backref so
@@ -139,13 +177,17 @@ export function stripThinking(input: string): StripThinkingResult {
   const { masked, fences } = maskCodeFences(input);
   const regex = buildBlockRegex();
   const thinking: string[] = [];
-  const visible = masked.replace(regex, (match) => {
+  let visible = masked.replace(regex, (match) => {
     thinking.push(stripEnvelope(match));
     return "";
   });
+  visible = unmaskCodeFences(visible, fences);
+  const unclosed = extractUnclosedThinking(visible);
   return {
-    visible: unmaskCodeFences(visible, fences).trim(),
-    thinking: thinking.map((t) => t.trim()).filter((t) => t.length > 0),
+    visible: unclosed.visible,
+    thinking: [...thinking, ...unclosed.thinking]
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0),
   };
 }
 

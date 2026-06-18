@@ -132,7 +132,7 @@ export function CommentThread({
   return (
     <div
       ref={containerRef}
-      className="z-[9999] rounded-xl border border-border bg-popover shadow-xl backdrop-blur-md"
+      className="z-[9999] rounded-xl border border-border bg-popover shadow-xl"
       style={style}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
@@ -332,7 +332,7 @@ export function NewCommentInput({ x, y, onSubmit, onCancel }: NewCommentInputPro
 
   return (
     <div
-      className="absolute z-[9999] rounded-xl border border-border bg-popover shadow-xl backdrop-blur-md"
+      className="absolute z-[9999] rounded-xl border border-border bg-popover shadow-xl"
       style={{ left: x + 16, top: y - 8, minWidth: 240, maxWidth: 300 }}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}

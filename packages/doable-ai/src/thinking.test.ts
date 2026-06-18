@@ -189,6 +189,36 @@ describe("createThinkingStripper — chunked input", () => {
 
 // ─── End-to-end sanity ──────────────────────────────────────────────────────
 
+describe("stripThinking — unclosed tags", () => {
+  it("moves a trailing unclosed <reasoning> block into thinking", () => {
+    const r = stripThinking("Answer here <reasoning>still thinking");
+    assert.match(r.visible, /Answer here/);
+    assert.equal(r.visible.includes("<reasoning>"), false);
+    assert.deepEqual(r.thinking, ["still thinking"]);
+  });
+
+  it("extracts <think>…</think> blocks", () => {
+    const r = stripThinking("Hi <think>secret</think> bye");
+    assert.match(r.visible, /Hi\s+bye/);
+    assert.deepEqual(r.thinking, ["secret"]);
+  });
+
+  it("flush() treats an unclosed <plan> tail as thinking", () => {
+    const s = createThinkingStripper();
+    let visible = "";
+    let thinking: string[] = [];
+    const r1 = s.push("visible <plan>step 1");
+    visible += r1.visible;
+    thinking = thinking.concat(r1.thinking);
+    const f = s.flush();
+    visible += f.visible;
+    thinking = thinking.concat(f.thinking);
+    assert.match(visible, /visible/);
+    assert.equal(visible.includes("<plan>"), false);
+    assert.deepEqual(thinking, ["step 1"]);
+  });
+});
+
 describe("stripThinking — full message shape", () => {
   it("typical model reply: one think block + one plan block + body", () => {
     const r = stripThinking(`<thinking>

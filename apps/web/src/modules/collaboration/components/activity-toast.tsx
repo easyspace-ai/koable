@@ -34,7 +34,7 @@ export function ActivityToasts({ toasts, onDismiss }: Props) {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="flex items-center gap-3 rounded-lg border border-border bg-popover backdrop-blur-sm px-4 py-3 shadow-xl animate-in slide-in-from-right duration-300"
+          className="flex items-center gap-3 rounded-lg border border-border bg-popover px-4 py-3 shadow-xl animate-in slide-in-from-right duration-300"
         >
           <span className="text-base">{EVENT_ICONS[toast.eventType] ?? "📋"}</span>
           <div className="flex-1 min-w-0">

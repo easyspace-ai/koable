@@ -135,7 +135,7 @@ export function PreviewToolbar({
 
         {/* Route dropdown */}
         {showRouteDropdown && routes.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-background shadow-lg">
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg">
             {routes.map((route) => (
               <button
                 key={route.path}

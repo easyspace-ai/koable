@@ -158,7 +158,7 @@ export function GitHubButton({
 
       {/* Dropdown menu */}
       {menuOpen && isConnected && (
-        <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-md border bg-background p-2 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-1 w-72 rounded-md border border-border bg-popover text-popover-foreground p-2 shadow-lg">
           {/* Status info */}
           <div className="mb-2 rounded-md bg-muted/50 px-3 py-2">
             <div className="flex items-center justify-between">

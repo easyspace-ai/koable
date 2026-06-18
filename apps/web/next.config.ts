@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,
-  transpilePackages: ["@doable/shared"],
+  transpilePackages: ["@doable/shared", "@doable/ai"],
   typescript: { ignoreBuildErrors: true },
   // Next.js 16 blocks cross-origin requests to dev-only resources
   // (/_next/webpack-hmr and the dev-asset chunks) unless the request's

@@ -40,6 +40,15 @@ const VIEWPORT = { width: 1280, height: 720 };
 const HMR_WS_CONNECT_RE =
   /failed to connect to websocket|\[vite\][^\n]*websocket|server connection lost|websocket connection[^\n]*fail/i;
 
+const MACOS_CHROME =
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const LINUX_CHROME_CANDIDATES = [
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+] as const;
+
 const BROWSER_LAUNCH_TIMEOUT_MS = 30_000;
 // Hard ceiling on a single capture (goto + settle + health-check + screenshot).
 // On timeout we force-close the page so headless Chrome can NEVER stick around.
@@ -47,6 +56,45 @@ const CAPTURE_TIMEOUT_MS = 30_000;
 // Close the shared browser after this much inactivity so it never lingers
 // indefinitely between bursts of captures.
 const BROWSER_IDLE_MS = 3 * 60_000;
+
+/**
+ * Resolve the Chrome/Chromium binary for puppeteer.launch().
+ *
+ * Order: explicit env override → puppeteer cache → platform fallbacks.
+ * Production sets PUPPETEER_EXECUTABLE_PATH (see deployment/docker/Dockerfile);
+ * local dev can use system Chrome on macOS when the puppeteer cache is empty.
+ */
+async function resolveChromeExecutable(): Promise<string | undefined> {
+  const fromEnv =
+    process.env.PUPPETEER_EXECUTABLE_PATH?.trim() ||
+    process.env.CHROME_PATH?.trim();
+  if (fromEnv && existsSync(fromEnv)) return fromEnv;
+
+  try {
+    const bundled = await puppeteer.executablePath();
+    if (bundled && existsSync(bundled)) return bundled;
+  } catch {
+    // puppeteer cache miss — fall through to system Chrome
+  }
+
+  if (process.platform === "darwin" && existsSync(MACOS_CHROME)) {
+    return MACOS_CHROME;
+  }
+  for (const candidate of LINUX_CHROME_CANDIDATES) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return undefined;
+}
+
+/** Human-readable hint when Chrome cannot be launched. */
+function chromeUnavailableMessage(): string {
+  return (
+    "Chrome not found for thumbnail capture. " +
+    "Install bundled Chrome: pnpm --filter @doable/api exec puppeteer browsers install chrome " +
+    "— or set PUPPETEER_EXECUTABLE_PATH to your Chrome/Chromium binary " +
+    "(macOS default: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome)."
+  );
+}
 
 let browser: Browser | null = null;
 // Single in-flight launch promise. Concurrent callers (e.g. a retry storm of
@@ -80,10 +128,16 @@ async function getBrowser(): Promise<Browser> {
     if (isRoot || inContainer) {
       launchArgs.unshift("--no-sandbox", "--disable-setuid-sandbox");
     }
+    const executablePath = await resolveChromeExecutable();
+    if (!executablePath) {
+      throw new Error(chromeUnavailableMessage());
+    }
+
     // Wrap puppeteer.launch() with a timeout so a missing/broken Chrome
     // binary can't hang forever and permanently block thumbnail captures.
     const launchPromise = puppeteer.launch({
       headless: true,
+      executablePath,
       args: launchArgs,
     });
     const timeoutPromise = new Promise<never>((_, reject) =>
@@ -285,7 +339,15 @@ export async function captureProjectThumbnail(
         continue;
       }
       const msg = err instanceof Error ? err.message : "Unknown error";
-      console.warn(`[Thumbnail] Failed to capture for ${projectId} after ${maxAttempts} attempts:`, err);
+      const chromeMissing =
+        /could not find chrome|chrome not found for thumbnail/i.test(msg);
+      if (chromeMissing) {
+        console.warn(
+          `[Thumbnail] Chrome unavailable — skipping capture for ${projectId}. ${chromeUnavailableMessage()}`,
+        );
+      } else {
+        console.warn(`[Thumbnail] Failed to capture for ${projectId} after ${maxAttempts} attempts:`, err);
+      }
       void logThumbnailAttempt({ projectId, status: "failed", previewUrl, errorMessage: msg, durationMs: Date.now() - startTime, triggeredBy });
       return null;
     }
